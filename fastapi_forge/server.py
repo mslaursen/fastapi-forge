@@ -7,6 +7,7 @@ import threading
 import uvicorn
 import os
 
+
 app = FastAPI()
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
