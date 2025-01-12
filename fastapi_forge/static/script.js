@@ -1,25 +1,43 @@
 document.addEventListener("DOMContentLoaded", () => {
     const generateButton = document.getElementById("generateButton");
+    const shutdownButton = document.getElementById("shutdownButton");
     const responseOutput = document.getElementById("responseOutput");
 
-    generateButton.addEventListener("click", async () => {
+    const makeRequest = async (url, options, successMessage) => {
         try {
-            const response = await fetch("http://localhost:8000/forge", {
+            const response = await fetch(url, options);
+
+            if (response.ok) {
+                const data = successMessage ? successMessage : await response.json();
+                responseOutput.textContent = `Response: ${JSON.stringify(data)}`;
+            } else {
+                responseOutput.textContent = `Error: ${response.status} - ${response.statusText}`;
+            }
+        } catch (error) {
+            responseOutput.textContent = `Request failed: ${error.message}`;
+        }
+    };
+
+    if (generateButton) {
+        generateButton.addEventListener("click", () => {
+            makeRequest("http://localhost:8000/forge", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({ project_name: "temp_project" }),
             });
+        });
+    } else {
+        console.error("Generate button not found!");
+    }
 
-            if (response.ok) {
-                const data = await response.json();
-                responseOutput.textContent = `Response: ${JSON.stringify(data)}`;
-            } else {
-                responseOutput.textContent = `Error: ${response.statusText}`;
-            }
-        } catch (error) {
-            responseOutput.textContent = `Request failed: ${error.message}`;
-        }
-    });
+    if (shutdownButton) {
+
+        shutdownButton.addEventListener("click", () => {
+            makeRequest("http://localhost:8000/shutdown", { method: "POST" }, "Server shutdown");
+        });
+    } else {
+        console.error("Shutdown button not found!");
+    }
 });

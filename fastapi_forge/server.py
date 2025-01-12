@@ -2,9 +2,8 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from cookiecutter.main import cookiecutter
-from fastapi_forge.dtos import ForgeProjectRequestDTO
+from .dtos import ForgeProjectRequestDTO
 import threading
-import uvicorn
 import os
 
 
@@ -33,12 +32,26 @@ def serve_ui() -> HTMLResponse:
 @app.post("/forge")
 async def forge_project(request: ForgeProjectRequestDTO) -> None:
     """Creates a new project using the provided template."""
-    project_name = request.project_name
-    print(f"Creating project: {project_name}")
+    template_path = os.path.join(os.path.dirname(__file__), "template")
+
+    cookiecutter(
+        template_path,
+        output_dir=os.getcwd(),
+        no_input=True,
+        extra_context={
+            "project_name": request.project_name,
+        },
+    )
+
+
+@app.post("/shutdown")
+def shutdown() -> None:
+    """Shuts down the program."""
+    os._exit(0)
 
 
 class FastAPIServer:
-    """FastAPI server wrapper."""
+    """FastAPI server."""
 
     def __init__(self, host: str, port: int, app: FastAPI):
         self.host = host
@@ -48,12 +61,20 @@ class FastAPIServer:
 
     def start(self) -> None:
         """Starts the server in a separate thread."""
-        self.server_thread = threading.Thread(
-            target=uvicorn.run,
-            args=(self.app,),
-            kwargs={"host": self.host, "port": self.port},
-            daemon=True,
+        from uvicorn import Config, Server
+
+        config = Config(
+            app=self.app,
+            host=self.host,
+            port=self.port,
+            reload=True,
         )
+        server = Server(config)
+
+        def run_server():
+            server.run()
+
+        self.server_thread = threading.Thread(target=run_server, daemon=True)
         self.server_thread.start()
 
     def is_running(self) -> bool:
