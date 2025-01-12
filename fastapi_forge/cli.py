@@ -2,9 +2,9 @@ import click
 
 # from cookiecutter.main import cookiecutter
 
-from fastapi_forge.config import FastAPIServerConfig
-from fastapi_forge.server import app, FastAPIServer
-from fastapi_forge.utils import open_browser
+from .config import FastAPIServerConfig
+from .server import app, FastAPIServer
+from .utils import open_browser
 
 
 @click.group()
