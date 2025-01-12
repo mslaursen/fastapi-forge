@@ -55,11 +55,6 @@ class FastAPIServer:
         )
         self.server_thread.start()
 
-    def stop(self) -> None:
-        """Stops the server thread."""
-        if self.server_thread and self.server_thread.is_alive():
-            self.server_thread.join()
-
     def is_running(self) -> bool:
         """Checks if the server is active."""
         return self.server_thread is not None and self.server_thread.is_alive()
@@ -70,4 +65,4 @@ class FastAPIServer:
             while self.is_running():
                 pass
         except KeyboardInterrupt:
-            self.stop()
+            pass

@@ -22,11 +22,12 @@ def start(host: str, port: int) -> None:
 
     server = FastAPIServer(host, port, app)
     server.start()
+
     open_browser(f"http://{host}:{port}")
 
-    click.echo(f"Server running at http://{host}:{port}")
-
     server.wait_for_shutdown()
+
+    click.echo("Server stopped.")
 
 
 if __name__ == "__main__":
