@@ -40,6 +40,9 @@ async def forge_project(request: ForgeProjectRequestDTO) -> None:
         no_input=True,
         extra_context={
             "project_name": request.project_name,
+            "use_postgres": request.use_postgres,
+            "create_daos": request.create_daos,
+            "create_endpoints": request.create_endpoints,
         },
     )
 

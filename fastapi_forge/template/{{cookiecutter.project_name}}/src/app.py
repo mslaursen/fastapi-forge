@@ -5,13 +5,18 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from fastapi import FastAPI
 from routes import base_router
+from db import db_lifetime
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Lifespan."""
 
+    await db_lifetime.setup_db(app)
+
     yield
+
+    await db_lifetime.shutdown_db(app)
 
 
 def get_app() -> FastAPI:
