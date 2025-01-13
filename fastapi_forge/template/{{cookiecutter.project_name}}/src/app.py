@@ -5,18 +5,20 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from fastapi import FastAPI
 from routes import base_router
+{% if cookiecutter.use_postgres %}
 from db import db_lifetime
-
+{% endif %}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Lifespan."""
-
+    {% if cookiecutter.use_postgres %}
     await db_lifetime.setup_db(app)
-
+    {% endif %}
     yield
-
+    {% if cookiecutter.use_postgres %}
     await db_lifetime.shutdown_db(app)
+    {% endif %}
 
 
 def get_app() -> FastAPI:
