@@ -3,9 +3,8 @@ from setuptools import setup, find_packages
 
 setup(
     name="fastapi-forge",
-    version="0.1.5",
+    version="0.1.6",
     packages=find_packages(),
-    package_data={"fastapi_forge": ["static/**/*", "template/**/*"]},
     install_requires=[
         "fastapi",
         "uvicorn",
