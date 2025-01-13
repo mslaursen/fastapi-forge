@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="fastapi-forge",
-    version="0.1.2",
+    version="0.1.3",
     packages=find_packages(),
     package_data={"fastapi_forge": ["static/*", "templates/*"]},
     install_requires=[

@@ -1,3 +1,9 @@
 {
-    "project_name": "fastapi_forge"
+    "project_name": "fastapi_forge",
+    "enable_postgres": false,
+    "enable_daos": true,
+    "enable_endpoints": true,
+    "enable_uv": true,
+    "enable_dockerfile": true,
+    "enable_docker_compose": true
 }
