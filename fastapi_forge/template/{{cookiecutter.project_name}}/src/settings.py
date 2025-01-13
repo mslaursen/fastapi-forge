@@ -1,7 +1,8 @@
 import pathlib
 from pydantic_settings import SettingsConfigDict
 from pydantic_settings import BaseSettings as PydanticBaseSettings
-
+from pydantic import SecretStr
+from yarl import URL
 
 PREFIX = "{{ cookiecutter.project_name|upper|replace('-', '_') }}_"
 
@@ -15,6 +16,37 @@ class BaseSettings(PydanticBaseSettings):
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )
 
+{% if cookiecutter.use_postgres %}
+class PGSettings(BaseSettings):
+    """Configuration for database connection."""
+
+    host: str = "localhost"
+
+    port: int = 5432
+    user: str = "postgres"
+    password: SecretStr = SecretStr("postgres")
+    database: str = "booking-db"
+    pool_size: int = 15
+    echo: bool = False
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_prefix=f"{PREFIX}PG_",
+    )
+
+    @property
+    def url(self) -> URL:
+        """Assemble database URL from settings."""
+
+        return URL.build(
+            scheme="postgresql+asyncpg",
+            host=self.host,
+            port=self.port,
+            user=self.user,
+            password=self.password.get_secret_value(),
+            path=f"/{self.database}",
+        )
+{% endif %}
 
 class Settings(BaseSettings):
     """Settings for the auth service."""
@@ -24,7 +56,9 @@ class Settings(BaseSettings):
     workers: int = 1
     log_level: str = "info"
     reload: bool = False
-
+    {% if cookiecutter.use_postgres %}
+    pg: PGSettings = PGSettings()
+    {% endif %}
     model_config = SettingsConfigDict(
         env_file=DOTENV,
         env_prefix=PREFIX,

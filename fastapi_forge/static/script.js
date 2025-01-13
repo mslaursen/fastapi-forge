@@ -25,7 +25,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ project_name: "temp_project" }),
+                body: JSON.stringify(
+                    {
+                        project_name: "temp_project8",
+                        use_postgres: true,
+                        create_daos: true,
+                        create_endpoints: true,
+                    }
+                ),
             });
         });
     } else {
