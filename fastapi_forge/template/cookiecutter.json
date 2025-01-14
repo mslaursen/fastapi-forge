@@ -14,5 +14,9 @@
     "use_endpoints": {
         "type": "boolean",
         "default": true
+    },
+    "use_sqlalchemy": {
+        "type": "boolean",
+        "default": true
     }
 }

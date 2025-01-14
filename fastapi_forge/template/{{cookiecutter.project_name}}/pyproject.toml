@@ -11,4 +11,11 @@ dependencies = [
     "pydantic>=2.10.4",
     "loguru>=0.7.3",
     "yarl>=1.18.3",
+    "ruff>=0.6.7",
+    {% if cookiecutter.use_sqlalchemy -%}
+    "sqlalchemy[asyncio]>=2.0.37",
+    {% endif %}
+    {%- if cookiecutter.use_postgres -%}
+    "asyncpg>=0.30.0",
+    {% endif %}
 ]

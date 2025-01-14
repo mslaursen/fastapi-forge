@@ -21,4 +21,4 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 COPY --from=builder --chown=app:app /app /app
 
-CMD ["python3.12", "/app/src/app.py"]
+CMD ["python3.12", "-m", "/app/src/app.py"]

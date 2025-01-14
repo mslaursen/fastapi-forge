@@ -21,11 +21,10 @@ class PGSettings(BaseSettings):
     """Configuration for database connection."""
 
     host: str = "localhost"
-
     port: int = 5432
     user: str = "postgres"
     password: SecretStr = SecretStr("postgres")
-    database: str = "booking-db"
+    database: str = "postgres"
     pool_size: int = 15
     echo: bool = False
 

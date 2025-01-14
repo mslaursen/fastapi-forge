@@ -18,16 +18,15 @@ def git_init() -> None:
     )
 
 
-def uv_run() -> None:
+def uv_init() -> None:
     subprocess.run(
         [
             "uv",
-            "run",
-            "src/app.py",
+            "lock",
         ]
     )
 
 
 if __name__ == "__main__":
     git_init()
-    # uv_run()
+    uv_init()
