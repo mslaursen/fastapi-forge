@@ -1,8 +1,8 @@
-from settings import settings
+from src.settings import settings
+from src.db import meta
 
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from db import meta
 
 
 async def setup_db(app: FastAPI) -> None:

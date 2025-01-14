@@ -1,3 +1,5 @@
 run:
-	echo "Running..."
+	uv run -m src
 
+up:
+	docker-compose up

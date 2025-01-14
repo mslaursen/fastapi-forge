@@ -1,12 +1,12 @@
 from loguru import logger
-from settings import settings
 
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from fastapi import FastAPI
-from routes import base_router
+from src.settings import settings
+from src.routes import base_router
 {% if cookiecutter.use_postgres %}
-from db import db_lifetime
+from src.db import db_lifetime
 {% endif %}
 
 @asynccontextmanager
@@ -31,17 +31,3 @@ def get_app() -> FastAPI:
     app = FastAPI(lifespan=lifespan)
     app.include_router(base_router)
     return app
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(
-        "app:get_app",
-        host=settings.host,
-        port=settings.port,
-        log_level=settings.log_level,
-        reload=settings.reload,
-        lifespan="on",
-        factory=True,
-    )
