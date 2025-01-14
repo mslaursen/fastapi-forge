@@ -1,50 +1,49 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const generateButton = document.getElementById("generateButton");
-    const shutdownButton = document.getElementById("shutdownButton");
-    const responseOutput = document.getElementById("responseOutput");
+    const form = document.querySelector("form");
 
-    const makeRequest = async (url, options, successMessage) => {
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const projectName = document.getElementById("project_name").value;
+        const usePostgres = document.getElementById("use_postgres").checked;
+        const createDaos = document.getElementById("create_daos").checked;
+        const createEndpoints = document.getElementById("create_endpoints").checked;
+
+        let models;
         try {
-            const response = await fetch(url, options);
-
-            if (response.ok) {
-                const data = successMessage ? successMessage : await response.json();
-                responseOutput.textContent = `Response: ${JSON.stringify(data)}`;
-            } else {
-                responseOutput.textContent = `Error: ${response.status} - ${response.statusText}`;
-            }
-        } catch (error) {
-            responseOutput.textContent = `Request failed: ${error.message}`;
+            models = JSON.parse(document.getElementById("models").value);
+        } catch (e) {
+            alert("Invalid JSON in models field");
+            return;
         }
-    };
 
-    if (generateButton) {
-        generateButton.addEventListener("click", () => {
-            makeRequest("http://localhost:8000/forge", {
+        const payload = {
+            project_name: projectName,
+            use_postgres: usePostgres,
+            create_daos: createDaos,
+            create_endpoints: createEndpoints,
+            models: models
+        };
+
+        try {
+            const response = await fetch("http://localhost:8000/forge", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
+                    "Content-Type": "application/json"
                 },
-                body: JSON.stringify(
-                    {
-                        project_name: "temp_project8",
-                        use_postgres: true,
-                        create_daos: true,
-                        create_endpoints: true,
-                    }
-                ),
+                body: JSON.stringify(payload)
             });
-        });
-    } else {
-        console.error("Generate button not found!");
-    }
 
-    if (shutdownButton) {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
 
-        shutdownButton.addEventListener("click", () => {
-            makeRequest("http://localhost:8000/shutdown", { method: "POST" }, "Server shutdown");
-        });
-    } else {
-        console.error("Shutdown button not found!");
-    }
+            const result = await response.json();
+            console.log("Success:", result);
+            alert("Project configuration submitted successfully!");
+        } catch (error) {
+            console.error("Error:", error);
+            alert("An error occurred while submitting the project configuration.");
+        }
+    });
 });
