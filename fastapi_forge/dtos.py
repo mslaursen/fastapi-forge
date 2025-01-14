@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Any
 
 
 class ForgeProjectRequestDTO(BaseModel):
@@ -8,3 +9,4 @@ class ForgeProjectRequestDTO(BaseModel):
     use_postgres: bool
     create_daos: bool
     create_endpoints: bool
+    models: dict[str, Any]

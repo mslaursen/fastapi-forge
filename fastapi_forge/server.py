@@ -32,6 +32,10 @@ def serve_ui() -> HTMLResponse:
 @app.post("/forge")
 async def forge_project(request: ForgeProjectRequestDTO) -> None:
     """Creates a new project using the provided template."""
+
+    print(request.dict())
+
+    return None
     template_path = os.path.join(os.path.dirname(__file__), "template")
 
     cookiecutter(
