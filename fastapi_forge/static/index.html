@@ -2,67 +2,111 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Configuration</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Configuration</title>
 </head>
 
 <body>
-    <h1>Project Configuration</h1>
+  <h1>Project Configuration</h1>
 
-    <form>
-        <label for="project_name">Project Name:</label>
-        <input type="text" id="project_name" name="project_name" value="my_project">
-        <br><br>
+  <form>
+    <label for="project_name">Project Name:</label>
+    <input type="text" id="project_name" name="project_name" value="my_project">
+    <br><br>
 
-        <label>
-            <input type="checkbox" id="use_postgres" name="use_postgres" checked>
-            Use Postgres
-        </label>
-        <br>
+    <label>
+      <input type="checkbox" id="use_postgres" name="use_postgres" checked>
+      Use Postgres
+    </label>
+    <br>
 
-        <label>
-            <input type="checkbox" id="create_daos" name="create_daos" checked>
-            Create DAOs
-        </label>
-        <br>
+    <label>
+      <input type="checkbox" id="create_daos" name="create_daos" checked>
+      Create DAOs
+    </label>
+    <br>
 
-        <label>
-            <input type="checkbox" id="create_endpoints" name="create_endpoints" checked>
-            Create Endpoints
-        </label>
-        <br><br>
+    <label>
+      <input type="checkbox" id="create_endpoints" name="create_endpoints" checked>
+      Create Endpoints
+    </label>
+    <br><br>
 
-        <label for="models">Models (JSON):</label>
-        <textarea id="models" name="models" rows="25" cols="75">{
-  "models": [
-    {
-      "name": "User",
-      "fields": [
-        { "name": "id", "type": "Integer", "primary_key": true },
-        { "name": "name", "type": "String", "nullable": false },
-        { "name": "email", "type": "String", "unique": true }
-      ],
-      "relationships": [
-        { "type": "OneToMany", "target": "Post", "foreign_key": "user_id" }
-      ]
-    },
-    {
-      "name": "Post",
-      "fields": [
-        { "name": "id", "type": "Integer", "primary_key": true },
-        { "name": "title", "type": "String", "nullable": false },
-        { "name": "user_id", "type": "Integer", "foreign_key": "User.id" }
-      ]
-    }
-  ]
-}</textarea>
-        <br><br>
+    <label for="models">Models (JSON):</label>
+    <textarea id="models" name="models" rows="25" cols="75">
+[
+{
+"name": "User",
+"fields": [
+{
+"name": "id",
+"type": "Integer",
+"primary_key": true
+},
+{
+"name": "birth_date",
+"type": "DateTime"
+},
+{
+"name": "name",
+"type": "String",
+"nullable": false
+},
+{
+"name": "nickname",
+"type": "String",
+"nullable": true
+},
+{
+"name": "email",
+"type": "String",
+"unique": true
+}
+],
+"relationships": [
+{
+"type": "OneToMany",
+"target": "Post",
+"foreign_key": "user_id"
+}
+]
+},
+{
+"name": "Post",
+"fields": [
+{
+"name": "id",
+"type": "UUID",
+"primary_key": true
+},
+{
+"name": "title",
+"type": "String",
+"nullable": false
+},
+{
+"name": "user_id",
+"type": "UUID",
+"foreign_key": "User.id"
+}
+],
+"relationships": [
+{
+"type": "ManyToOne",
+"target": "User",
+"foreign_key": "user_id"
+}
+]
+}
+]
+    </textarea>
+    <br><br>
 
-        <button type="submit">Submit</button>
-    </form>
+    <button type="submit">Submit</button>
+  </form>
 
-    <script src="static/script.js"></script>
+  <script src="static/script.js"></script>
 </body>
 
 </html>

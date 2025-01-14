@@ -3,3 +3,6 @@ run:
 
 up:
 	docker-compose up
+
+lint:
+	uv run ruff check . --fix

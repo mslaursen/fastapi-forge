@@ -5,6 +5,7 @@ from cookiecutter.main import cookiecutter
 from .dtos import ForgeProjectRequestDTO
 import threading
 import os
+from .jinja import render_models
 
 
 app = FastAPI()
@@ -33,9 +34,6 @@ def serve_ui() -> HTMLResponse:
 async def forge_project(request: ForgeProjectRequestDTO) -> None:
     """Creates a new project using the provided template."""
 
-    print(request.dict())
-
-    return None
     template_path = os.path.join(os.path.dirname(__file__), "template")
 
     cookiecutter(
@@ -49,6 +47,13 @@ async def forge_project(request: ForgeProjectRequestDTO) -> None:
             "create_endpoints": request.create_endpoints,
         },
     )
+
+    models_path = os.path.join(os.getcwd(), request.project_name, "src", "models.py")
+
+    with open(models_path, "w") as file:
+        file.write(render_models(request.models))
+
+    print("Project created successfully.")
 
 
 @app.post("/shutdown")

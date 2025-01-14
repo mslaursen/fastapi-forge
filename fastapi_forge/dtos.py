@@ -9,4 +9,4 @@ class ForgeProjectRequestDTO(BaseModel):
     use_postgres: bool
     create_daos: bool
     create_endpoints: bool
-    models: dict[str, Any]
+    models: list[dict[str, Any]]
