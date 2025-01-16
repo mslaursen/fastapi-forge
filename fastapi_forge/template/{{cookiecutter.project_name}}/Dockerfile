@@ -18,7 +18,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 FROM python:3.12-slim-bookworm
 
 ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONPATH="/app"
+
 
 COPY --from=builder --chown=app:app /app /app
 
-CMD ["python3.12", "-m", "/app/src/app.py"]
+CMD ["python3.12", "-m", "src"]
