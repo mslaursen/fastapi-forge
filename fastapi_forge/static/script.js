@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
         try {
-            const response = await fetch("http://localhost:8000/forge", {
+            const response = await fetch("http://localhost:9000/forge", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
