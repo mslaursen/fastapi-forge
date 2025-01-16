@@ -1,6 +1,5 @@
 import click
 
-# from cookiecutter.main import cookiecutter
 
 from .config import FastAPIServerConfig
 from .server import app, FastAPIServer
