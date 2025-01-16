@@ -1,12 +1,38 @@
 from pydantic import BaseModel
-from typing import Any
+
+
+class ModelField(BaseModel):
+    """ModelField DTO."""
+
+    name: str
+    type: str
+    primary_key: bool = False
+    nullable: bool = False
+    unique: bool = False
+    foreign_key: str | None = None
+
+
+class ModelRelationship(BaseModel):
+    """ModelRelationship DTO."""
+
+    type: str
+    target: str
+    foreign_key: str
+
+
+class Model(BaseModel):
+    """Model DTO."""
+
+    name: str
+    fields: list[ModelField]
+    relationships: list[ModelRelationship] = []
 
 
 class ForgeProjectRequestDTO(BaseModel):
-    """Temp."""
+    """ForgeProjectRequest DTO."""
 
     project_name: str
     use_postgres: bool
     create_daos: bool
     create_endpoints: bool
-    models: list[dict[str, Any]]
+    models: list[Model]
