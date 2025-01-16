@@ -6,4 +6,4 @@ class FastAPIServerConfig:
     """FastAPI server configuration."""
 
     host: str = "localhost"
-    port: int = 8000
+    port: int = 9000
