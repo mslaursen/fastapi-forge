@@ -18,7 +18,7 @@ class BaseSettings(PydanticBaseSettings):
 
 {% if cookiecutter.use_postgres %}
 class PGSettings(BaseSettings):
-    """Configuration for database connection."""
+    """Configuration for PostgreSQL connection."""
 
     host: str = "localhost"
     port: int = 5432
@@ -35,7 +35,7 @@ class PGSettings(BaseSettings):
 
     @property
     def url(self) -> URL:
-        """Assemble database URL from settings."""
+        """Generates a URL for the PostgreSQL connection."""
 
         return URL.build(
             scheme="postgresql+asyncpg",
@@ -48,7 +48,7 @@ class PGSettings(BaseSettings):
 {% endif %}
 
 class Settings(BaseSettings):
-    """Settings for the auth service."""
+    """Main settings."""
 
     host: str = "localhost"
     port: int = 8000
