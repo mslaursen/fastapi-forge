@@ -14,6 +14,9 @@ from uuid import UUID, uuid4
 from typing import get_args
 from types import get_original_bases
 import sqlalchemy as sa
+{% for model_name in cookiecutter.models.names -%}
+from src.daos.{{ model_name.lower() }}_daos import {{ model_name }}DAO
+{% endfor %}
 
 PaginationType = PaginationParams | PaginationParamsSortBy
 
@@ -242,6 +245,12 @@ class AllDAOs:
 
     def __init__(self, session: GetDBSession):
         self.session = session
+
+    {% for model_name in cookiecutter.models.names %}
+    @property
+    def {{ model_name.lower() }}(self) -> {{ model_name }}DAO:
+        return {{ model_name }}DAO(self.session)
+    {% endfor %}
 
 
 GetDAOs = Annotated[AllDAOs, Depends()]
