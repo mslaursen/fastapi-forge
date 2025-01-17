@@ -6,10 +6,13 @@ import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid import UUID
 from datetime import datetime
+{% for relation in model.relationships -%}
+from src.models.{{ relation.target.lower() }}_models import {{ relation.target }}
+{% endfor %}
 
-from src.db import Base
 
-{% for model in models %}
+from src.models import Base
+
 class {{ model.name }}(Base):
     \"\"\"{{ model.name.title() }} model.\"\"\"
 
@@ -35,15 +38,13 @@ class {{ model.name }}(Base):
 
     {% for relation in model.relationships %}
         {% if relation.type == "ManyToOne" %}
-    {{ relation.target.lower() }}: Mapped["{{ relation.target }}"] = relationship(
+    {{ relation.target.lower() }}: Mapped[{{ relation.target }}] = relationship(
         "{{ relation.target }}",
         foreign_keys=[{{ relation.foreign_key.lower() }}],
         uselist=False,
     )
         {% endif %}
     {% endfor %}
-
-{% endfor %}
 """
 
 dto_template = """
@@ -52,77 +53,9 @@ from pydantic import BaseModel, ConfigDict, Field
 from fastapi import Depends
 from uuid import UUID
 from typing import Annotated
+from src.dtos import BaseOrmModel
 
 
-#############
-# Base DTOs #
-#############
-
-
-class BaseOrmModel(BaseModel):
-    \"\"\"Base ORM model.\"\"\"
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-######################
-# Data Response DTOs #
-######################
-
-
-class DataResponse[T: BaseModel](BaseModel):
-    \"\"\"Model for response data.\"\"\"
-
-    data: T | None = None
-
-
-class CreatedResponse(BaseModel):
-    \"\"\"Model for created objects, returning the id.\"\"\"
-
-    id: UUID
-
-
-###################
-# Pagination DTOs #
-###################
-
-
-class PaginationParams(BaseModel):
-    \"\"\"DTO for offset pagination.\"\"\"
-
-    offset: int = Field(0, ge=0)
-    limit: int = Field(20, le=20, ge=1)
-
-
-class PaginationParamsSortBy(PaginationParams):
-    \"\"\"DTO for offset pagination with sorting.\"\"\"
-
-    sort_by: str
-    sort_order: str = "asc"
-
-
-class OffsetPaginationMetadata(BaseModel):
-    \"\"\"DTO for offset pagination metadata.\"\"\"
-
-    total: int
-
-
-class OffsetResults[T: BaseModel](BaseModel):
-    \"\"\"DTO for offset paginated response.\"\"\"
-
-    data: list[T]
-    pagination: OffsetPaginationMetadata
-
-
-Pagination = Annotated[PaginationParams, Depends()]
-
-
-#############
-# Core DTOs #
-#############
-
-
-{% for model in models %}
 class {{ model.name }}DTO(BaseOrmModel):
     \"\"\"{{ model.name }} DTO.\"\"\"
 
@@ -132,12 +65,13 @@ class {{ model.name }}DTO(BaseOrmModel):
     {{ field.name }}: {{ type_mapping[field.type] }}{% if field.nullable %} | None{% endif %}
     {%- endif %}
     {% endfor %}
+    created_at: datetime
+    updated_at: datetime
 
 
-class {{ model.name }}InputDTO(BaseOrmModel):
+class {{ model.name }}InputDTO(BaseModel):
     \"\"\"{{ model.name }} input DTO.\"\"\"
 
-    
     {% for field in model.fields -%}
     {% if not field.primary_key -%}
     {{ field.name }}: {{ type_mapping[field.type] }}{% if field.nullable %} | None{% endif %}
@@ -145,7 +79,7 @@ class {{ model.name }}InputDTO(BaseOrmModel):
     {% endfor %}
 
 
-class {{ model.name }}UpdateDTO(BaseOrmModel):
+class {{ model.name }}UpdateDTO(BaseModel):
     \"\"\"{{ model.name }} update DTO.\"\"\"
 
     {% for field in model.fields -%}
@@ -153,10 +87,10 @@ class {{ model.name }}UpdateDTO(BaseOrmModel):
     {{ field.name }}: {{ type_mapping[field.type] }} | None
     {%- endif %}
     {% endfor %}
-{% endfor %}
 """
 
 dao_template = """
+# {{ model.name }} DAO
 """
 
 TYPE_MAPPING = {
@@ -167,23 +101,23 @@ TYPE_MAPPING = {
 }
 
 
-def render_models_to_models(models: list[Model]) -> str:
+def render_model_to_model(model: Model) -> str:
     return Template(model_template).render(
-        models=models,
+        model=model,
         type_mapping=TYPE_MAPPING,
     )
 
 
-def render_models_to_dtos(models: list[Model]) -> str:
+def render_model_to_dto(model: Model) -> str:
     return Template(dto_template).render(
-        models=models,
+        model=model,
         type_mapping=TYPE_MAPPING,
     )
 
 
-def render_models_to_daos(models: list[Model]) -> str:
+def render_model_to_dao(model: Model) -> str:
     return Template(dao_template).render(
-        models=models,
+        model=model,
         type_mapping=TYPE_MAPPING,
     )
 
@@ -219,4 +153,4 @@ if __name__ == "__main__":
         ),
     ]
 
-    print(render_models_to_models(models))
+    print(render_model_to_model(models[0]))
