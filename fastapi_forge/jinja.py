@@ -1,7 +1,7 @@
 from jinja2 import Template
 from .dtos import Model, ModelField, ModelRelationship
 
-models_template = """
+model_template = """
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid import UUID
@@ -46,7 +46,7 @@ class {{ model.name }}(Base):
 {% endfor %}
 """
 
-dtos_template = """
+dto_template = """
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 from fastapi import Depends
@@ -156,7 +156,8 @@ class {{ model.name }}UpdateDTO(BaseOrmModel):
 {% endfor %}
 """
 
-daos_template = """
+dao_template = """
+"""
 
 TYPE_MAPPING = {
     "Integer": "int",
@@ -175,6 +176,13 @@ def render_models_to_models(models: list[Model]) -> str:
 
 def render_models_to_dtos(models: list[Model]) -> str:
     return Template(dto_template).render(
+        models=models,
+        type_mapping=TYPE_MAPPING,
+    )
+
+
+def render_models_to_daos(models: list[Model]) -> str:
+    return Template(dao_template).render(
         models=models,
         type_mapping=TYPE_MAPPING,
     )
