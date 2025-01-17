@@ -87,10 +87,10 @@ class FastAPIServer:
         )
         server = Server(config)
 
-        def run_server():
+        def _run_server():
             server.run()
 
-        self.server_thread = threading.Thread(target=run_server, daemon=True)
+        self.server_thread = threading.Thread(target=_run_server, daemon=True)
         self.server_thread.start()
 
     def is_running(self) -> bool:
