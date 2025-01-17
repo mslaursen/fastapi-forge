@@ -9,13 +9,29 @@ def open_browser(url: str) -> None:
     webbrowser.open(url)
 
 
-def generate_extra(project_name: str, models: list[Model]) -> None:
+def _init_proj_dirs(project_name: str) -> None:
+    """Create project directories."""
+
+    project_dir = os.path.join(os.getcwd(), project_name)
+
+    if not os.path.exists(project_dir):
+        os.mkdir(project_dir)
+
+    src_dir = os.path.join(project_dir, "src")
+
+    if not os.path.exists(src_dir):
+        os.mkdir(src_dir)
+
+
+def generate_for_sqlalchemy(project_name: str, models: list[Model]) -> None:
     """Generates extra files for the project."""
 
     file_to_func = {
         "models.py": render_models_to_models,
         "dtos.py": render_models_to_dtos,
     }
+
+    _init_proj_dirs(project_name)
 
     for file, func in file_to_func.items():
         file = os.path.join(os.getcwd(), project_name, "src", file)

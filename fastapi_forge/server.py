@@ -5,7 +5,7 @@ from cookiecutter.main import cookiecutter
 from .dtos import ForgeProjectRequestDTO
 import threading
 import os
-from .utils import generate_extra
+from .utils import generate_for_sqlalchemy
 
 
 app = FastAPI()
@@ -38,10 +38,17 @@ async def forge_project(request: ForgeProjectRequestDTO) -> None:
 
     template_path = os.path.join(os.path.dirname(__file__), "template")
 
+    if not os.path.exists(template_path):
+        raise RuntimeError(f"Template directory not found: {template_path}")
+
+    if request.use_postgres:
+        generate_for_sqlalchemy(request.project_name, request.models)
+
     cookiecutter(
         template_path,
         output_dir=os.getcwd(),
         no_input=True,
+        overwrite_if_exists=True,
         extra_context={
             "project_name": request.project_name,
             "use_postgres": request.use_postgres,
@@ -49,8 +56,6 @@ async def forge_project(request: ForgeProjectRequestDTO) -> None:
             "create_endpoints": request.create_endpoints,
         },
     )
-
-    generate_extra(request.project_name, request.models)
 
     print("Project created successfully.")
 
