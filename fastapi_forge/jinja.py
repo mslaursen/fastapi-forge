@@ -90,7 +90,20 @@ class {{ model.name }}UpdateDTO(BaseModel):
 """
 
 dao_template = """
-# {{ model.name }} DAO
+from src.daos import BaseDAO
+
+from src.models.{{ model.name.lower() }}_models import {{ model.name }}
+from src.dtos.{{ model.name.lower() }}_dtos import {{ model.name }}InputDTO, {{ model.name }}UpdateDTO
+
+
+class {{ model.name }}DAO(
+    BaseDAO[
+        {{ model.name }},
+        {{ model.name }}InputDTO,
+        {{ model.name }}UpdateDTO,
+    ]
+):
+    \"\"\"{{ model.name }} DAO.\"\"\"
 """
 
 TYPE_MAPPING = {
@@ -118,7 +131,6 @@ def render_model_to_dto(model: Model) -> str:
 def render_model_to_dao(model: Model) -> str:
     return Template(dao_template).render(
         model=model,
-        type_mapping=TYPE_MAPPING,
     )
 
 
@@ -153,4 +165,4 @@ if __name__ == "__main__":
         ),
     ]
 
-    print(render_model_to_model(models[0]))
+    print(render_model_to_dao(models[0]))
