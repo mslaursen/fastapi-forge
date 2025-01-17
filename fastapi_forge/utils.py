@@ -1,6 +1,6 @@
 import webbrowser
 from .dtos import Model
-from .jinja import render_models_to_dtos, render_models_to_models
+from .jinja import render_model_to_dto, render_model_to_model, render_model_to_dao
 import os
 
 
@@ -23,18 +23,53 @@ def _init_proj_dirs(project_name: str) -> None:
         os.mkdir(src_dir)
 
 
-def generate_for_sqlalchemy(project_name: str, models: list[Model]) -> None:
-    """Generate SQLAlchemy extras for the specified project name."""
+def _create_path(project_name: str, path: str) -> str:
+    """Create a path."""
 
-    file_to_func = {
-        "models.py": render_models_to_models,
-        "dtos.py": render_models_to_dtos,
-    }
+    path = os.path.join(os.getcwd(), project_name, path)
+
+    if not os.path.exists(path):
+        os.mkdir(path)
+
+    return path
+
+
+def _write_dto(project_name: str, model: Model) -> None:
+    """Write DTOs to file."""
+
+    path = _create_path(project_name, "src/dtos")
+    file = os.path.join(path, f"{model.name.lower()}_dtos.py")
+
+    with open(file, "w") as file:
+        file.write(render_model_to_dto(model))
+
+
+def _write_model(project_name: str, model: Model) -> None:
+    """Write models to file."""
+
+    path = _create_path(project_name, "src/models")
+    file = os.path.join(path, f"{model.name.lower()}_models.py")
+
+    with open(file, "w") as file:
+        file.write(render_model_to_model(model))
+
+
+def _write_dao(project_name: str, model: Model) -> None:
+    """Write DAOs to file."""
+
+    path = _create_path(project_name, "src/daos")
+    file = os.path.join(path, f"{model.name.lower()}_daos.py")
+
+    with open(file, "w") as file:
+        file.write(render_model_to_dao(model))
+
+
+def build_database_entities(project_name: str, models: list[Model]) -> None:
+    """Build project entities."""
 
     _init_proj_dirs(project_name)
 
-    for file, func in file_to_func.items():
-        file = os.path.join(os.getcwd(), project_name, "src", file)
-
-        with open(file, "w") as file:
-            file.write(func(models))
+    for model in models:
+        _write_dto(project_name, model)
+        _write_model(project_name, model)
+        _write_dao(project_name, model)

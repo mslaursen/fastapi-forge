@@ -3,7 +3,7 @@ from fastapi import Depends
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.db_dependencies import GetDBSession
-from src.db import Base
+from src.models import Base
 from src.dtos import (
     OffsetPaginationMetadata,
     PaginationParams,
