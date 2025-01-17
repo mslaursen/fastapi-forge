@@ -24,7 +24,7 @@ def _init_proj_dirs(project_name: str) -> None:
 
 
 def generate_for_sqlalchemy(project_name: str, models: list[Model]) -> None:
-    """Generates extra files for the project."""
+    """Generate SQLAlchemy extras for the specified project name."""
 
     file_to_func = {
         "models.py": render_models_to_models,
