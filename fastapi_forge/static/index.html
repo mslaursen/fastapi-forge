@@ -12,7 +12,7 @@
 
   <form>
     <label for="project_name">Project Name:</label>
-    <input type="text" id="project_name" name="project_name" value="my_project">
+    <input type="text" id="project_name" name="project_name" value="restaurant_service">
     <br><br>
 
     <label>
@@ -36,69 +36,153 @@
     <label for="models">Models (JSON):</label>
     <textarea id="models" name="models" rows="25" cols="75">
 [
-{
-"name": "User",
-"fields": [
-{
-"name": "id",
-"type": "Integer",
-"primary_key": true
-},
-{
-"name": "birth_date",
-"type": "DateTime"
-},
-{
-"name": "name",
-"type": "String",
-"nullable": false
-},
-{
-"name": "nickname",
-"type": "String",
-"nullable": true
-},
-{
-"name": "email",
-"type": "String",
-"unique": true
-}
-],
-"relationships": [
-{
-"type": "OneToMany",
-"target": "Post",
-"foreign_key": "user_id"
-}
-]
-},
-{
-"name": "Post",
-"fields": [
-{
-"name": "id",
-"type": "UUID",
-"primary_key": true
-},
-{
-"name": "title",
-"type": "String",
-"nullable": false
-},
-{
-"name": "user_id",
-"type": "UUID",
-"foreign_key": "User.id"
-}
-],
-"relationships": [
-{
-"type": "ManyToOne",
-"target": "User",
-"foreign_key": "user_id"
-}
-]
-}
+  {
+    "name": "User",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "primary_key": true
+      },
+      {
+        "name": "name",
+        "type": "String",
+        "nullable": false
+      },
+      {
+        "name": "email",
+        "type": "String",
+        "unique": true,
+        "nullable": false
+      },
+      {
+        "name": "phone_number",
+        "type": "String",
+        "nullable": true
+      }
+    ],
+    "relationships": [
+      {
+        "type": "OneToMany",
+        "target": "Reservation",
+        "foreign_key": "user_id"
+      }
+    ]
+  },
+  {
+    "name": "Restaurant",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "primary_key": true
+      },
+      {
+        "name": "name",
+        "type": "String",
+        "nullable": false
+      },
+      {
+        "name": "address",
+        "type": "String",
+        "nullable": false
+      },
+      {
+        "name": "phone_number",
+        "type": "String",
+        "nullable": true
+      }
+    ],
+    "relationships": [
+      {
+        "type": "OneToMany",
+        "target": "Table",
+        "foreign_key": "restaurant_id"
+      },
+      {
+        "type": "OneToMany",
+        "target": "Reservation",
+        "foreign_key": "restaurant_id"
+      }
+    ]
+  },
+  {
+    "name": "Table",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "primary_key": true
+      },
+      {
+        "name": "number",
+        "type": "Integer",
+        "nullable": false
+      },
+      {
+        "name": "seats",
+        "type": "Integer",
+        "nullable": false
+      },
+      {
+        "name": "restaurant_id",
+        "type": "UUID",
+        "foreign_key": "Restaurant.id",
+        "nullable": false
+      }
+    ],
+    "relationships": []
+  },
+  {
+    "name": "Reservation",
+    "fields": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "primary_key": true
+      },
+      {
+        "name": "user_id",
+        "type": "UUID",
+        "foreign_key": "User.id",
+        "nullable": false
+      },
+      {
+        "name": "restaurant_id",
+        "type": "UUID",
+        "foreign_key": "Restaurant.id",
+        "nullable": false
+      },
+      {
+        "name": "table_id",
+        "type": "UUID",
+        "foreign_key": "Table.id",
+        "nullable": false
+      },
+      {
+        "name": "reservation_time",
+        "type": "DateTime",
+        "nullable": false
+      }
+    ],
+    "relationships": [
+      {
+        "type": "ManyToOne",
+        "target": "User",
+        "foreign_key": "user_id"
+      },
+      {
+        "type": "ManyToOne",
+        "target": "Restaurant",
+        "foreign_key": "restaurant_id"
+      },
+      {
+        "type": "ManyToOne",
+        "target": "Table",
+        "foreign_key": "table_id"
+      }
+    ]
+  }
 ]
     </textarea>
     <br><br>
