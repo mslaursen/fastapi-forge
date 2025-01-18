@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const projectName = document.getElementById("project_name").value;
         const usePostgres = document.getElementById("use_postgres").checked;
         const createDaos = document.getElementById("create_daos").checked;
-        const createEndpoints = document.getElementById("create_endpoints").checked;
+        const createRoutes = document.getElementById("create_routes").checked;
 
         let models;
         try {
@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
             project_name: projectName,
             use_postgres: usePostgres,
             create_daos: createDaos,
-            create_endpoints: createEndpoints,
+            create_routes: createRoutes,
             models: models
         };
 

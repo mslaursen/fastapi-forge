@@ -34,5 +34,5 @@ class ForgeProjectRequestDTO(BaseModel):
     project_name: str
     use_postgres: bool
     create_daos: bool
-    create_endpoints: bool
+    create_routes: bool
     models: list[Model]

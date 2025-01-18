@@ -32,6 +32,12 @@ class CreatedResponse(BaseModel):
     id: UUID
 
 
+class EmptyResponse(BaseModel):
+    """Model for empty response."""
+
+    data: None = None
+
+
 ###################
 # Pagination DTOs #
 ###################

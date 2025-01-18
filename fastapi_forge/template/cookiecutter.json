@@ -5,13 +5,13 @@
     "use_postgres": {
         "default": true
     },
-    "use_daos": {
-        "default": true
-    },
-    "use_endpoints": {
-        "default": true
-    },
     "use_sqlalchemy": {
+        "default": true
+    },
+    "create_daos": {
+        "default": true
+    },
+    "create_routes": {
         "default": true
     },
     "models": {
