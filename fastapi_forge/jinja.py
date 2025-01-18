@@ -84,7 +84,7 @@ class {{ model.name }}UpdateDTO(BaseModel):
 
     {% for field in model.fields -%}
     {% if not field.primary_key -%}
-    {{ field.name }}: {{ type_mapping[field.type] }} | None
+    {{ field.name }}: {{ type_mapping[field.type] }} | None = None
     {%- endif %}
     {% endfor %}
 """
@@ -104,6 +104,82 @@ class {{ model.name }}DAO(
     ]
 ):
     \"\"\"{{ model.name }} DAO.\"\"\"
+"""
+
+routers_template = """
+from fastapi import APIRouter
+from src.daos import GetDAOs
+from src.dtos.{{ model.name.lower() }}_dtos import {{ model.name }}InputDTO, {{ model.name }}DTO, {{ model.name }}UpdateDTO
+from src.dtos import (
+    DataResponse,
+    Pagination,
+    OffsetResults,
+    CreatedResponse,
+    EmptyResponse,
+)
+from uuid import UUID
+
+router = APIRouter(prefix="/{{ model.name.lower() }}s")
+
+
+@router.post("/")
+async def create_{{ model.name.lower() }}(
+    input_dto: {{ model.name }}InputDTO,
+    daos: GetDAOs,
+) -> DataResponse[CreatedResponse]:
+    \"\"\"Create a new {{ model.name.lower() }}.\"\"\"
+
+    created_id = await daos.{{ model.name.lower() }}.create(input_dto)
+    return DataResponse(
+        data=CreatedResponse(id=created_id),
+    )
+
+
+@router.patch("/{ {{- model.name.lower() }}_id}")
+async def update_{{ model.name.lower() }}(
+    {{ model.name.lower() }}_id: UUID,
+    update_dto: {{ model.name }}UpdateDTO,
+    daos: GetDAOs,
+) -> EmptyResponse:
+    \"\"\"Update {{ model.name.lower() }}.\"\"\"
+
+    await daos.{{ model.name.lower() }}.update({{ model.name.lower() }}_id, update_dto)
+    return EmptyResponse()
+
+
+@router.delete("/{ {{- model.name.lower() }}_id}")
+async def delete_{{ model.name.lower() }}(
+    {{ model.name.lower() }}_id: UUID,
+    daos: GetDAOs,
+) -> EmptyResponse:
+    \"\"\"Delete a {{ model.name.lower() }} by id.\"\"\"
+
+    await daos.{{ model.name.lower() }}.delete({{ model.name.lower() }}_id)
+    return EmptyResponse()
+
+
+@router.get("/")
+async def get_{{ model.name.lower() }}_paginated(
+    daos: GetDAOs,
+    pagination: Pagination,
+) -> OffsetResults[{{ model.name }}DTO]:
+    \"\"\"Get all {{ model.name.lower() }}s paginated.\"\"\"
+
+    return await daos.{{ model.name.lower() }}.get_offset_results(
+        out_dto={{ model.name }}DTO,
+        pagination=pagination,
+    )
+
+
+@router.get("/{ {{- model.name.lower() }}_id}")
+async def get_{{ model.name.lower() }}(
+    {{ model.name.lower() }}_id: UUID,
+    daos: GetDAOs,
+) -> DataResponse[{{ model.name }}DTO]:
+    \"\"\"Get a {{ model.name.lower() }} by id.\"\"\"
+
+    {{ model.name.lower() }} = await daos.{{ model.name.lower() }}.filter_first(id={{ model.name.lower() }}_id)
+    return DataResponse(data={{ model.name }}DTO.model_validate({{ model.name.lower() }}))
 """
 
 TYPE_MAPPING = {
@@ -130,6 +206,12 @@ def render_model_to_dto(model: Model) -> str:
 
 def render_model_to_dao(model: Model) -> str:
     return Template(dao_template).render(
+        model=model,
+    )
+
+
+def render_model_to_routers(model: Model) -> str:
+    return Template(routers_template).render(
         model=model,
     )
 
@@ -165,4 +247,4 @@ if __name__ == "__main__":
         ),
     ]
 
-    print(render_model_to_dao(models[0]))
+    print(render_model_to_routers(models[1]))

@@ -1,6 +1,11 @@
 import webbrowser
 from .dtos import Model
-from .jinja import render_model_to_dto, render_model_to_model, render_model_to_dao
+from .jinja import (
+    render_model_to_dto,
+    render_model_to_model,
+    render_model_to_dao,
+    render_model_to_routers,
+)
 import os
 
 
@@ -64,6 +69,16 @@ def _write_dao(project_name: str, model: Model) -> None:
         file.write(render_model_to_dao(model))
 
 
+def _write_routers(project_name: str, model: Model) -> None:
+    """Write routers to file."""
+
+    path = _create_path(project_name, "src/routes")
+    file = os.path.join(path, f"{model.name.lower()}_routes.py")
+
+    with open(file, "w") as file:
+        file.write(render_model_to_routers(model))
+
+
 def build_database_entities(project_name: str, models: list[Model]) -> None:
     """Build project entities."""
 
@@ -73,3 +88,4 @@ def build_database_entities(project_name: str, models: list[Model]) -> None:
         _write_dto(project_name, model)
         _write_model(project_name, model)
         _write_dao(project_name, model)
+        _write_routers(project_name, model)
