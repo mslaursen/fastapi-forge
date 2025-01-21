@@ -26,6 +26,7 @@ services:
       {{ cookiecutter.project_name|upper|replace('-', '_') }}_PG_DATABASE: {{ cookiecutter.project_name }}
     volumes:
     - ./src:/app/src
+    - ./tests:/app/tests
   {% if cookiecutter.use_postgres %}
   postgres:
     image: postgres:13.8-bullseye
