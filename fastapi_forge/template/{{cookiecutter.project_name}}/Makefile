@@ -5,7 +5,7 @@ up:
 	docker-compose up
 
 test:
-	docker exec -it $$(docker ps | grep "restaurant_service-api" | awk '{print $$1}') pytest ./app/tests
+	docker exec -it $$(docker ps | grep "{{ cookiecutter.project_name }}-api" | awk '{print $$1}') pytest ./app/tests
 
 lint:
 	uv run ruff format
