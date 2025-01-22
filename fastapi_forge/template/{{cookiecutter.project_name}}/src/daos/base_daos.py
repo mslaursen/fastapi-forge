@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Sequence
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -58,7 +58,7 @@ class BaseDAO[
         self,
         query: sa.Select,
         **filter_params: Any,
-    ) -> sa.Select:
+    ) -> sa.Select[tuple[Model]]:
         """Apply filter parameters to a query."""
 
         query = sa.select(self.model)
@@ -75,7 +75,7 @@ class BaseDAO[
         self,
         loads: list[Any] | None = None,
         **filter_params: Any,
-    ) -> sa.Select:
+    ) -> sa.Select[tuple[Model]]:
         """Get records by filter parameters."""
 
         query = sa.select(self.model)
@@ -91,7 +91,7 @@ class BaseDAO[
         query: sa.sql.Select[tuple[Model]],
         sort_by: str,
         sort_order: str,
-    ) -> sa.sql.Select[tuple[Model]]:
+    ) -> sa.Select[tuple[Model]]:
         """Apply sorting to query."""
 
         if hasattr(self.model, sort_by) is False:
@@ -109,10 +109,10 @@ class BaseDAO[
     ) -> OffsetPaginationMetadata:
         """Compute offset pagination metadata."""
 
-        total = await self.session.execute(
-            sa.select(sa.func.count()).select_from(query)
-        )
-        return OffsetPaginationMetadata(total=total.scalar())
+        count_query = sa.select(sa.func.count()).select_from(query.subquery())
+        result = await self.session.execute(count_query)
+        total = result.scalar_one_or_none() or 0
+        return OffsetPaginationMetadata(total=total))
 
     ##################
     # Public methods #
@@ -138,7 +138,7 @@ class BaseDAO[
         self,
         loads: list[Any] | None = None,
         **filter_params: Any,
-    ) -> list[Model]:
+    ) -> Sequence[Model] | None:
         """Get records by filter parameters."""
 
         query = self._apply_base_filter(loads=loads, **filter_params)
@@ -150,7 +150,7 @@ class BaseDAO[
         self,
         loads: list[Any] | None = None,
         **filter_params: Any,
-    ) -> Model:
+    ) -> Model | None:
         """Get a single record by filter parameters."""
 
         query = self._apply_base_filter(loads=loads, **filter_params)
@@ -193,7 +193,7 @@ class BaseDAO[
         self,
         out_dto: type[T],
         pagination: PaginationType,
-        query: sa.sql.Select[tuple[Model]] | None = None,
+        query: sa.Select[tuple[Model]] | None = None,
     ) -> OffsetResults[T]:
         """Get offset paginated results."""
 
