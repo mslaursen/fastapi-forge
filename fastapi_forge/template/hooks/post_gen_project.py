@@ -37,6 +37,16 @@ def lint() -> None:
     )
 
 
+def make_env() -> None:
+    subprocess.run(
+        [
+            "cp",
+            ".env.example",
+            ".env",
+        ]
+    )
+
+
 if __name__ == "__main__":
     git_init()
     uv_init()
