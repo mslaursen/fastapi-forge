@@ -24,9 +24,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 def get_app() -> FastAPI:
     """Get FastAPI app."""
 
-    logger.info(
-        settings.model_dump_json(indent=2),
-    )
+    if settings.env != "test":
+        logger.info(
+            settings.model_dump_json(indent=2),
+        )
 
     app = FastAPI(lifespan=lifespan)
     app.include_router(base_router)
