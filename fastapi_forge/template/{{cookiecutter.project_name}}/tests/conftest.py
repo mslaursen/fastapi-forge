@@ -77,7 +77,7 @@ def inject_session(db_session: AsyncSession) -> None:
 
 @pytest.fixture
 def overwritten_deps(db_session: AsyncSession) -> dict[Any, Any]:
-    """Override dependencies for the app."""
+    """Override dependencies for the test app."""
     return {get_db_session: lambda: db_session}
 
 
