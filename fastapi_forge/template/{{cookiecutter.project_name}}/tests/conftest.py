@@ -71,7 +71,7 @@ async def db_session(engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
 
 @pytest.fixture(autouse=True)
 def inject_session(db_session: AsyncSession) -> None:
-    """For each test, inject the database session into the BaseFactory."""
+    """For each test, inject a database session into the BaseFactory."""
     BaseFactory.session = db_session
 
 
