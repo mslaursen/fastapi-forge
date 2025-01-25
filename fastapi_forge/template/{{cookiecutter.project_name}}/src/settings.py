@@ -50,6 +50,7 @@ class PGSettings(BaseSettings):
 class Settings(BaseSettings):
     """Main settings."""
 
+    env: str = "local"
     host: str = "localhost"
     port: int = 8000
     workers: int = 1
