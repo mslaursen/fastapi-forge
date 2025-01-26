@@ -6,6 +6,10 @@ from .jinja import (
     render_model_to_dao,
     render_model_to_routers,
     render_model_to_post_test,
+    render_model_to_get_test,
+    render_model_to_get_id_test,
+    render_model_to_patch_test,
+    render_model_to_delete_test,
 )
 import os
 
@@ -35,7 +39,7 @@ def _create_path(project_name: str, path: str) -> str:
     path = os.path.join(os.getcwd(), project_name, path)
 
     if not os.path.exists(path):
-        os.mkdir(path)
+        os.makedirs(path)
 
     return path
 
@@ -85,13 +89,26 @@ def _write_tests(project_name: str, model: Model) -> None:
 
     path = _create_path(project_name, f"tests/endpoint_tests/{model.name.lower()}")
 
-    methods = ["get", "post", "patch", "delete"]
+    method_to_func = {
+        "get": render_model_to_get_test,
+        "get_id": render_model_to_get_id_test,
+        "post": render_model_to_post_test,
+        "patch": render_model_to_patch_test,
+        "delete": render_model_to_delete_test,
+    }
 
-    for method in methods:
-        file = os.path.join(path, f"test_{method}_{model.name.lower()}.py")
+    for method, render_func in method_to_func.items():
+        method_suffix = "id" if method == "get_id" else ""
+        file_name = (
+            f"test_{method.replace('_id', '')}_"
+            f"{model.name.lower()}"
+            f"{f'_{method_suffix}' if method_suffix else ''}.py"
+        )
 
-        with open(file, "w") as file:
-            file.write(render_model_to_post_test(model, method=method))
+        file_path = os.path.join(path, file_name)
+
+        with open(file_path, "w") as test_file:
+            test_file.write(render_func(model))
 
 
 def build_project_artifacts(project_name: str, models: list[Model]) -> None:
@@ -104,4 +121,4 @@ def build_project_artifacts(project_name: str, models: list[Model]) -> None:
         _write_model(project_name, model)
         _write_dao(project_name, model)
         _write_routers(project_name, model)
-        # _write_tests(project_name, model)
+        _write_tests(project_name, model)
