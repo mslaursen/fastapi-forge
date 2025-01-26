@@ -54,7 +54,9 @@ async def forge_project(request: ForgeProjectRequestDTO) -> None:
             "use_postgres": request.use_postgres,
             "create_daos": request.create_daos,
             "create_routes": request.create_routes,
-            "models": {"names": [model.name for model in request.models]},
+            "models": {
+                "models": [model.model_dump() for model in request.models],
+            },
         },
     )
 

@@ -1,6 +1,6 @@
 from src.daos.base_daos import BaseDAO # noqa
-{% for model_name in cookiecutter.models.names -%}
-from src.daos.{{ model_name.lower() }}_daos import {{ model_name }}DAO
+{% for model in cookiecutter.models.models -%}
+from src.daos.{{ model.name.lower() }}_daos import {{ model.name }}DAO
 {% endfor %}
 from src.db.db_dependencies import GetDBSession
 from fastapi import Depends
@@ -29,10 +29,10 @@ class AllDAOs:
     def __init__(self, session: GetDBSession):
         self.session = session
 
-    {% for model_name in cookiecutter.models.names %}
+    {% for model in cookiecutter.models.models %}
     @property
-    def {{ model_name.lower() }}(self) -> {{ model_name }}DAO:
-        return {{ model_name }}DAO(self.session)
+    def {{ model.name.lower() }}(self) -> {{ model.name }}DAO:
+        return {{ model.name }}DAO(self.session)
     {% endfor %}
 
 

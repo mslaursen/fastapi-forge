@@ -26,4 +26,4 @@ dependencies = [
 
 
 [tool.pytest.ini_options]
-env = ["RESTAURANT_SERVICE_PG_DATABASE=test", "RESTAURANT_SERVICE_ENV=test"]
+env = ["{{ cookiecutter.project_name|upper|replace('-', '_') }}_PG_DATABASE=test", "{{ cookiecutter.project_name|upper|replace('-', '_') }}_ENV=test"]
