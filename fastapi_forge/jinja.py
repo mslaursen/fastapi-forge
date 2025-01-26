@@ -1,5 +1,5 @@
 from jinja2 import Template
-from .dtos import Model, ModelField, ModelRelationship
+from dtos import Model, ModelField, ModelRelationship
 
 model_template = """
 import sqlalchemy as sa
@@ -154,7 +154,7 @@ async def delete_{{ model.name.lower() }}(
 ) -> EmptyResponse:
     \"\"\"Delete a {{ model.name.lower() }} by id.\"\"\"
 
-    await daos.{{ model.name.lower() }}.delete({{ model.name.lower() }}_id)
+    await daos.{{ model.name.lower() }}.delete(id={{ model.name.lower() }}_id)
     return EmptyResponse()
 
 
@@ -182,16 +182,169 @@ async def get_{{ model.name.lower() }}(
     return DataResponse(data={{ model.name }}DTO.model_validate({{ model.name.lower() }}))
 """
 
-tests_template = """
+test_template_post = """
 import pytest
 from tests import factories
 from src.daos import AllDAOs
 from httpx import AsyncClient
+from uuid import UUID
 
+URI = "/api/v1/{{ model.name.lower() }}s/"
 
 @pytest.mark.anyio
 async def test_create_{{ model.name.lower() }}(client: AsyncClient, daos: AllDAOs,) -> None:
     \"\"\"Test create {{ model.name.lower() }}: 201.\"\"\"
+
+    {%- for relation in model.relationships %}
+    {% if relation.type == "ManyToOne" %}
+    {{ relation.target.lower() }} = await factories.{{ relation.target }}Factory.create()
+    {% endif %}
+    {% endfor %}
+    input_json = {
+        {%- for field in model.fields -%}
+        {%- if not field.primary_key and field.name.endswith('_id') -%}
+        "{{ field.name }}": str({{ field.name.lower() | replace('_id', '.id') }}),
+        {% elif not field.primary_key %}
+        "{{ field.name }}": {{ type_to_input_value_mapping[field.type] }},
+        {% elif field.name.endswith('_id') %}
+        {% endif %}
+        {%- endfor %}
+    }
+
+    response = await client.post(URI, json=input_json)
+    assert response.status_code == 201
+
+    response_data = response.json()["data"]
+    db_{{ model.name.lower() }} = await daos.{{ model.name.lower() }}.filter_first(id=response_data["id"])
+
+    assert db_{{ model.name.lower() }} is not None
+    {%- for field in model.fields %}
+    {%- if not field.primary_key and field.name.endswith('_id') %}
+    assert db_{{ model.name.lower() }}.{{ field.name }} == UUID(input_json["{{ field.name }}"])
+    {%- elif not field.primary_key %}
+    assert db_{{ model.name.lower() }}.{{ field.name }} == input_json["{{ field.name }}"]
+    {%- endif %}
+    {%- endfor %}
+"""
+
+test_template_get = """
+import pytest
+from tests import factories
+from httpx import AsyncClient
+from uuid import UUID
+
+URI = "/api/v1/{{ model.name.lower() }}s/"
+
+@pytest.mark.anyio
+async def test_get_{{ model.name.lower() }}s(client: AsyncClient,) -> None:
+    \"\"\"Test get {{ model.name.lower() }}: 200.\"\"\"
+
+    {{ model.name.lower() }}s = await factories.{{ model.name }}Factory.create_batch(3)
+
+    response = await client.get(URI)
+    assert response.status_code == 200
+
+    response_data = response.json()["data"]
+    assert len(response_data) == 3
+
+    for {{ model.name.lower() }} in {{ model.name.lower() }}s:
+        assert any({{ model.name.lower() }}.id == UUID(item["id"]) for item in response_data)
+"""
+
+test_template_get_id = """
+import pytest
+from tests import factories
+from httpx import AsyncClient
+from uuid import UUID
+
+URI = "/api/v1/{{ model.name.lower() }}s/{ {{- model.name.lower() -}}_id}"
+
+@pytest.mark.anyio
+async def test_get_{{ model.name.lower() }}_by_id(client: AsyncClient,) -> None:
+    \"\"\"Test get {{ model.name.lower() }} by id: 200.\"\"\"
+
+    {{ model.name.lower() }} = await factories.{{ model.name }}Factory.create()
+
+    response = await client.get(URI.format({{ model.name.lower() }}_id={{ model.name.lower() }}.id))
+    assert response.status_code == 200
+
+    response_data = response.json()["data"]
+    assert response_data["id"] == str({{ model.name.lower() }}.id)
+    {%- for field in model.fields %}
+    {%- if not field.primary_key and field.name.endswith('_id') %}
+    assert response_data["{{ field.name }}"] == str({{ model.name.lower() }}.{{ field.name }})
+    {%- elif not field.primary_key %}
+    assert response_data["{{ field.name }}"] == {{ model.name.lower() }}.{{ field.name }}
+    {%- endif %}
+    {%- endfor %}
+"""
+
+test_template_patch = """
+import pytest
+from tests import factories
+from src.daos import AllDAOs
+from httpx import AsyncClient
+from uuid import UUID
+
+URI = "/api/v1/{{ model.name.lower() }}s/{ {{- model.name.lower() -}}_id}"
+
+@pytest.mark.anyio
+async def test_patch_{{ model.name.lower() }}(client: AsyncClient, daos: AllDAOs,) -> None:
+    \"\"\"Test patch {{ model.name.lower() }}: 200.\"\"\"
+
+    {%- for relation in model.relationships %}
+    {% if relation.type == "ManyToOne" %}
+    {{ relation.target.lower() }} = await factories.{{ relation.target }}Factory.create()
+    {% endif %}
+    {% endfor %}
+    {{ model.name.lower() }} = await factories.{{ model.name }}Factory.create()
+
+    input_json = {
+        {%- for field in model.fields -%}
+        {%- if not field.primary_key and field.name.endswith('_id') -%}
+        "{{ field.name }}": str({{ field.name.lower() | replace('_id', '.id') }}),
+        {% elif not field.primary_key %}
+        "{{ field.name }}": {{ type_to_input_value_mapping[field.type] }},
+        {% elif field.name.endswith('_id') %}
+        {% endif %}
+        {%- endfor %}
+    }
+
+    response = await client.patch(URI.format({{ model.name.lower() }}_id={{ model.name.lower() }}.id), json=input_json)
+    assert response.status_code == 200
+    
+    db_{{ model.name.lower() }} = await daos.{{ model.name.lower() }}.filter_first(id={{ model.name.lower() }}.id)
+
+    assert db_{{ model.name.lower() }} is not None
+    {%- for field in model.fields %}
+    {%- if not field.primary_key and field.name.endswith('_id') %}
+    assert db_{{ model.name.lower() }}.{{ field.name }} == UUID(input_json["{{ field.name }}"])
+    {%- elif not field.primary_key %}
+    assert db_{{ model.name.lower() }}.{{ field.name }} == input_json["{{ field.name }}"]
+    {%- endif %}
+    {%- endfor %}
+"""
+
+test_template_delete = """
+import pytest
+from tests import factories
+from src.daos import AllDAOs
+from httpx import AsyncClient
+from uuid import UUID
+
+URI = "/api/v1/{{ model.name.lower() }}s/{ {{- model.name.lower() -}}_id}"
+
+@pytest.mark.anyio
+async def test_delete_{{ model.name.lower() }}(client: AsyncClient, daos: AllDAOs,) -> None:
+    \"\"\"Test delete {{ model.name.lower() }}: 200.\"\"\"
+
+    {{ model.name.lower() }} = await factories.{{ model.name }}Factory.create()
+
+    response = await client.delete(URI.format({{ model.name.lower() }}_id={{ model.name.lower() }}.id))
+    assert response.status_code == 200
+
+    db_{{ model.name.lower() }} = await daos.{{ model.name.lower() }}.filter_first(id={{ model.name.lower() }}.id)
+    assert db_{{ model.name.lower() }} is None
 """
 
 TYPE_MAPPING = {
@@ -199,6 +352,13 @@ TYPE_MAPPING = {
     "String": "str",
     "UUID": "UUID",
     "DateTime": "datetime",
+}
+
+TYPE_TO_INPUT_VALUE_MAPPING = {
+    "Integer": "1",
+    "String": "'string'",
+    "UUID": "UUID('00000000-0000-0000-0000-000000000000')",
+    "DateTime": "datetime.now()",
 }
 
 
@@ -228,9 +388,38 @@ def render_model_to_routers(model: Model) -> str:
     )
 
 
-def render_model_to_test(model: Model) -> str:
-    return Template(tests_template).render(
+def render_model_to_post_test(model: Model) -> str:
+    return Template(test_template_post).render(
         model=model,
+        type_to_input_value_mapping=TYPE_TO_INPUT_VALUE_MAPPING,
+    )
+
+
+def render_model_to_get_test(model: Model) -> str:
+    return Template(test_template_get).render(
+        model=model,
+        type_to_input_value_mapping=TYPE_TO_INPUT_VALUE_MAPPING,
+    )
+
+
+def render_model_to_get_id_test(model: Model) -> str:
+    return Template(test_template_get_id).render(
+        model=model,
+        type_to_input_value_mapping=TYPE_TO_INPUT_VALUE_MAPPING,
+    )
+
+
+def render_model_to_patch_test(model: Model) -> str:
+    return Template(test_template_patch).render(
+        model=model,
+        type_to_input_value_mapping=TYPE_TO_INPUT_VALUE_MAPPING,
+    )
+
+
+def render_model_to_delete_test(model: Model) -> str:
+    return Template(test_template_delete).render(
+        model=model,
+        type_to_input_value_mapping=TYPE_TO_INPUT_VALUE_MAPPING,
     )
 
 
@@ -263,6 +452,20 @@ if __name__ == "__main__":
                 )
             ],
         ),
+        Model(
+            name="Table",
+            fields=[
+                ModelField(name="id", type="UUID", primary_key=True),
+                ModelField(name="number", type="Integer", nullable=False),
+                ModelField(name="seats", type="Integer", nullable=False),
+                ModelField(name="restaurant_id", type="UUID", nullable=False),
+            ],
+            relationships=[
+                ModelRelationship(
+                    type="ManyToOne", target="Restaurant", foreign_key="restaurant_id"
+                )
+            ],
+        ),
     ]
 
-    print(render_model_to_routers(models[1]))
+    print(render_model_to_delete_test(models[2]))
