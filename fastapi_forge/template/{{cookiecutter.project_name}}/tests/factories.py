@@ -36,6 +36,11 @@ class BaseFactory[Model: Base](factory.Factory):
         instance = await super().create(*args, **kwargs)
         await cls.session.commit()
         return instance
+    
+    @classmethod
+    async def create_batch(cls, size: int, *args: Any, **kwargs: Any) -> list[Model]:
+        """Create a batch of new instances of the model."""
+        return [await cls.create(*args, **kwargs) for _ in range(size)]
 
     @classmethod
     def _create(
@@ -51,7 +56,7 @@ class BaseFactory[Model: Base](factory.Factory):
             return await cls._create_model(model_class, *args, **kwargs)
 
         return asyncio.create_task(maker_coroutine())
-
+    
     @classmethod
     async def _create_model(
         cls,
