@@ -1,5 +1,5 @@
 from jinja2 import Template
-from dtos import Model, ModelField, ModelRelationship
+from .dtos import Model, ModelField, ModelRelationship
 
 model_template = """
 import sqlalchemy as sa
@@ -187,12 +187,13 @@ import pytest
 from tests import factories
 from src.daos import AllDAOs
 from httpx import AsyncClient
+from datetime import datetime, timezone
 from uuid import UUID
 
 URI = "/api/v1/{{ model.name.lower() }}s/"
 
 @pytest.mark.anyio
-async def test_create_{{ model.name.lower() }}(client: AsyncClient, daos: AllDAOs,) -> None:
+async def test_post_{{ model.name.lower() }}(client: AsyncClient, daos: AllDAOs,) -> None:
     \"\"\"Test create {{ model.name.lower() }}: 201.\"\"\"
 
     {%- for relation in model.relationships %}
@@ -204,10 +205,13 @@ async def test_create_{{ model.name.lower() }}(client: AsyncClient, daos: AllDAO
         {%- for field in model.fields -%}
         {%- if not field.primary_key and field.name.endswith('_id') -%}
         "{{ field.name }}": str({{ field.name.lower() | replace('_id', '.id') }}),
-        {% elif not field.primary_key %}
+        {%- elif not field.primary_key %}
+        {%- if field.type == "DateTime" %}
+        "{{ field.name }}": {{ type_to_input_value_mapping[field.type] }}.isoformat(),
+        {%- else %}
         "{{ field.name }}": {{ type_to_input_value_mapping[field.type] }},
-        {% elif field.name.endswith('_id') %}
-        {% endif %}
+        {%- endif %}
+        {%- endif %}
         {%- endfor %}
     }
 
@@ -222,7 +226,11 @@ async def test_create_{{ model.name.lower() }}(client: AsyncClient, daos: AllDAO
     {%- if not field.primary_key and field.name.endswith('_id') %}
     assert db_{{ model.name.lower() }}.{{ field.name }} == UUID(input_json["{{ field.name }}"])
     {%- elif not field.primary_key %}
+    {%- if field.type == "DateTime" %}
+    assert db_{{ model.name.lower() }}.{{ field.name }}.isoformat() == input_json["{{ field.name }}"]
+    {%- else %}
     assert db_{{ model.name.lower() }}.{{ field.name }} == input_json["{{ field.name }}"]
+    {%- endif %}
     {%- endif %}
     {%- endfor %}
 """
@@ -231,6 +239,7 @@ test_template_get = """
 import pytest
 from tests import factories
 from httpx import AsyncClient
+from datetime import datetime
 from uuid import UUID
 
 URI = "/api/v1/{{ model.name.lower() }}s/"
@@ -255,6 +264,7 @@ test_template_get_id = """
 import pytest
 from tests import factories
 from httpx import AsyncClient
+from datetime import datetime
 from uuid import UUID
 
 URI = "/api/v1/{{ model.name.lower() }}s/{ {{- model.name.lower() -}}_id}"
@@ -274,7 +284,11 @@ async def test_get_{{ model.name.lower() }}_by_id(client: AsyncClient,) -> None:
     {%- if not field.primary_key and field.name.endswith('_id') %}
     assert response_data["{{ field.name }}"] == str({{ model.name.lower() }}.{{ field.name }})
     {%- elif not field.primary_key %}
+    {%- if field.type == "DateTime" %}
+    assert response_data["{{ field.name }}"] == {{ model.name.lower() }}.{{ field.name }}.isoformat()
+    {%- else %}
     assert response_data["{{ field.name }}"] == {{ model.name.lower() }}.{{ field.name }}
+    {%- endif %}
     {%- endif %}
     {%- endfor %}
 """
@@ -284,6 +298,7 @@ import pytest
 from tests import factories
 from src.daos import AllDAOs
 from httpx import AsyncClient
+from datetime import datetime, timezone
 from uuid import UUID
 
 URI = "/api/v1/{{ model.name.lower() }}s/{ {{- model.name.lower() -}}_id}"
@@ -304,15 +319,18 @@ async def test_patch_{{ model.name.lower() }}(client: AsyncClient, daos: AllDAOs
         {%- if not field.primary_key and field.name.endswith('_id') -%}
         "{{ field.name }}": str({{ field.name.lower() | replace('_id', '.id') }}),
         {% elif not field.primary_key %}
+        {%- if field.type == "DateTime" %}
+        "{{ field.name }}": {{ type_to_input_value_mapping[field.type] }}.isoformat(),
+        {%- else %}
         "{{ field.name }}": {{ type_to_input_value_mapping[field.type] }},
-        {% elif field.name.endswith('_id') %}
-        {% endif %}
+        {%- endif %}
+        {%- endif %}
         {%- endfor %}
     }
 
     response = await client.patch(URI.format({{ model.name.lower() }}_id={{ model.name.lower() }}.id), json=input_json)
     assert response.status_code == 200
-    
+
     db_{{ model.name.lower() }} = await daos.{{ model.name.lower() }}.filter_first(id={{ model.name.lower() }}.id)
 
     assert db_{{ model.name.lower() }} is not None
@@ -320,9 +338,14 @@ async def test_patch_{{ model.name.lower() }}(client: AsyncClient, daos: AllDAOs
     {%- if not field.primary_key and field.name.endswith('_id') %}
     assert db_{{ model.name.lower() }}.{{ field.name }} == UUID(input_json["{{ field.name }}"])
     {%- elif not field.primary_key %}
+    {%- if field.type == "DateTime" %}
+    assert db_{{ model.name.lower() }}.{{ field.name }}.isoformat() == input_json["{{ field.name }}"]
+    {%- else %}
     assert db_{{ model.name.lower() }}.{{ field.name }} == input_json["{{ field.name }}"]
     {%- endif %}
+    {%- endif %}
     {%- endfor %}
+
 """
 
 test_template_delete = """
@@ -330,6 +353,7 @@ import pytest
 from tests import factories
 from src.daos import AllDAOs
 from httpx import AsyncClient
+from datetime import datetime
 from uuid import UUID
 
 URI = "/api/v1/{{ model.name.lower() }}s/{ {{- model.name.lower() -}}_id}"
@@ -358,7 +382,7 @@ TYPE_TO_INPUT_VALUE_MAPPING = {
     "Integer": "1",
     "String": "'string'",
     "UUID": "UUID('00000000-0000-0000-0000-000000000000')",
-    "DateTime": "datetime.now()",
+    "DateTime": "datetime.now(timezone.utc)",
 }
 
 
@@ -459,6 +483,7 @@ if __name__ == "__main__":
                 ModelField(name="number", type="Integer", nullable=False),
                 ModelField(name="seats", type="Integer", nullable=False),
                 ModelField(name="restaurant_id", type="UUID", nullable=False),
+                ModelField(name="time", type="DateTime", nullable=False),
             ],
             relationships=[
                 ModelRelationship(
@@ -468,4 +493,4 @@ if __name__ == "__main__":
         ),
     ]
 
-    print(render_model_to_delete_test(models[2]))
+    print(render_model_to_post_test(models[2]))
