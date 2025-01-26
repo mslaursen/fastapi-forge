@@ -61,13 +61,7 @@
         "nullable": true
       }
     ],
-    "relationships": [
-      {
-        "type": "OneToMany",
-        "target": "Reservation",
-        "foreign_key": "user_id"
-      }
-    ]
+    "relationships": []
   },
   {
     "name": "Restaurant",
@@ -93,18 +87,7 @@
         "nullable": true
       }
     ],
-    "relationships": [
-      {
-        "type": "OneToMany",
-        "target": "Table",
-        "foreign_key": "restaurant_id"
-      },
-      {
-        "type": "OneToMany",
-        "target": "Reservation",
-        "foreign_key": "restaurant_id"
-      }
-    ]
+    "relationships": []
   },
   {
     "name": "Table",
@@ -131,7 +114,13 @@
         "nullable": false
       }
     ],
-    "relationships": []
+    "relationships": [
+      {
+        "type": "ManyToOne",
+        "target": "Restaurant",
+        "foreign_key": "restaurant_id"
+      }
+    ]
   },
   {
     "name": "Reservation",
