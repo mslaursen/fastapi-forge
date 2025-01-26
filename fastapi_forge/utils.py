@@ -5,7 +5,7 @@ from .jinja import (
     render_model_to_model,
     render_model_to_dao,
     render_model_to_routers,
-    render_model_to_test,
+    render_model_to_post_test,
 )
 import os
 
@@ -91,7 +91,7 @@ def _write_tests(project_name: str, model: Model) -> None:
         file = os.path.join(path, f"test_{method}_{model.name.lower()}.py")
 
         with open(file, "w") as file:
-            file.write(render_model_to_test(model, method=method))
+            file.write(render_model_to_post_test(model, method=method))
 
 
 def build_project_artifacts(project_name: str, models: list[Model]) -> None:
