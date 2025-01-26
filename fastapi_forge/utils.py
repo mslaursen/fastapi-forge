@@ -5,6 +5,7 @@ from .jinja import (
     render_model_to_model,
     render_model_to_dao,
     render_model_to_routers,
+    render_model_to_test,
 )
 import os
 
@@ -79,8 +80,22 @@ def _write_routers(project_name: str, model: Model) -> None:
         file.write(render_model_to_routers(model))
 
 
-def build_database_entities(project_name: str, models: list[Model]) -> None:
-    """Build project entities."""
+def _write_tests(project_name: str, model: Model) -> None:
+    """Write tests to file."""
+
+    path = _create_path(project_name, f"tests/endpoint_tests/{model.name.lower()}")
+
+    methods = ["get", "post", "patch", "delete"]
+
+    for method in methods:
+        file = os.path.join(path, f"test_{method}_{model.name.lower()}.py")
+
+        with open(file, "w") as file:
+            file.write(render_model_to_test(model, method=method))
+
+
+def build_project_artifacts(project_name: str, models: list[Model]) -> None:
+    """Build project artifacts."""
 
     _init_proj_dirs(project_name)
 
@@ -89,3 +104,4 @@ def build_database_entities(project_name: str, models: list[Model]) -> None:
         _write_model(project_name, model)
         _write_dao(project_name, model)
         _write_routers(project_name, model)
+        # _write_tests(project_name, model)

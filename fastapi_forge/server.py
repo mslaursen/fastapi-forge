@@ -5,7 +5,7 @@ from cookiecutter.main import cookiecutter
 from .dtos import ForgeProjectRequestDTO
 import threading
 import os
-from .utils import build_database_entities
+from .utils import build_project_artifacts
 
 
 app = FastAPI()
@@ -42,7 +42,7 @@ async def forge_project(request: ForgeProjectRequestDTO) -> None:
         raise RuntimeError(f"Template directory not found: {template_path}")
 
     if request.use_postgres:
-        build_database_entities(request.project_name, request.models)
+        build_project_artifacts(request.project_name, request.models)
 
     cookiecutter(
         template_path,

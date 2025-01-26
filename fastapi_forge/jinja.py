@@ -122,7 +122,7 @@ from uuid import UUID
 router = APIRouter(prefix="/{{ model.name.lower() }}s")
 
 
-@router.post("/")
+@router.post("/", status_code=201)
 async def create_{{ model.name.lower() }}(
     input_dto: {{ model.name }}InputDTO,
     daos: GetDAOs,
@@ -182,6 +182,18 @@ async def get_{{ model.name.lower() }}(
     return DataResponse(data={{ model.name }}DTO.model_validate({{ model.name.lower() }}))
 """
 
+tests_template = """
+import pytest
+from tests import factories
+from src.daos import AllDAOs
+from httpx import AsyncClient
+
+
+@pytest.mark.anyio
+async def test_create_{{ model.name.lower() }}(client: AsyncClient, daos: AllDAOs,) -> None:
+    \"\"\"Test create {{ model.name.lower() }}: 201.\"\"\"
+"""
+
 TYPE_MAPPING = {
     "Integer": "int",
     "String": "str",
@@ -212,6 +224,12 @@ def render_model_to_dao(model: Model) -> str:
 
 def render_model_to_routers(model: Model) -> str:
     return Template(routers_template).render(
+        model=model,
+    )
+
+
+def render_model_to_test(model: Model) -> str:
+    return Template(tests_template).render(
         model=model,
     )
 
