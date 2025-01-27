@@ -1,0 +1,138 @@
+[
+    {
+        "name": "User",
+        "fields": [
+            {
+                "name": "id",
+                "type": "UUID",
+                "primary_key": true
+            },
+            {
+                "name": "name",
+                "type": "String",
+                "nullable": false
+            },
+            {
+                "name": "email",
+                "type": "String",
+                "unique": true,
+                "nullable": false
+            },
+            {
+                "name": "phone_number",
+                "type": "String",
+                "nullable": true
+            }
+        ],
+        "relationships": []
+    },
+    {
+        "name": "Restaurant",
+        "fields": [
+            {
+                "name": "id",
+                "type": "UUID",
+                "primary_key": true
+            },
+            {
+                "name": "name",
+                "type": "String",
+                "nullable": false
+            },
+            {
+                "name": "address",
+                "type": "String",
+                "nullable": false
+            },
+            {
+                "name": "phone_number",
+                "type": "String",
+                "nullable": true
+            }
+        ],
+        "relationships": []
+    },
+    {
+        "name": "Table",
+        "fields": [
+            {
+                "name": "id",
+                "type": "UUID",
+                "primary_key": true
+            },
+            {
+                "name": "number",
+                "type": "Integer",
+                "nullable": false
+            },
+            {
+                "name": "seats",
+                "type": "Integer",
+                "nullable": false
+            },
+            {
+                "name": "restaurant_id",
+                "type": "UUID",
+                "foreign_key": "Restaurant.id",
+                "nullable": false
+            }
+        ],
+        "relationships": [
+            {
+                "type": "ManyToOne",
+                "target": "Restaurant",
+                "foreign_key": "restaurant_id"
+            }
+        ]
+    },
+    {
+        "name": "Reservation",
+        "fields": [
+            {
+                "name": "id",
+                "type": "UUID",
+                "primary_key": true
+            },
+            {
+                "name": "user_id",
+                "type": "UUID",
+                "foreign_key": "User.id",
+                "nullable": false
+            },
+            {
+                "name": "restaurant_id",
+                "type": "UUID",
+                "foreign_key": "Restaurant.id",
+                "nullable": false
+            },
+            {
+                "name": "table_id",
+                "type": "UUID",
+                "foreign_key": "Table.id",
+                "nullable": false
+            },
+            {
+                "name": "reservation_time",
+                "type": "DateTime",
+                "nullable": false
+            }
+        ],
+        "relationships": [
+            {
+                "type": "ManyToOne",
+                "target": "User",
+                "foreign_key": "user_id"
+            },
+            {
+                "type": "ManyToOne",
+                "target": "Restaurant",
+                "foreign_key": "restaurant_id"
+            },
+            {
+                "type": "ManyToOne",
+                "target": "Table",
+                "foreign_key": "table_id"
+            }
+        ]
+    }
+]
