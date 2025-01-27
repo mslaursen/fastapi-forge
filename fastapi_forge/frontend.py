@@ -47,6 +47,8 @@ def init() -> None:
 
         forge_project(spec)
 
+        print("Project created.")
+
     ui.button("Submit", on_click=on_submit).classes("mt-4")
 
-    ui.run()
+    ui.run(reload=False)
