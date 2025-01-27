@@ -51,11 +51,12 @@ class Model(BaseModel):
     relationships: list[ModelRelationship] = []
 
 
-class ForgeProjectRequestDTO(BaseModel):
-    """ForgeProjectRequest DTO."""
+class ProjectSpec(BaseModel):
+    """ProjectSpec DTO."""
 
     project_name: str
     use_postgres: bool
     create_daos: bool
     create_routes: bool
+    create_tests: bool
     models: list[Model]
