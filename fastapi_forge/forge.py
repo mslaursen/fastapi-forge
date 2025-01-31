@@ -1,7 +1,7 @@
 import os
 from cookiecutter.main import cookiecutter
-from .dtos import ProjectSpec
-from .utils import build_project_artifacts
+from dtos import ProjectSpec
+from utils import build_project_artifacts
 
 
 def _get_template_path() -> str:

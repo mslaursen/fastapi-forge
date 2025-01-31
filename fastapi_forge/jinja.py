@@ -1,5 +1,5 @@
 from jinja2 import Template
-from .dtos import Model, ModelField, ModelRelationship
+from  dtos import Model, ModelField, ModelRelationship
 
 model_template = """
 import sqlalchemy as sa

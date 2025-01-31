@@ -1,5 +1,5 @@
 import click
-from .frontend import init
+from  frontend import init
 
 
 @click.group()

@@ -1,7 +1,7 @@
 from nicegui import ui
 import json
-from .forge import forge_project
-from .dtos import ProjectSpec, Model, ModelField, ModelRelationship
+from forge import forge_project
+from dtos import ProjectSpec, Model, ModelField, ModelRelationship
 
 
 def init() -> None:
@@ -92,6 +92,11 @@ def init() -> None:
             )
 
             def add_field() -> None:
-                
+            
+                ...
 
     ui.run(reload=True)
+
+
+if __name__ in {"__main__", "__mp_main__"}:
+    init()

@@ -1,6 +1,9 @@
 start:
 	python -m fastapi_forge start
 
+dev:
+	python fastapi_forge/frontend.py
+
 lint:
 	uv run ruff format
 	uv run ruff check . --fix
