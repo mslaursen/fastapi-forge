@@ -19,7 +19,7 @@ def version() -> None:
     """Print the version of FastAPI Forge."""
     from importlib.metadata import version
 
-    click.echo(f"FastAPI Forge CLI v{version('fastapi-forge')}.")
+    click.echo(f"FastAPI Forge v{version('fastapi-forge')}.")
 
 
 if __name__ in {"__main__", "__mp_main__"}:
