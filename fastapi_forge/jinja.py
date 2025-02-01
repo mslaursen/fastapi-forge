@@ -1,7 +1,7 @@
 from typing import Any
 from jinja2 import Environment
 from jinja2.ext import Extension
-from .dtos import Model, ModelField, ModelRelationship
+from fastapi_forge.dtos import Model, ModelField, ModelRelationship
 
 
 def _base_converter(name: str, separator: str) -> str:
