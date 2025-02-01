@@ -13,10 +13,12 @@ def start() -> None:
 
     init()
 
+
 @main.command()
 def version() -> None:
     """Print the version of FastAPI Forge."""
     from importlib.metadata import version
+
     click.echo(f"FastAPI Forge CLI v{version('fastapi-forge')}.")
 
 
