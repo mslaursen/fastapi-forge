@@ -1,37 +1,159 @@
 import os
+import shutil
+from enum import StrEnum
+from typing import Callable
 from cookiecutter.main import cookiecutter
-from fastapi_forge.dtos import ProjectSpec
-from fastapi_forge.utils import build_project_artifacts
+from fastapi_forge.dtos import ProjectSpec, Model
+from fastapi_forge.jinja import (
+    render_model_to_dto,
+    render_model_to_model,
+    render_model_to_dao,
+    render_model_to_routers,
+    render_model_to_post_test,
+    render_model_to_get_test,
+    render_model_to_get_id_test,
+    render_model_to_patch_test,
+    render_model_to_delete_test,
+    camel_to_snake,
+)
+from fastapi_forge.logger import logger
 
 
 def _get_template_path() -> str:
-    """Returns the absolute path to the project template directory."""
-    return os.path.join(os.path.dirname(__file__), "template")
+    """Return the absolute path to the project template directory."""
+    template_path = os.path.join(os.path.dirname(__file__), "template")
+    if not os.path.exists(template_path):
+        raise RuntimeError(f"Template directory not found: {template_path}")
+    return template_path
 
 
-def _validate_template_path(path: str) -> None:
-    """Validates the existence of the template directory."""
-    if not os.path.exists(path):
-        raise RuntimeError(f"Template directory not found: {path}")
+def _teardown_project(project_name: str) -> None:
+    """Forcefully remove the project directory and all its contents."""
+    project_dir = os.path.join(os.getcwd(), project_name)
+    if os.path.exists(project_dir):
+        shutil.rmtree(project_dir)  # Force remove directory and contents
+        logger.info(f"Removed project directory: {project_dir}")
 
 
-def forge_project(spec: ProjectSpec) -> None:
-    """Creates a new project using the provided template."""
+def build_project(spec: ProjectSpec) -> None:
+    """Create a new project using the provided template and specifications."""
 
-    template_path = _get_template_path()
-    _validate_template_path(template_path)
+    try:
+        builder = ProjectBuilder(spec.project_name, None)
+        builder.build_artifacts(spec.models)
 
-    build_project_artifacts(spec.project_name, spec.models)
-
-    cookiecutter(
-        template_path,
-        output_dir=os.getcwd(),
-        no_input=True,
-        overwrite_if_exists=True,
-        extra_context={
-            **spec.model_dump(exclude={"models"}),
-            "models": {
-                "models": [model.model_dump() for model in spec.models],
+        template_path = _get_template_path()
+        cookiecutter(
+            template_path,
+            output_dir=os.getcwd(),
+            no_input=True,
+            overwrite_if_exists=True,
+            extra_context={
+                **spec.model_dump(exclude={"models"}),
+                "models": {
+                    "models": [model.model_dump() for model in spec.models],
+                },
             },
-        },
-    )
+        )
+        logger.info(f"Project '{spec.project_name}' created successfully.")
+    except Exception as e:
+        logger.error(f"Failed to create project: {e}")
+        _teardown_project(spec.project_name)
+        raise
+
+
+class HttpMethod(StrEnum):
+    GET = "get"
+    GET_ID = "get_id"
+    POST = "post"
+    PATCH = "patch"
+    DELETE = "delete"
+
+
+TEST_RENDERERS: dict[HttpMethod, Callable[[Model], str]] = {
+    HttpMethod.GET: render_model_to_get_test,
+    HttpMethod.GET_ID: render_model_to_get_id_test,
+    HttpMethod.POST: render_model_to_post_test,
+    HttpMethod.PATCH: render_model_to_patch_test,
+    HttpMethod.DELETE: render_model_to_delete_test,
+}
+
+
+class ProjectBuilder:
+    """Handles the creation of project artifacts."""
+
+    def __init__(self, project_name: str, base_path: str | None = None) -> None:
+        self.project_name = project_name
+        self.base_path = base_path or os.getcwd()
+        self.project_dir = os.path.join(self.base_path, self.project_name)
+        self.src_dir = os.path.join(self.project_dir, "src")
+
+    def _create_directory(self, path: str) -> None:
+        """Create a directory if it doesn't exist."""
+        if not os.path.exists(path):
+            os.makedirs(path)
+            logger.info(f"Created directory: {path}")
+
+    def _write_file(self, path: str, content: str) -> None:
+        """Write content to a file."""
+        try:
+            with open(path, "w") as file:
+                file.write(content)
+            logger.info(f"Created file: {path}")
+        except IOError as e:
+            logger.error(f"Failed to write file {path}: {e}")
+            raise
+
+    def _init_project_directories(self) -> None:
+        """Initialize project directories."""
+        self._create_directory(self.project_dir)
+        self._create_directory(self.src_dir)
+
+    def _create_module_path(self, module: str) -> str:
+        """Create a path for a module (e.g., dtos, models, daos, routes)."""
+        path = os.path.join(self.src_dir, module)
+        self._create_directory(path)
+        return path
+
+    def _write_artifact(
+        self,
+        module: str,
+        model: Model,
+        render_func: Callable[[Model], str],
+    ) -> None:
+        """Write an artifact (e.g., DTO, model, DAO, router) to a file."""
+        path = self._create_module_path(module)
+        file_name = f"{camel_to_snake(model.name)}_{module}.py"
+        file_path = os.path.join(path, file_name)
+        self._write_file(file_path, render_func(model))
+
+    def _write_tests(self, model: Model) -> None:
+        """Write test files for a model."""
+        test_dir = os.path.join(
+            self.project_dir, "tests", "endpoint_tests", camel_to_snake(model.name)
+        )
+        self._create_directory(test_dir)
+
+        init_file = os.path.join(test_dir, "__init__.py")
+        self._write_file(init_file, "# Automatically generated by FastAPI Forge\n")
+
+        for method, render_func in TEST_RENDERERS.items():
+            method_suffix = "id" if method == HttpMethod.GET_ID else ""
+            file_name = (
+                f"test_{method.value.replace('_id', '')}_"
+                f"{camel_to_snake(model.name)}"
+                f"{f'_{method_suffix}' if method_suffix else ''}.py"
+            )
+            file_path = os.path.join(test_dir, file_name)
+            self._write_file(file_path, render_func(model))
+
+    def build_artifacts(self, models: list[Model]) -> None:
+        """Build all project artifacts for the given models."""
+        self._init_project_directories()
+
+        for model in models:
+            self._write_artifact("dtos", model, render_model_to_dto)
+            self._write_artifact("models", model, render_model_to_model)
+            self._write_artifact("daos", model, render_model_to_dao)
+            self._write_artifact("routes", model, render_model_to_routers)
+            self._write_tests(model)

@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from src.dtos.auth_dtos import UserLoginDTO, UserCreateDTO, LoginResponse, TokenData
 from src.dtos.app_user_dtos import AppUserDTO, AppUserInputDTO
-from src.dtos import DataResponse, DefaultCreatedResponse, CreatedResponse
+from src.dtos import DataResponse, CreatedResponse
 from src.daos import GetDAOs
 from src import exceptions
 from src.utils import auth_utils
@@ -18,7 +18,7 @@ async def login(
 ) -> DataResponse[LoginResponse]:
     """Login by email and password."""
 
-    user = await daos.filter_first(email=input_dto.email)
+    user = await daos.app_user.filter_first(email=input_dto.email)
 
     if user is None:
         raise exceptions.Http401("Wrong email or password")
@@ -57,11 +57,6 @@ async def register(
             password=auth_utils.hash_password(
                 input_dto.password.get_secret_value(),
             ),
-            {%- for model in cookiecutter.models.models if model.name == "AppUser" %}
-                {%- for field in model.fields if not field.primary_key and field.name not in ["password", "email"] %}
-                    {{ field.name | camel_to_snake }}=input_dto.{{ field.name | camel_to_snake }},
-                {%- endfor %}
-            {%- endfor %}
         )
     )
 

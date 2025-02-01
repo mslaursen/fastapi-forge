@@ -17,11 +17,6 @@
                 "name": "password",
                 "type": "String",
                 "nullable": false
-            },
-            {
-                "name": "phone_number",
-                "type": "String",
-                "nullable": true
             }
         ],
         "relationships": []

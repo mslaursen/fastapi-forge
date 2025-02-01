@@ -1,7 +1,7 @@
 from nicegui import ui
 import json
 import os
-from fastapi_forge.forge import forge_project
+from fastapi_forge.forge import build_project
 from fastapi_forge.dtos import ProjectSpec, Model
 
 
@@ -53,7 +53,11 @@ def init(reload: bool = False) -> None:
             models=[Model(**model) for model in json.loads(models.value)],
         )
 
-        forge_project(spec)
+        try:
+            build_project(spec)
+        except Exception:
+            ui.notify(f"Failed to create project: {spec.project_name}")
+            return
 
         print("Project created.")
 
