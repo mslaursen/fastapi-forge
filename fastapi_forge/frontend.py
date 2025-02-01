@@ -1,8 +1,8 @@
 from nicegui import ui
 import json
 import os
-from .forge import forge_project
-from .dtos import ProjectSpec, Model
+from fastapi_forge.forge import forge_project
+from fastapi_forge.dtos import ProjectSpec, Model
 
 
 def init() -> None:

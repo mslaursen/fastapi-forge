@@ -1,6 +1,6 @@
 import webbrowser
-from .dtos import Model
-from .jinja import (
+from fastapi_forge.dtos import Model
+from fastapi_forge.jinja import (
     render_model_to_dto,
     render_model_to_model,
     render_model_to_dao,
