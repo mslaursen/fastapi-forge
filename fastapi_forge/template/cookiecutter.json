@@ -23,7 +23,7 @@
     "models": {
         "models": []
     },
-    "_extentions": [
-        "../jinja.CamelToSnakeExtention"
+    "_extensions": [
+        "local_extensions.camel_to_snake"
     ]
 }
