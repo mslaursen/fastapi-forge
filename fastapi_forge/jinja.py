@@ -1,27 +1,20 @@
 from typing import Any
 from jinja2 import Environment
-from jinja2.ext import Extension
 from fastapi_forge.dtos import Model, ModelField, ModelRelationship
 
 
-def _base_converter(name: str, separator: str) -> str:
-    return "".join([separator + c.lower() if c.isupper() else c for c in name]).lstrip(
+def _convert(value: str, separator: str) -> str:
+    return "".join([separator + c.lower() if c.isupper() else c for c in value]).lstrip(
         separator
     )
 
 
-def camel_to_snake(name: str) -> str:
-    return _base_converter(name, "_")
+def camel_to_snake(value: str) -> str:
+    return _convert(value, "_")
 
 
-def camel_to_snake_hyphen(name: str) -> str:
-    return _base_converter(name, "-")
-
-
-class CamelToSnakeExtension(Extension):
-    def __init__(self, environment):
-        super(CamelToSnakeExtension, self).__init__(environment)
-        environment.filters["camel_to_snake"] = camel_to_snake
+def camel_to_snake_hyphen(value: str) -> str:
+    return _convert(value, "-")
 
 
 env = Environment()
@@ -48,15 +41,15 @@ class {{ model.name }}(Base):
     {% for field in model.fields -%}
     {% if not field.primary_key -%}
     {% if field.name.endswith('_id') %}
-    {{ field.name }}: Mapped[UUID] = mapped_column(
-        sa.UUID(as_uuid=True), sa.ForeignKey("{{ field.foreign_key.lower() }}", ondelete="CASCADE"),
+    {{ field.name | camel_to_snake }}: Mapped[UUID] = mapped_column(
+        sa.UUID(as_uuid=True), sa.ForeignKey("{{ field.foreign_key | camel_to_snake }}", ondelete="CASCADE"),
     )
     {% elif field.nullable %}
-    {{ field.name }}: Mapped[{{ type_mapping[field.type] }} | None] = mapped_column(
+    {{ field.name | camel_to_snake }}: Mapped[{{ type_mapping[field.type] }} | None] = mapped_column(
         sa.{% if field.type == 'DateTime' %}DateTime(timezone=True){% else %}{{ field.type }}{% endif %}{% if field.type == 'UUID' %}(as_uuid=True){% endif %}, {% if field.unique == True %}unique=True,{% endif %}
     )
     {% else %}
-    {{ field.name }}: Mapped[{{ type_mapping[field.type] }}] = mapped_column(
+    {{ field.name | camel_to_snake }}: Mapped[{{ type_mapping[field.type] }}] = mapped_column(
         sa.{% if field.type == 'DateTime' %}DateTime(timezone=True){% else %}{{ field.type }}{% endif %}{% if field.type == 'UUID' %}(as_uuid=True){% endif %}, {% if field.unique == True %}unique=True,{% endif %}
     )
     {% endif %}

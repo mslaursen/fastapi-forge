@@ -8,14 +8,14 @@
                 "primary_key": true
             },
             {
-                "name": "name",
-                "type": "String",
-                "nullable": false
-            },
-            {
                 "name": "email",
                 "type": "String",
                 "unique": true,
+                "nullable": false
+            },
+            {
+                "name": "password",
+                "type": "String",
                 "nullable": false
             },
             {

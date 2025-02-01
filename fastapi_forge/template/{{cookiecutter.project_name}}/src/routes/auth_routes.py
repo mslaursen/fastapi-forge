@@ -14,11 +14,11 @@ router = APIRouter(prefix="/auth")
 @router.post("/login-email", status_code=201)
 async def login(
     input_dto: UserLoginDTO,
-    r_daos: GetDAOs,
+    daos: GetDAOs,
 ) -> DataResponse[LoginResponse]:
     """Login by email and password."""
 
-    user = await r_daos.filter_first(email=input_dto.email)
+    user = await daos.filter_first(email=input_dto.email)
 
     if user is None:
         raise exceptions.Http401("Wrong email or password")
@@ -43,7 +43,7 @@ async def login(
 async def register(
     input_dto: UserCreateDTO,
     daos: GetDAOs,
-) -> DefaultCreatedResponse:
+) -> DataResponse:
     """Register by email and password."""
 
     user = await daos.app_user.filter_first(email=input_dto.email)
@@ -57,8 +57,14 @@ async def register(
             password=auth_utils.hash_password(
                 input_dto.password.get_secret_value(),
             ),
+            {%- for model in cookiecutter.models.models if model.name == "AppUser" %}
+                {%- for field in model.fields if not field.primary_key and field.name not in ["password", "email"] %}
+                    {{ field.name | camel_to_snake }}=input_dto.{{ field.name | camel_to_snake }},
+                {%- endfor %}
+            {%- endfor %}
         )
     )
+
 
     return DataResponse(
         data=CreatedResponse(
