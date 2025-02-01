@@ -18,7 +18,7 @@ async def login(
 ) -> DataResponse[LoginResponse]:
     """Login by email and password."""
 
-    user = await r_daos.filter_one(email=input_dto.email)
+    user = await r_daos.filter_first(email=input_dto.email)
 
     if user is None:
         raise exceptions.Http401("Wrong email or password")
