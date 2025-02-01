@@ -5,7 +5,7 @@ from fastapi_forge.forge import forge_project
 from fastapi_forge.dtos import ProjectSpec, Model
 
 
-def init() -> None:
+def init(reload: bool = False) -> None:
     ui.label("FastAPI Forge")
 
     path = os.path.join(
@@ -59,4 +59,8 @@ def init() -> None:
 
     ui.button("Submit", on_click=on_submit).classes("mt-4")
 
-    ui.run(reload=False)
+    ui.run(reload=reload)
+
+
+if __name__ in {"__main__", "__mp_main__"}:
+    init(reload=True)
