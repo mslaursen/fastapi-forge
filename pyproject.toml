@@ -10,6 +10,8 @@ requires-python = ">=3.12"
 dynamic = ["version"]
 dependencies = ["click", "nicegui", "cookiecutter"]
 
+[tool.setuptools_scm]
+
 [project.scripts]
 fastapi-forge = "fastapi_forge.__main__:main"
 
