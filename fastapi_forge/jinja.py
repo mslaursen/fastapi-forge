@@ -1,5 +1,32 @@
-from jinja2 import Template
+from typing import Any
+from jinja2 import Environment
+from jinja2.ext import Extension
 from .dtos import Model, ModelField, ModelRelationship
+
+
+def _base_converter(name: str, separator: str) -> str:
+    return "".join([separator + c.lower() if c.isupper() else c for c in name]).lstrip(
+        separator
+    )
+
+
+def camel_to_snake(name: str) -> str:
+    return _base_converter(name, "_")
+
+
+def camel_to_snake_hyphen(name: str) -> str:
+    return _base_converter(name, "-")
+
+
+class CamelToSnakeExtension(Extension):
+    def __init__(self, environment):
+        super(CamelToSnakeExtension, self).__init__(environment)
+        environment.filters["camel_to_snake"] = camel_to_snake
+
+
+env = Environment()
+env.filters["camel_to_snake"] = camel_to_snake
+env.filters["camel_to_snake_hyphen"] = camel_to_snake_hyphen
 
 model_template = """
 import sqlalchemy as sa
@@ -7,7 +34,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid import UUID
 from datetime import datetime
 {% for relation in model.relationships -%}
-from src.models.{{ relation.target.lower() }}_models import {{ relation.target }}
+from src.models.{{ relation.target | camel_to_snake }}_models import {{ relation.target }}
 {% endfor %}
 
 
@@ -16,7 +43,7 @@ from src.models import Base
 class {{ model.name }}(Base):
     \"\"\"{{ model.name.title() }} model.\"\"\"
 
-    __tablename__ = "{{ model.name.lower() }}"
+    __tablename__ = "{{ model.name | camel_to_snake }}"
     
     {% for field in model.fields -%}
     {% if not field.primary_key -%}
@@ -38,9 +65,9 @@ class {{ model.name }}(Base):
 
     {% for relation in model.relationships %}
         {% if relation.type == "ManyToOne" %}
-    {{ relation.target.lower() }}: Mapped[{{ relation.target }}] = relationship(
+    {{ relation.target | camel_to_snake }}: Mapped[{{ relation.target }}] = relationship(
         "{{ relation.target }}",
-        foreign_keys=[{{ relation.foreign_key.lower() }}],
+        foreign_keys=[{{ relation.foreign_key | camel_to_snake }}],
         uselist=False,
     )
         {% endif %}
@@ -92,8 +119,8 @@ class {{ model.name }}UpdateDTO(BaseModel):
 dao_template = """
 from src.daos import BaseDAO
 
-from src.models.{{ model.name.lower() }}_models import {{ model.name }}
-from src.dtos.{{ model.name.lower() }}_dtos import {{ model.name }}InputDTO, {{ model.name }}UpdateDTO
+from src.models.{{ model.name | camel_to_snake }}_models import {{ model.name }}
+from src.dtos.{{ model.name | camel_to_snake }}_dtos import {{ model.name }}InputDTO, {{ model.name }}UpdateDTO
 
 
 class {{ model.name }}DAO(
@@ -109,7 +136,7 @@ class {{ model.name }}DAO(
 routers_template = """
 from fastapi import APIRouter
 from src.daos import GetDAOs
-from src.dtos.{{ model.name.lower() }}_dtos import {{ model.name }}InputDTO, {{ model.name }}DTO, {{ model.name }}UpdateDTO
+from src.dtos.{{ model.name | camel_to_snake  }}_dtos import {{ model.name }}InputDTO, {{ model.name }}DTO, {{ model.name }}UpdateDTO
 from src.dtos import (
     DataResponse,
     Pagination,
@@ -119,67 +146,67 @@ from src.dtos import (
 )
 from uuid import UUID
 
-router = APIRouter(prefix="/{{ model.name.lower() }}s")
+router = APIRouter(prefix="/{{ model.name | camel_to_snake_hyphen }}s")
 
 
 @router.post("/", status_code=201)
-async def create_{{ model.name.lower() }}(
+async def create_{{ model.name | camel_to_snake }}(
     input_dto: {{ model.name }}InputDTO,
     daos: GetDAOs,
 ) -> DataResponse[CreatedResponse]:
-    \"\"\"Create a new {{ model.name.lower() }}.\"\"\"
+    \"\"\"Create a new {{ model.name }}.\"\"\"
 
-    created_id = await daos.{{ model.name.lower() }}.create(input_dto)
+    created_id = await daos.{{ model.name | camel_to_snake }}.create(input_dto)
     return DataResponse(
         data=CreatedResponse(id=created_id),
     )
 
 
-@router.patch("/{ {{- model.name.lower() }}_id}")
-async def update_{{ model.name.lower() }}(
-    {{ model.name.lower() }}_id: UUID,
+@router.patch("/{ {{- model.name | camel_to_snake }}_id}")
+async def update_{{ model.name | camel_to_snake }}(
+    {{ model.name | camel_to_snake }}_id: UUID,
     update_dto: {{ model.name }}UpdateDTO,
     daos: GetDAOs,
 ) -> EmptyResponse:
-    \"\"\"Update {{ model.name.lower() }}.\"\"\"
+    \"\"\"Update {{ model.name }}.\"\"\"
 
-    await daos.{{ model.name.lower() }}.update({{ model.name.lower() }}_id, update_dto)
+    await daos.{{ model.name | camel_to_snake }}.update({{ model.name | camel_to_snake }}_id, update_dto)
     return EmptyResponse()
 
 
-@router.delete("/{ {{- model.name.lower() }}_id}")
-async def delete_{{ model.name.lower() }}(
-    {{ model.name.lower() }}_id: UUID,
+@router.delete("/{ {{- model.name | camel_to_snake }}_id}")
+async def delete_{{ model.name | camel_to_snake }}(
+    {{ model.name | camel_to_snake }}_id: UUID,
     daos: GetDAOs,
 ) -> EmptyResponse:
-    \"\"\"Delete a {{ model.name.lower() }} by id.\"\"\"
+    \"\"\"Delete a {{ model.name }} by id.\"\"\"
 
-    await daos.{{ model.name.lower() }}.delete(id={{ model.name.lower() }}_id)
+    await daos.{{ model.name | camel_to_snake }}.delete(id={{ model.name | camel_to_snake }}_id)
     return EmptyResponse()
 
 
 @router.get("/")
-async def get_{{ model.name.lower() }}_paginated(
+async def get_{{ model.name | camel_to_snake }}_paginated(
     daos: GetDAOs,
     pagination: Pagination,
 ) -> OffsetResults[{{ model.name }}DTO]:
-    \"\"\"Get all {{ model.name.lower() }}s paginated.\"\"\"
+    \"\"\"Get all {{ model.name }}s paginated.\"\"\"
 
-    return await daos.{{ model.name.lower() }}.get_offset_results(
+    return await daos.{{ model.name | camel_to_snake }}.get_offset_results(
         out_dto={{ model.name }}DTO,
         pagination=pagination,
     )
 
 
-@router.get("/{ {{- model.name.lower() }}_id}")
-async def get_{{ model.name.lower() }}(
-    {{ model.name.lower() }}_id: UUID,
+@router.get("/{ {{- model.name | camel_to_snake }}_id}")
+async def get_{{ model.name | camel_to_snake }}(
+    {{ model.name | camel_to_snake }}_id: UUID,
     daos: GetDAOs,
 ) -> DataResponse[{{ model.name }}DTO]:
-    \"\"\"Get a {{ model.name.lower() }} by id.\"\"\"
+    \"\"\"Get a {{ model.name }} by id.\"\"\"
 
-    {{ model.name.lower() }} = await daos.{{ model.name.lower() }}.filter_first(id={{ model.name.lower() }}_id)
-    return DataResponse(data={{ model.name }}DTO.model_validate({{ model.name.lower() }}))
+    {{ model.name | camel_to_snake }} = await daos.{{ model.name | camel_to_snake }}.filter_first(id={{ model.name | camel_to_snake }}_id)
+    return DataResponse(data={{ model.name }}DTO.model_validate({{ model.name | camel_to_snake }}))
 """
 
 test_template_post = """
@@ -190,21 +217,21 @@ from httpx import AsyncClient
 from datetime import datetime, timezone
 from uuid import UUID
 
-URI = "/api/v1/{{ model.name.lower() }}s/"
+URI = "/api/v1/{{ model.name | camel_to_snake_hyphen }}s/"
 
 @pytest.mark.anyio
-async def test_post_{{ model.name.lower() }}(client: AsyncClient, daos: AllDAOs,) -> None:
-    \"\"\"Test create {{ model.name.lower() }}: 201.\"\"\"
+async def test_post_{{ model.name | camel_to_snake }}(client: AsyncClient, daos: AllDAOs,) -> None:
+    \"\"\"Test create {{ model.name }}: 201.\"\"\"
 
     {%- for relation in model.relationships %}
     {% if relation.type == "ManyToOne" %}
-    {{ relation.target.lower() }} = await factories.{{ relation.target }}Factory.create()
+    {{ relation.target | camel_to_snake }} = await factories.{{ relation.target }}Factory.create()
     {% endif %}
     {% endfor %}
     input_json = {
         {%- for field in model.fields -%}
         {%- if not field.primary_key and field.name.endswith('_id') -%}
-        "{{ field.name }}": str({{ field.name.lower() | replace('_id', '.id') }}),
+        "{{ field.name }}": str({{ field.name | camel_to_snake | replace('_id', '.id') }}),
         {%- elif not field.primary_key %}
         {%- if field.type == "DateTime" %}
         "{{ field.name }}": {{ type_to_input_value_mapping[field.type] }}.isoformat(),
@@ -219,17 +246,17 @@ async def test_post_{{ model.name.lower() }}(client: AsyncClient, daos: AllDAOs,
     assert response.status_code == 201
 
     response_data = response.json()["data"]
-    db_{{ model.name.lower() }} = await daos.{{ model.name.lower() }}.filter_first(id=response_data["id"])
+    db_{{ model.name | camel_to_snake }} = await daos.{{ model.name | camel_to_snake }}.filter_first(id=response_data["id"])
 
-    assert db_{{ model.name.lower() }} is not None
+    assert db_{{ model.name | camel_to_snake }} is not None
     {%- for field in model.fields %}
     {%- if not field.primary_key and field.name.endswith('_id') %}
-    assert db_{{ model.name.lower() }}.{{ field.name }} == UUID(input_json["{{ field.name }}"])
+    assert db_{{ model.name | camel_to_snake }}.{{ field.name }} == UUID(input_json["{{ field.name }}"])
     {%- elif not field.primary_key %}
     {%- if field.type == "DateTime" %}
-    assert db_{{ model.name.lower() }}.{{ field.name }}.isoformat() == input_json["{{ field.name }}"]
+    assert db_{{ model.name | camel_to_snake }}.{{ field.name }}.isoformat() == input_json["{{ field.name }}"]
     {%- else %}
-    assert db_{{ model.name.lower() }}.{{ field.name }} == input_json["{{ field.name }}"]
+    assert db_{{ model.name | camel_to_snake }}.{{ field.name }} == input_json["{{ field.name }}"]
     {%- endif %}
     {%- endif %}
     {%- endfor %}
@@ -242,13 +269,13 @@ from httpx import AsyncClient
 from datetime import datetime
 from uuid import UUID
 
-URI = "/api/v1/{{ model.name.lower() }}s/"
+URI = "/api/v1/{{ model.name | camel_to_snake_hyphen }}s/"
 
 @pytest.mark.anyio
-async def test_get_{{ model.name.lower() }}s(client: AsyncClient,) -> None:
-    \"\"\"Test get {{ model.name.lower() }}: 200.\"\"\"
+async def test_get_{{ model.name | camel_to_snake }}s(client: AsyncClient,) -> None:
+    \"\"\"Test get {{ model.name | camel_to_snake }}: 200.\"\"\"
 
-    {{ model.name.lower() }}s = await factories.{{ model.name }}Factory.create_batch(3)
+    {{ model.name | camel_to_snake }}s = await factories.{{ model.name }}Factory.create_batch(3)
 
     response = await client.get(URI)
     assert response.status_code == 200
@@ -256,8 +283,8 @@ async def test_get_{{ model.name.lower() }}s(client: AsyncClient,) -> None:
     response_data = response.json()["data"]
     assert len(response_data) == 3
 
-    for {{ model.name.lower() }} in {{ model.name.lower() }}s:
-        assert any({{ model.name.lower() }}.id == UUID(item["id"]) for item in response_data)
+    for {{ model.name | camel_to_snake }} in {{ model.name | camel_to_snake }}s:
+        assert any({{ model.name | camel_to_snake }}.id == UUID(item["id"]) for item in response_data)
 """
 
 test_template_get_id = """
@@ -267,27 +294,27 @@ from httpx import AsyncClient
 from datetime import datetime
 from uuid import UUID
 
-URI = "/api/v1/{{ model.name.lower() }}s/{ {{- model.name.lower() -}}_id}"
+URI = "/api/v1/{{ model.name | camel_to_snake_hyphen }}s/{ {{- model.name | camel_to_snake -}}_id}"
 
 @pytest.mark.anyio
-async def test_get_{{ model.name.lower() }}_by_id(client: AsyncClient,) -> None:
-    \"\"\"Test get {{ model.name.lower() }} by id: 200.\"\"\"
+async def test_get_{{ model.name | camel_to_snake }}_by_id(client: AsyncClient,) -> None:
+    \"\"\"Test get {{ model.name | camel_to_snake }} by id: 200.\"\"\"
 
-    {{ model.name.lower() }} = await factories.{{ model.name }}Factory.create()
+    {{ model.name | camel_to_snake }} = await factories.{{ model.name }}Factory.create()
 
-    response = await client.get(URI.format({{ model.name.lower() }}_id={{ model.name.lower() }}.id))
+    response = await client.get(URI.format({{ model.name | camel_to_snake }}_id={{ model.name | camel_to_snake }}.id))
     assert response.status_code == 200
 
     response_data = response.json()["data"]
-    assert response_data["id"] == str({{ model.name.lower() }}.id)
+    assert response_data["id"] == str({{ model.name | camel_to_snake }}.id)
     {%- for field in model.fields %}
     {%- if not field.primary_key and field.name.endswith('_id') %}
-    assert response_data["{{ field.name }}"] == str({{ model.name.lower() }}.{{ field.name }})
+    assert response_data["{{ field.name }}"] == str({{ model.name | camel_to_snake }}.{{ field.name }})
     {%- elif not field.primary_key %}
     {%- if field.type == "DateTime" %}
-    assert response_data["{{ field.name }}"] == {{ model.name.lower() }}.{{ field.name }}.isoformat()
+    assert response_data["{{ field.name }}"] == {{ model.name | camel_to_snake }}.{{ field.name }}.isoformat()
     {%- else %}
-    assert response_data["{{ field.name }}"] == {{ model.name.lower() }}.{{ field.name }}
+    assert response_data["{{ field.name }}"] == {{ model.name | camel_to_snake }}.{{ field.name }}
     {%- endif %}
     {%- endif %}
     {%- endfor %}
@@ -301,23 +328,23 @@ from httpx import AsyncClient
 from datetime import datetime, timezone
 from uuid import UUID
 
-URI = "/api/v1/{{ model.name.lower() }}s/{ {{- model.name.lower() -}}_id}"
+URI = "/api/v1/{{ model.name | camel_to_snake_hyphen }}s/{ {{- model.name | camel_to_snake -}}_id}"
 
 @pytest.mark.anyio
-async def test_patch_{{ model.name.lower() }}(client: AsyncClient, daos: AllDAOs,) -> None:
-    \"\"\"Test patch {{ model.name.lower() }}: 200.\"\"\"
+async def test_patch_{{ model.name | camel_to_snake }}(client: AsyncClient, daos: AllDAOs,) -> None:
+    \"\"\"Test patch {{ model.name | camel_to_snake }}: 200.\"\"\"
 
     {%- for relation in model.relationships %}
     {% if relation.type == "ManyToOne" %}
-    {{ relation.target.lower() }} = await factories.{{ relation.target }}Factory.create()
+    {{ relation.target | camel_to_snake }} = await factories.{{ relation.target }}Factory.create()
     {% endif %}
     {% endfor %}
-    {{ model.name.lower() }} = await factories.{{ model.name }}Factory.create()
+    {{ model.name | camel_to_snake }} = await factories.{{ model.name }}Factory.create()
 
     input_json = {
         {%- for field in model.fields -%}
         {%- if not field.primary_key and field.name.endswith('_id') -%}
-        "{{ field.name }}": str({{ field.name.lower() | replace('_id', '.id') }}),
+        "{{ field.name }}": str({{ field.name | camel_to_snake | replace('_id', '.id') }}),
         {% elif not field.primary_key %}
         {%- if field.type == "DateTime" %}
         "{{ field.name }}": {{ type_to_input_value_mapping[field.type] }}.isoformat(),
@@ -328,20 +355,20 @@ async def test_patch_{{ model.name.lower() }}(client: AsyncClient, daos: AllDAOs
         {%- endfor %}
     }
 
-    response = await client.patch(URI.format({{ model.name.lower() }}_id={{ model.name.lower() }}.id), json=input_json)
+    response = await client.patch(URI.format({{ model.name | camel_to_snake }}_id={{ model.name | camel_to_snake }}.id), json=input_json)
     assert response.status_code == 200
 
-    db_{{ model.name.lower() }} = await daos.{{ model.name.lower() }}.filter_first(id={{ model.name.lower() }}.id)
+    db_{{ model.name | camel_to_snake }} = await daos.{{ model.name | camel_to_snake }}.filter_first(id={{ model.name | camel_to_snake }}.id)
 
-    assert db_{{ model.name.lower() }} is not None
+    assert db_{{ model.name | camel_to_snake }} is not None
     {%- for field in model.fields %}
     {%- if not field.primary_key and field.name.endswith('_id') %}
-    assert db_{{ model.name.lower() }}.{{ field.name }} == UUID(input_json["{{ field.name }}"])
+    assert db_{{ model.name | camel_to_snake }}.{{ field.name }} == UUID(input_json["{{ field.name }}"])
     {%- elif not field.primary_key %}
     {%- if field.type == "DateTime" %}
-    assert db_{{ model.name.lower() }}.{{ field.name }}.isoformat() == input_json["{{ field.name }}"]
+    assert db_{{ model.name | camel_to_snake }}.{{ field.name }}.isoformat() == input_json["{{ field.name }}"]
     {%- else %}
-    assert db_{{ model.name.lower() }}.{{ field.name }} == input_json["{{ field.name }}"]
+    assert db_{{ model.name | camel_to_snake }}.{{ field.name }} == input_json["{{ field.name }}"]
     {%- endif %}
     {%- endif %}
     {%- endfor %}
@@ -356,19 +383,19 @@ from httpx import AsyncClient
 from datetime import datetime
 from uuid import UUID
 
-URI = "/api/v1/{{ model.name.lower() }}s/{ {{- model.name.lower() -}}_id}"
+URI = "/api/v1/{{ model.name | camel_to_snake_hyphen }}s/{ {{- model.name | camel_to_snake -}}_id}"
 
 @pytest.mark.anyio
-async def test_delete_{{ model.name.lower() }}(client: AsyncClient, daos: AllDAOs,) -> None:
-    \"\"\"Test delete {{ model.name.lower() }}: 200.\"\"\"
+async def test_delete_{{ model.name | camel_to_snake }}(client: AsyncClient, daos: AllDAOs,) -> None:
+    \"\"\"Test delete {{ model.name | camel_to_snake }}: 200.\"\"\"
 
-    {{ model.name.lower() }} = await factories.{{ model.name }}Factory.create()
+    {{ model.name | camel_to_snake }} = await factories.{{ model.name }}Factory.create()
 
-    response = await client.delete(URI.format({{ model.name.lower() }}_id={{ model.name.lower() }}.id))
+    response = await client.delete(URI.format({{ model.name | camel_to_snake }}_id={{ model.name | camel_to_snake }}.id))
     assert response.status_code == 200
 
-    db_{{ model.name.lower() }} = await daos.{{ model.name.lower() }}.filter_first(id={{ model.name.lower() }}.id)
-    assert db_{{ model.name.lower() }} is None
+    db_{{ model.name | camel_to_snake }} = await daos.{{ model.name | camel_to_snake }}.filter_first(id={{ model.name | camel_to_snake }}.id)
+    assert db_{{ model.name | camel_to_snake }} is None
 """
 
 TYPE_MAPPING = {
@@ -386,63 +413,66 @@ TYPE_TO_INPUT_VALUE_MAPPING = {
 }
 
 
-def render_model_to_model(model: Model) -> str:
-    return Template(model_template).render(
+def _render(model: Model, template_name: str, **kwargs: Any) -> str:
+    template = env.from_string(template_name)
+    return template.render(
         model=model,
-        type_mapping=TYPE_MAPPING,
+        **kwargs,
     )
+
+
+def render_model_to_model(model: Model) -> str:
+    return _render(model, model_template, type_mapping=TYPE_MAPPING)
 
 
 def render_model_to_dto(model: Model) -> str:
-    return Template(dto_template).render(
-        model=model,
-        type_mapping=TYPE_MAPPING,
-    )
+    return _render(model, dto_template, type_mapping=TYPE_MAPPING)
 
 
 def render_model_to_dao(model: Model) -> str:
-    return Template(dao_template).render(
-        model=model,
-    )
+    return _render(model, dao_template)
 
 
 def render_model_to_routers(model: Model) -> str:
-    return Template(routers_template).render(
-        model=model,
-    )
+    return _render(model, routers_template)
 
 
 def render_model_to_post_test(model: Model) -> str:
-    return Template(test_template_post).render(
-        model=model,
+    return _render(
+        model,
+        test_template_post,
         type_to_input_value_mapping=TYPE_TO_INPUT_VALUE_MAPPING,
     )
 
 
 def render_model_to_get_test(model: Model) -> str:
-    return Template(test_template_get).render(
-        model=model,
+    return _render(
+        model,
+        test_template_get,
         type_to_input_value_mapping=TYPE_TO_INPUT_VALUE_MAPPING,
     )
 
 
 def render_model_to_get_id_test(model: Model) -> str:
-    return Template(test_template_get_id).render(
-        model=model,
+    return _render(
+        model,
+        test_template_get_id,
         type_to_input_value_mapping=TYPE_TO_INPUT_VALUE_MAPPING,
     )
 
 
 def render_model_to_patch_test(model: Model) -> str:
-    return Template(test_template_patch).render(
-        model=model,
+    return _render(
+        model,
+        test_template_patch,
         type_to_input_value_mapping=TYPE_TO_INPUT_VALUE_MAPPING,
     )
 
 
 def render_model_to_delete_test(model: Model) -> str:
-    return Template(test_template_delete).render(
-        model=model,
+    return _render(
+        model,
+        test_template_delete,
         type_to_input_value_mapping=TYPE_TO_INPUT_VALUE_MAPPING,
     )
 
@@ -450,11 +480,12 @@ def render_model_to_delete_test(model: Model) -> str:
 if __name__ == "__main__":
     models = [
         Model(
-            name="User",
+            name="AppUser",
             fields=[
                 ModelField(name="id", type="UUID", primary_key=True),
                 ModelField(name="name", type="String", nullable=False),
                 ModelField(name="email", type="String", unique=True),
+                ModelField(name="password", type="String", nullable=False),
                 ModelField(name="birth_date", type="DateTime"),
             ],
             relationships=[
@@ -493,4 +524,5 @@ if __name__ == "__main__":
         ),
     ]
 
-    print(render_model_to_post_test(models[2]))
+    # print(render_model_to_post_test(models[0]))
+    print(render_model_to_post_test(models[0]))

@@ -1,6 +1,6 @@
 [
     {
-        "name": "User",
+        "name": "AppUser",
         "fields": [
             {
                 "name": "id",
@@ -94,9 +94,9 @@
                 "primary_key": true
             },
             {
-                "name": "user_id",
+                "name": "app_user_id",
                 "type": "UUID",
-                "foreign_key": "User.id",
+                "foreign_key": "AppUser.id",
                 "nullable": false
             },
             {
@@ -120,8 +120,8 @@
         "relationships": [
             {
                 "type": "ManyToOne",
-                "target": "User",
-                "foreign_key": "user_id"
+                "target": "AppUser",
+                "foreign_key": "app_user_id"
             },
             {
                 "type": "ManyToOne",

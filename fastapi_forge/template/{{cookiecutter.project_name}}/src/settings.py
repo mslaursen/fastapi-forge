@@ -46,6 +46,13 @@ class PGSettings(BaseSettings):
             path=f"/{self.database}",
         )
 {% endif %}
+{% if cookiecutter.use_builtin_auth %}
+class JWTSettings(BaseSettings):
+    """Configuration for JWT."""
+
+    secret: SecretStr = SecretStr("")
+    algorithm: str = "HS256"
+{% endif %}
 
 class Settings(BaseSettings):
     """Main settings."""
@@ -58,6 +65,9 @@ class Settings(BaseSettings):
     reload: bool = False
     {% if cookiecutter.use_postgres %}
     pg: PGSettings = PGSettings()
+    {% endif %}
+    {% if cookiecutter.use_builtin_auth %}
+    jwt: JWTSettings = JWTSettings()
     {% endif %}
     model_config = SettingsConfigDict(
         env_file=DOTENV,

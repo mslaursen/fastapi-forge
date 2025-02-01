@@ -10,6 +10,7 @@ from .jinja import (
     render_model_to_get_id_test,
     render_model_to_patch_test,
     render_model_to_delete_test,
+    camel_to_snake,
 )
 import os
 
@@ -48,7 +49,7 @@ def _write_dto(project_name: str, model: Model) -> None:
     """Write DTOs to file."""
 
     path = _create_path(project_name, "src/dtos")
-    file = os.path.join(path, f"{model.name.lower()}_dtos.py")
+    file = os.path.join(path, f"{camel_to_snake(model.name)}_dtos.py")
 
     with open(file, "w") as file:
         file.write(render_model_to_dto(model))
@@ -58,7 +59,7 @@ def _write_model(project_name: str, model: Model) -> None:
     """Write models to file."""
 
     path = _create_path(project_name, "src/models")
-    file = os.path.join(path, f"{model.name.lower()}_models.py")
+    file = os.path.join(path, f"{camel_to_snake(model.name)}_models.py")
 
     with open(file, "w") as file:
         file.write(render_model_to_model(model))
@@ -68,7 +69,7 @@ def _write_dao(project_name: str, model: Model) -> None:
     """Write DAOs to file."""
 
     path = _create_path(project_name, "src/daos")
-    file = os.path.join(path, f"{model.name.lower()}_daos.py")
+    file = os.path.join(path, f"{camel_to_snake(model.name)}_daos.py")
 
     with open(file, "w") as file:
         file.write(render_model_to_dao(model))
@@ -78,7 +79,7 @@ def _write_routers(project_name: str, model: Model) -> None:
     """Write routers to file."""
 
     path = _create_path(project_name, "src/routes")
-    file = os.path.join(path, f"{model.name.lower()}_routes.py")
+    file = os.path.join(path, f"{camel_to_snake(model.name)}_routes.py")
 
     with open(file, "w") as file:
         file.write(render_model_to_routers(model))
@@ -87,7 +88,9 @@ def _write_routers(project_name: str, model: Model) -> None:
 def _write_tests(project_name: str, model: Model) -> None:
     """Write tests to file."""
 
-    path = _create_path(project_name, f"tests/endpoint_tests/{model.name.lower()}")
+    path = _create_path(
+        project_name, f"tests/endpoint_tests/{camel_to_snake(model.name)}"
+    )
 
     method_to_func = {
         "get": render_model_to_get_test,
@@ -101,7 +104,7 @@ def _write_tests(project_name: str, model: Model) -> None:
         method_suffix = "id" if method == "get_id" else ""
         file_name = (
             f"test_{method.replace('_id', '')}_"
-            f"{model.name.lower()}"
+            f"{camel_to_snake(model.name)}"
             f"{f'_{method_suffix}' if method_suffix else ''}.py"
         )
 
