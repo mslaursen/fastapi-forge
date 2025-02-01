@@ -31,7 +31,7 @@ def _teardown_project(project_name: str) -> None:
     """Forcefully remove the project directory and all its contents."""
     project_dir = os.path.join(os.getcwd(), project_name)
     if os.path.exists(project_dir):
-        shutil.rmtree(project_dir)  # Force remove directory and contents
+        shutil.rmtree(project_dir)
         logger.info(f"Removed project directory: {project_dir}")
 
 
