@@ -9,6 +9,7 @@ class ModelField(BaseModel):
     primary_key: bool = False
     nullable: bool = False
     unique: bool = False
+    index: bool = False
     foreign_key: str | None = None
 
     @computed_field
@@ -56,6 +57,8 @@ class ProjectSpec(BaseModel):
 
     project_name: str
     use_postgres: bool
+    use_builtin_auth: bool
+    builtin_jwt_token_expire: int
     create_daos: bool
     create_routes: bool
     create_tests: bool

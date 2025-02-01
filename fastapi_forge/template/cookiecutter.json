@@ -8,6 +8,12 @@
     "use_sqlalchemy": {
         "default": true
     },
+    "use_builtin_auth": {
+        "default": true
+    },
+    "builtin_jwt_token_expire": {
+        "default": 15
+    },
     "create_daos": {
         "default": true
     },
@@ -16,5 +22,8 @@
     },
     "models": {
         "models": []
-    }
+    },
+    "_extentions": [
+        "../jinja.CamelToSnakeExtention"
+    ]
 }

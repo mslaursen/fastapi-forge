@@ -23,6 +23,12 @@ def init() -> None:
             "Project Name", placeholder="Enter project name", value="restaurant_service"
         ).classes("w-full")
         use_postgres = ui.checkbox("Use PostgreSQL", value=True)
+        use_builtin_auth = ui.checkbox("Use Builtin Auth", value=True)
+        builtin_jwt_token_expire = ui.input(
+            "Builtin JWT Token Expire",
+            placeholder="Enter JWT Token Expiration",
+            value=15,
+        ).classes("w-full")
         create_daos = ui.checkbox("Create DAOs", value=True)
         create_routes = ui.checkbox("Create Routes", value=True)
         create_tests = ui.checkbox("Create Tests", value=True)
@@ -34,11 +40,13 @@ def init() -> None:
         ).classes("w-full")
 
     def on_submit() -> None:
-        ui.notify(models.value)
+        # ui.notify(models.value)
 
         spec = ProjectSpec(
             project_name=project_name.value,
             use_postgres=use_postgres.value,
+            use_builtin_auth=use_builtin_auth.value,
+            builtin_jwt_token_expire=builtin_jwt_token_expire.value,
             create_daos=create_daos.value,
             create_routes=create_routes.value,
             create_tests=create_tests.value,

@@ -8,7 +8,7 @@ import factory
 from typing import Any
 
 {% for model in cookiecutter.models.models -%}
-from src.models.{{ model.name.lower() }}_models import {{ model.name }}
+from src.models.{{ model.name | camel_to_snake }}_models import {{ model.name }}
 {% endfor %}
 
 
@@ -83,7 +83,7 @@ class {{ model.name }}Factory(BaseFactory[{{ model.name }}]):
 
     {%- for field in model.fields %}
     {%- if "id" not in field.name %}
-    {{ field.name.lower() }} = {{ field.factory_field_value }}
+    {{ field.name | camel_to_snake }} = {{ field.factory_field_value }}
     {%- endif %}
     {%- endfor %}
 
@@ -95,8 +95,8 @@ class {{ model.name }}Factory(BaseFactory[{{ model.name }}]):
         """Create a new instance of the model."""
 
         {%- for relationship in model.relationships %}
-        if "{{ relationship.target.lower() }}" not in kwargs:
-            kwargs["{{ relationship.target.lower() }}"] = await {{ relationship.target }}Factory.create()
+        if "{{ relationship.target | camel_to_snake }}" not in kwargs:
+            kwargs["{{ relationship.target | camel_to_snake }}"] = await {{ relationship.target }}Factory.create()
         {%- endfor %}
         return await super()._create_model(model_class, *args, **kwargs)
     {%- endif %}

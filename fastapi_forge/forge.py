@@ -29,10 +29,7 @@ def forge_project(spec: ProjectSpec) -> None:
         no_input=True,
         overwrite_if_exists=True,
         extra_context={
-            "project_name": spec.project_name,
-            "use_postgres": spec.use_postgres,
-            "create_daos": spec.create_daos,
-            "create_routes": spec.create_routes,
+            **spec.model_dump(exclude={"models"}),
             "models": {
                 "models": [model.model_dump() for model in spec.models],
             },
