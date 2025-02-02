@@ -517,5 +517,4 @@ if __name__ == "__main__":
         ),
     ]
 
-    # print(render_model_to_post_test(models[0]))
     print(render_model_to_post_test(models[0]))

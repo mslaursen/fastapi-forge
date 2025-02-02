@@ -1,21 +1,137 @@
 from nicegui import ui
 import json
-import os
 from fastapi_forge.forge import build_project
 from fastapi_forge.dtos import ProjectSpec, Model
+
+test_models = [
+    {
+        "name": "AppUser",
+        "fields": [
+            {
+                "name": "id",
+                "type": "UUID",
+                "primary_key": True,
+            },
+            {
+                "name": "email",
+                "type": "String",
+                "unique": True,
+                "nullable": False,
+            },
+            {
+                "name": "password",
+                "type": "String",
+                "nullable": False,
+            },
+        ],
+        "relationships": [],
+    },
+    {
+        "name": "Restaurant",
+        "fields": [
+            {
+                "name": "id",
+                "type": "UUID",
+                "primary_key": True,
+            },
+            {
+                "name": "name",
+                "type": "String",
+                "nullable": False,
+            },
+            {
+                "name": "address",
+                "type": "String",
+                "nullable": False,
+            },
+            {
+                "name": "phone_number",
+                "type": "String",
+                "nullable": True,
+            },
+        ],
+        "relationships": [],
+    },
+    {
+        "name": "Table",
+        "fields": [
+            {
+                "name": "id",
+                "type": "UUID",
+                "primary_key": True,
+            },
+            {
+                "name": "number",
+                "type": "Integer",
+                "nullable": False,
+            },
+            {
+                "name": "seats",
+                "type": "Integer",
+                "nullable": False,
+            },
+            {
+                "name": "restaurant_id",
+                "type": "UUID",
+                "foreign_key": "Restaurant.id",
+                "nullable": False,
+            },
+        ],
+        "relationships": [
+            {
+                "type": "ManyToOne",
+                "target": "Restaurant",
+                "foreign_key": "restaurant_id",
+            }
+        ],
+    },
+    {
+        "name": "Reservation",
+        "fields": [
+            {
+                "name": "id",
+                "type": "UUID",
+                "primary_key": True,
+            },
+            {
+                "name": "app_user_id",
+                "type": "UUID",
+                "foreign_key": "AppUser.id",
+                "nullable": False,
+            },
+            {
+                "name": "restaurant_id",
+                "type": "UUID",
+                "foreign_key": "Restaurant.id",
+                "nullable": False,
+            },
+            {
+                "name": "table_id",
+                "type": "UUID",
+                "foreign_key": "Table.id",
+                "nullable": False,
+            },
+            {
+                "name": "reservation_time",
+                "type": "DateTime",
+                "nullable": False,
+            },
+        ],
+        "relationships": [
+            {"type": "ManyToOne", "target": "AppUser", "foreign_key": "app_user_id"},
+            {
+                "type": "ManyToOne",
+                "target": "Restaurant",
+                "foreign_key": "restaurant_id",
+            },
+            {"type": "ManyToOne", "target": "Table", "foreign_key": "table_id"},
+        ],
+    },
+]
 
 
 def init(reload: bool = False) -> None:
     ui.label("FastAPI Forge")
-
-    path = os.path.join(
-        os.getcwd(),
-        "fastapi_forge",
-        "default_project_models.json",
-    )
-
-    with open(path) as file:
-        default_project_config = json.load(file)
 
     with ui.card().classes("w-96"):
         ui.label("Create a New Project").classes("text-2xl")
@@ -36,11 +152,11 @@ def init(reload: bool = False) -> None:
         models = ui.textarea(
             "Models (JSON)",
             placeholder="Enter models as JSON",
-            value=json.dumps(default_project_config, indent=4),
+            value=json.dumps(test_models, indent=4),
         ).classes("w-full")
 
     def on_submit() -> None:
-        # ui.notify(models.value)
+        ui.notify("Creating project...")
 
         spec = ProjectSpec(
             project_name=project_name.value,
@@ -59,7 +175,7 @@ def init(reload: bool = False) -> None:
             ui.notify(f"Failed to create project: {spec.project_name}")
             return
 
-        print("Project created.")
+        ui.notify(f"Project created: {spec.project_name}")
 
     ui.button("Submit", on_click=on_submit).classes("mt-4")
 
