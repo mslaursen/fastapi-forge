@@ -68,7 +68,7 @@ class BaseDAO[
 
         return query
 
-    def _base_filter(
+    def _apply_base_filter(
         self,
         query: sa.Select[Any] | None = None,
         loads: list[Any] | None = None,
@@ -141,7 +141,7 @@ class BaseDAO[
     ) -> Sequence[Model] | None:
         """Get records by filter parameters."""
 
-        query = self._base_filter(loads=loads, **filter_params)
+        query = self._apply_base_filter(loads=loads, **filter_params)
 
         result = await self.session.execute(query)
         return result.scalars().all()
@@ -153,7 +153,7 @@ class BaseDAO[
     ) -> Model | None:
         """Get a single record by filter parameters."""
 
-        query = self._base_filter(loads=loads, **filter_params)
+        query = self._apply_base_filter(loads=loads, **filter_params)
         query = query.limit(1)
 
         result = await self.session.execute(query)
