@@ -5,6 +5,9 @@
     "use_postgres": {
         "default": true
     },
+    "use_alembic": {
+        "default": true
+    },
     "use_sqlalchemy": {
         "default": true
     },

@@ -2,7 +2,7 @@ from typing import Any, Sequence
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models import Base
+from src.db import Base
 from src.dtos import (
     OffsetPaginationMetadata,
     PaginationParams,

@@ -139,6 +139,7 @@ def init(reload: bool = False) -> None:
             "Project Name", placeholder="Enter project name", value="restaurant_service"
         ).classes("w-full")
         use_postgres = ui.checkbox("Use PostgreSQL", value=True)
+        use_alembic = ui.checkbox("Use Alembic", value=True)
         use_builtin_auth = ui.checkbox("Use Builtin Auth", value=True)
         builtin_jwt_token_expire = ui.input(
             "Builtin JWT Token Expire",
@@ -161,6 +162,7 @@ def init(reload: bool = False) -> None:
         spec = ProjectSpec(
             project_name=project_name.value,
             use_postgres=use_postgres.value,
+            use_alembic=use_alembic.value,
             use_builtin_auth=use_builtin_auth.value,
             builtin_jwt_token_expire=builtin_jwt_token_expire.value,
             create_daos=create_daos.value,

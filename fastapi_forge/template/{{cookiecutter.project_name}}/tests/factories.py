@@ -3,7 +3,7 @@ import inspect
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
 )
-from src.models import Base
+from src.db import Base
 import factory
 from typing import Any
 
