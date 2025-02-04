@@ -13,7 +13,7 @@ from src.daos import AllDAOs
 from src.db.db_dependencies import get_db_session
 from src.main import get_app
 from src.settings import settings
-from src.models import meta
+from src.db import meta
 
 from tests.factories import BaseFactory
 from tests.test_utils import create_test_db, drop_test_db

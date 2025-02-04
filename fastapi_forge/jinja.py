@@ -31,7 +31,7 @@ from src.models.{{ relation.target | camel_to_snake }}_models import {{ relation
 {% endfor %}
 
 
-from src.models import Base
+from src.db import Base
 
 class {{ model.name }}(Base):
     \"\"\"{{ model.name.title() }} model.\"\"\"

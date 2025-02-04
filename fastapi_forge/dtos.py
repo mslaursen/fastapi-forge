@@ -57,6 +57,7 @@ class ProjectSpec(BaseModel):
 
     project_name: str
     use_postgres: bool
+    use_alembic: bool
     use_builtin_auth: bool
     builtin_jwt_token_expire: int
     create_daos: bool
