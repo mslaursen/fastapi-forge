@@ -503,7 +503,7 @@ if __name__ == "__main__":
         Model(
             name="Table",
             fields=[
-                ModelField(name="id", type="UUID", primary_key=True),
+                ModelField(name="", type="UUID", primary_key=True),
                 ModelField(name="number", type="Integer", nullable=False),
                 ModelField(name="seats", type="Integer", nullable=False),
                 ModelField(name="restaurant_id", type="UUID", nullable=False),
