@@ -8,7 +8,7 @@ description = "Generate FastAPI projects based on database schema."
 readme = "README.md"
 requires-python = ">=3.12"
 dynamic = ["version"]
-dependencies = ["click", "nicegui", "cookiecutter"]
+dependencies = ["click", "nicegui", "cookiecutter", "pytest"]
 
 [tool.setuptools_scm]
 
@@ -19,3 +19,6 @@ fastapi-forge = "fastapi_forge.__main__:main"
 exclude = ["template"]
 line-length = 88
 indent-width = 4
+
+[tool.pytest]
+testpaths = ["tests", "integration"]
