@@ -1,20 +1,7 @@
 from typing import Any
 from jinja2 import Environment
 from fastapi_forge.dtos import Model, ModelField, ModelRelationship
-
-
-def _convert(value: str, separator: str) -> str:
-    return "".join([separator + c.lower() if c.isupper() else c for c in value]).lstrip(
-        separator
-    )
-
-
-def camel_to_snake(value: str) -> str:
-    return _convert(value, "_")
-
-
-def camel_to_snake_hyphen(value: str) -> str:
-    return _convert(value, "-")
+from fastapi_forge.utils import camel_to_snake, camel_to_snake_hyphen
 
 
 env = Environment()
