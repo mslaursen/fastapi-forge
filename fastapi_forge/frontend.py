@@ -2,6 +2,8 @@ from nicegui import ui
 import json
 from fastapi_forge.forge import build_project
 from fastapi_forge.dtos import ProjectSpec, Model
+from fastapi_forge.enums import FieldDataType, RelationshipType
+
 
 test_models = [
     {
@@ -9,18 +11,18 @@ test_models = [
         "fields": [
             {
                 "name": "id",
-                "type": "UUID",
+                "type": FieldDataType.UUID,
                 "primary_key": True,
             },
             {
                 "name": "email",
-                "type": "String",
+                "type": FieldDataType.STRING,
                 "unique": True,
                 "nullable": False,
             },
             {
                 "name": "password",
-                "type": "String",
+                "type": FieldDataType.STRING,
                 "nullable": False,
             },
         ],
@@ -31,22 +33,22 @@ test_models = [
         "fields": [
             {
                 "name": "id",
-                "type": "UUID",
+                "type": FieldDataType.UUID,
                 "primary_key": True,
             },
             {
                 "name": "name",
-                "type": "String",
+                "type": FieldDataType.STRING,
                 "nullable": False,
             },
             {
                 "name": "address",
-                "type": "String",
+                "type": FieldDataType.STRING,
                 "nullable": False,
             },
             {
                 "name": "phone_number",
-                "type": "String",
+                "type": FieldDataType.STRING,
                 "nullable": True,
             },
         ],
@@ -57,29 +59,29 @@ test_models = [
         "fields": [
             {
                 "name": "id",
-                "type": "UUID",
+                "type": FieldDataType.UUID,
                 "primary_key": True,
             },
             {
                 "name": "number",
-                "type": "Integer",
+                "type": FieldDataType.INTEGER,
                 "nullable": False,
             },
             {
                 "name": "seats",
-                "type": "Integer",
+                "type": FieldDataType.INTEGER,
                 "nullable": False,
             },
             {
                 "name": "restaurant_id",
-                "type": "UUID",
+                "type": FieldDataType.UUID,
                 "foreign_key": "Restaurant.id",
                 "nullable": False,
             },
         ],
         "relationships": [
             {
-                "type": "ManyToOne",
+                "type": RelationshipType.MANY_TO_ONE,
                 "target": "Restaurant",
                 "foreign_key": "restaurant_id",
             }
@@ -90,41 +92,49 @@ test_models = [
         "fields": [
             {
                 "name": "id",
-                "type": "UUID",
+                "type": FieldDataType.UUID,
                 "primary_key": True,
             },
             {
                 "name": "app_user_id",
-                "type": "UUID",
+                "type": FieldDataType.UUID,
                 "foreign_key": "AppUser.id",
                 "nullable": False,
             },
             {
                 "name": "restaurant_id",
-                "type": "UUID",
+                "type": FieldDataType.UUID,
                 "foreign_key": "Restaurant.id",
                 "nullable": False,
             },
             {
                 "name": "table_id",
-                "type": "UUID",
+                "type": FieldDataType.UUID,
                 "foreign_key": "Table.id",
                 "nullable": False,
             },
             {
                 "name": "reservation_time",
-                "type": "DateTime",
+                "type": FieldDataType.DATETIME,
                 "nullable": False,
             },
         ],
         "relationships": [
-            {"type": "ManyToOne", "target": "AppUser", "foreign_key": "app_user_id"},
             {
-                "type": "ManyToOne",
+                "type": RelationshipType.MANY_TO_ONE,
+                "target": "AppUser",
+                "foreign_key": "app_user_id",
+            },
+            {
+                "type": RelationshipType.MANY_TO_ONE,
                 "target": "Restaurant",
                 "foreign_key": "restaurant_id",
             },
-            {"type": "ManyToOne", "target": "Table", "foreign_key": "table_id"},
+            {
+                "type": RelationshipType.MANY_TO_ONE,
+                "target": "Table",
+                "foreign_key": "table_id",
+            },
         ],
     },
 ]
@@ -136,7 +146,9 @@ def init(reload: bool = False) -> None:
     with ui.card().classes("w-96"):
         ui.label("Create a New Project").classes("text-2xl")
         project_name = ui.input(
-            "Project Name", placeholder="Enter project name", value="restaurant_service"
+            "Project Name",
+            placeholder="Enter project name",
+            value="restaurant_service",
         ).classes("w-full")
         use_postgres = ui.checkbox("Use PostgreSQL", value=True)
         use_alembic = ui.checkbox("Use Alembic", value=True)
