@@ -1,4 +1,3 @@
-from functools import lru_cache
 from pydantic import BaseModel, computed_field, Field, model_validator
 from typing import Annotated
 from fastapi_forge.enums import FieldDataType, RelationshipType
@@ -50,7 +49,6 @@ class ModelField(BaseModel):
 
     @computed_field
     @property
-    @lru_cache
     def factory_field_value(self) -> str | None:
         """Return the appropriate factory default for the model field."""
 
@@ -98,9 +96,7 @@ class Model(BaseModel):
         if len(field_names) != len(set(field_names)):
             raise ValueError(f"Model '{self.name}' contains duplicate fields.")
 
-        relationship_targets = [
-            relationship.target for relationship in self.relationships
-        ]
+        relationship_targets = [relation.target for relation in self.relationships]
         if len(relationship_targets) != len(set(relationship_targets)):
             raise ValueError(f"Model '{self.name} contains duplicate relationships.")
 
@@ -110,7 +106,7 @@ class Model(BaseModel):
             )
 
         relationship_target_field_names = {
-            relationship.field_name for relationship in self.relationships
+            relation.field_name for relation in self.relationships
         }
         for field in self.fields:
             if field.foreign_key is None:
