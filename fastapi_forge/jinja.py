@@ -2,6 +2,7 @@ from typing import Any
 from jinja2 import Environment
 from fastapi_forge.dtos import Model, ModelField, ModelRelationship
 from fastapi_forge.utils import camel_to_snake, camel_to_snake_hyphen
+from fastapi_forge.enums import FieldDataType, RelationshipType
 
 
 env = Environment()
@@ -47,7 +48,7 @@ class {{ model.name }}(Base):
         {% if relation.type == "ManyToOne" %}
     {{ relation.target | camel_to_snake }}: Mapped[{{ relation.target }}] = relationship(
         "{{ relation.target }}",
-        foreign_keys=[{{ relation.foreign_key | camel_to_snake }}],
+        foreign_keys=[{{ relation.field_name }}],
         uselist=False,
     )
         {% endif %}
@@ -462,46 +463,82 @@ if __name__ == "__main__":
         Model(
             name="AppUser",
             fields=[
-                ModelField(name="id", type="UUID", primary_key=True),
-                ModelField(name="name", type="String", nullable=False),
-                ModelField(name="email", type="String", unique=True),
-                ModelField(name="password", type="String", nullable=False),
-                ModelField(name="birth_date", type="DateTime"),
-            ],
-            relationships=[
-                ModelRelationship(
-                    type="OneToMany", target="Post", foreign_key="user_id"
-                )
-            ],
-        ),
-        Model(
-            name="Post",
-            fields=[
-                ModelField(name="id", type="UUID", primary_key=True),
-                ModelField(name="title", type="String", nullable=False),
-                ModelField(name="user_id", type="UUID", foreign_key="User.id"),
-            ],
-            relationships=[
-                ModelRelationship(
-                    type="ManyToOne", target="User", foreign_key="user_id"
-                )
+                ModelField(
+                    name="id",
+                    type=FieldDataType.UUID,
+                    primary_key=True,
+                    unique=True,
+                ),
+                ModelField(
+                    name="email",
+                    type=FieldDataType.STRING,
+                    unique=True,
+                    nullable=False,
+                ),
+                ModelField(
+                    name="password",
+                    type=FieldDataType.STRING,
+                    nullable=False,
+                ),
             ],
         ),
         Model(
-            name="Table",
+            name="Reservation",
             fields=[
-                ModelField(name="", type="UUID", primary_key=True),
-                ModelField(name="number", type="Integer", nullable=False),
-                ModelField(name="seats", type="Integer", nullable=False),
-                ModelField(name="restaurant_id", type="UUID", nullable=False),
-                ModelField(name="time", type="DateTime", nullable=False),
+                ModelField(
+                    name="id",
+                    type=FieldDataType.UUID,
+                    primary_key=True,
+                    unique=True,
+                ),
+                ModelField(
+                    name="reservation_date",
+                    type=FieldDataType.DATETIME,
+                    nullable=False,
+                ),
+                ModelField(
+                    name="party_size",
+                    type=FieldDataType.INTEGER,
+                    nullable=False,
+                ),
+                ModelField(
+                    name="notes",
+                    type=FieldDataType.STRING,
+                    nullable=True,
+                ),
+                ModelField(
+                    name="app_user_id",
+                    type=FieldDataType.UUID,
+                    foreign_key="AppUser.id",
+                    nullable=False,
+                ),
             ],
             relationships=[
                 ModelRelationship(
-                    type="ManyToOne", target="Restaurant", foreign_key="restaurant_id"
+                    type=RelationshipType.MANY_TO_ONE,
+                    target="AppUser",
                 )
             ],
         ),
     ]
 
-    print(render_model_to_post_test(models[0]))
+    render_funcs = [
+        render_model_to_model,
+        render_model_to_dto,
+        render_model_to_dao,
+        render_model_to_routers,
+        render_model_to_post_test,
+        render_model_to_get_test,
+        render_model_to_get_id_test,
+        render_model_to_patch_test,
+        render_model_to_delete_test,
+    ]
+
+    for fn in render_funcs:
+        print()
+        print("=" * 80)
+        print(fn.__name__)
+        print("=" * 80)
+        print()
+
+        print(fn(models[0]))

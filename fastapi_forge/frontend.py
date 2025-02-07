@@ -13,6 +13,7 @@ test_models = [
                 "name": "id",
                 "type": FieldDataType.UUID,
                 "primary_key": True,
+                "unique": True,
             },
             {
                 "name": "email",
@@ -35,6 +36,7 @@ test_models = [
                 "name": "id",
                 "type": FieldDataType.UUID,
                 "primary_key": True,
+                "unique": True,
             },
             {
                 "name": "name",
@@ -61,6 +63,7 @@ test_models = [
                 "name": "id",
                 "type": FieldDataType.UUID,
                 "primary_key": True,
+                "unique": True,
             },
             {
                 "name": "number",
@@ -83,7 +86,6 @@ test_models = [
             {
                 "type": RelationshipType.MANY_TO_ONE,
                 "target": "Restaurant",
-                "foreign_key": "restaurant_id",
             }
         ],
     },
@@ -94,6 +96,7 @@ test_models = [
                 "name": "id",
                 "type": FieldDataType.UUID,
                 "primary_key": True,
+                "unique": True,  # Added missing unique constraint
             },
             {
                 "name": "app_user_id",
@@ -123,17 +126,14 @@ test_models = [
             {
                 "type": RelationshipType.MANY_TO_ONE,
                 "target": "AppUser",
-                "foreign_key": "app_user_id",
             },
             {
                 "type": RelationshipType.MANY_TO_ONE,
                 "target": "Restaurant",
-                "foreign_key": "restaurant_id",
             },
             {
                 "type": RelationshipType.MANY_TO_ONE,
                 "target": "Table",
-                "foreign_key": "table_id",
             },
         ],
     },
@@ -158,7 +158,6 @@ def init(reload: bool = False) -> None:
             placeholder="Enter JWT Token Expiration",
             value=15,
         ).classes("w-full")
-        create_daos = ui.checkbox("Create DAOs", value=True)
         create_routes = ui.checkbox("Create Routes", value=True)
         create_tests = ui.checkbox("Create Tests", value=True)
 
@@ -177,7 +176,6 @@ def init(reload: bool = False) -> None:
             use_alembic=use_alembic.value,
             use_builtin_auth=use_builtin_auth.value,
             builtin_jwt_token_expire=builtin_jwt_token_expire.value,
-            create_daos=create_daos.value,
             create_routes=create_routes.value,
             create_tests=create_tests.value,
             models=[Model(**model) for model in json.loads(models.value)],
