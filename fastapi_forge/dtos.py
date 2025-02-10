@@ -4,6 +4,7 @@ from fastapi_forge.enums import FieldDataType, RelationshipType
 from typing_extensions import Self
 from fastapi_forge.utils import camel_to_snake
 
+
 BoundedStr = Annotated[str, Field(..., min_length=1, max_length=100)]
 ForeignKey = Annotated[str, Field(..., pattern=r"^[A-Z][a-zA-Z]*\.id$")]
 ModelName = Annotated[str, Field(..., pattern=r"^[A-Z][a-zA-Z]*$")]
