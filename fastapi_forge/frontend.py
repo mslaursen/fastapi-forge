@@ -139,9 +139,13 @@ class ModelRow(ui.row):
 
 
 class ModelPanel(ui.left_drawer):
-    def __init__(self, on_select_model: Callable[[dict[str, Any]], None]):
+    def __init__(
+        self,
+        use_defaults: bool,
+        on_select_model: Callable[[dict[str, Any]], None],
+    ):
         super().__init__(value=True, elevated=True, bottom_corner=True)
-        self.models: list[dict[str, Any]] = test_models
+        self.models: list[dict[str, Any]] = test_models if use_defaults else []
 
         self.selected_model: dict[str, Any] | None = None
         self.on_select_model = on_select_model
@@ -442,8 +446,13 @@ class ModelEditorCard(ui.card):
 
 
 class ProjectConfigPanel(ui.right_drawer):
-    def __init__(self, generate_models: Callable[[], list[Model]]):
+    def __init__(
+        self,
+        use_defaults: bool,
+        generate_models: Callable[[], list[Model]],
+    ):
         super().__init__(value=True, elevated=True, bottom_corner=True)
+        self.use_defaults = use_defaults
         self.generate_models = generate_models
         self._build()
 
@@ -454,71 +463,133 @@ class ProjectConfigPanel(ui.right_drawer):
             ) as self.column:
                 with ui.column().classes("w-full gap-2"):
                     ui.label("Project Name").classes("text-lg font-bold")
-                    self.project_name = ui.input(placeholder="Project Name").classes(
-                        "w-full"
+                    self.project_name = ui.input(
+                        placeholder="Project Name",
+                    ).classes("w-full")
+
+                with ui.column().classes("w-full gap-2"):
+                    ui.label("Database").classes("text-lg font-bold")
+                    self.use_postgres = ui.checkbox(
+                        "Postgres", value=self.use_defaults
+                    ).classes("w-full")
+                    self.use_mysql = (
+                        ui.checkbox("MySQL")
+                        .classes("w-full")
+                        .tooltip("Coming soon!")
+                        .set_enabled(False)
+                    )
+                    self.use_alembic = (
+                        ui.checkbox(
+                            "Alembic (Migrations)",
+                            value=self.use_defaults,
+                        )
+                        .classes("w-full")
+                        .bind_enabled_from(
+                            self.use_postgres or self.use_mysql,
+                            "value",
+                        )
                     )
 
                 with ui.column().classes("w-full gap-2"):
                     ui.label("Code Generation").classes("text-lg font-bold")
-                    self.create_routes = ui.checkbox("Create Routes").classes("w-full")
-                    self.create_tests = ui.checkbox("Create Tests").classes("w-full")
-
-                with ui.column().classes("w-full gap-2"):
-                    ui.label("Database").classes("text-lg font-bold")
-                    self.use_postgres = ui.checkbox("Postgres").classes("w-full")
-                    self.use_alembic = ui.checkbox("Alembic").classes("w-full")
+                    self.create_routes = (
+                        ui.checkbox("Create Routes", value=self.use_defaults)
+                        .classes("w-full")
+                        .bind_enabled_from(self.use_postgres, "value")
+                    )
+                    self.create_tests = (
+                        ui.checkbox("Create Tests", value=self.use_defaults)
+                        .classes("w-full")
+                        .bind_enabled_from(self.use_postgres, "value")
+                    )
 
                 with ui.column().classes("w-full gap-2"):
                     ui.label("Authentication").classes("text-lg font-bold")
-                    self.use_builtin_auth = ui.checkbox("Builtin Auth").classes(
-                        "w-full"
+                    self.use_builtin_auth = (
+                        ui.checkbox("Builtin Auth", value=self.use_defaults)
+                        .classes("w-full")
+                        .bind_enabled_from(self.use_postgres, "value")
                     )
-                    self.builtin_jwt_token_expire = ui.number(
-                        placeholder="JWT Token Expire (minutes)",
-                        min=1,
-                        max=365,
-                    ).classes("w-full")
+                    self.builtin_jwt_token_expire = (
+                        ui.number(
+                            placeholder="JWT Token Expire (minutes)",
+                            min=1,
+                            max=365,
+                            value=30 if self.use_defaults else None,
+                        )
+                        .classes("w-full")
+                        .bind_enabled_from(self.use_builtin_auth, "value")
+                    )
 
                 with ui.column().classes("w-full gap-2"):
                     ui.label("Messaging").classes("text-lg font-bold")
                     self.use_kafka = (
-                        ui.checkbox("Kafka").classes("w-full").set_enabled(False)
+                        ui.checkbox("Kafka")
+                        .classes("w-full")
+                        .tooltip("Coming soon!")
+                        .set_enabled(False)
                     )
                     self.use_rabbitmq = (
-                        ui.checkbox("RabbitMQ").classes("w-full").set_enabled(False)
+                        ui.checkbox("RabbitMQ")
+                        .classes("w-full")
+                        .tooltip("Coming soon!")
+                        .set_enabled(False)
                     )
 
                 with ui.column().classes("w-full gap-2"):
                     ui.label("Task Queues").classes("text-lg font-bold")
                     self.use_celery = (
-                        ui.checkbox("Celery").classes("w-full").set_enabled(False)
+                        ui.checkbox("Celery")
+                        .classes("w-full")
+                        .tooltip("Coming soon!")
+                        .set_enabled(False)
                     )
                     self.use_taskiq = (
-                        ui.checkbox("Taskiq").classes("w-full").set_enabled(False)
+                        ui.checkbox("Taskiq")
+                        .classes("w-full")
+                        .tooltip("Coming soon!")
+                        .set_enabled(False)
                     )
 
                 with ui.column().classes("w-full gap-2"):
                     ui.label("Metrics").classes("text-lg font-bold")
                     self.use_prometheus = (
-                        ui.checkbox("Prometheus").classes("w-full").set_enabled(False)
+                        ui.checkbox("Prometheus")
+                        .classes("w-full")
+                        .tooltip("Coming soon!")
+                        .set_enabled(False)
                     )
-
                 with ui.column().classes("w-full gap-2"):
                     ui.label("NoSQL").classes("text-lg font-bold")
                     self.use_elasticsearch = (
                         ui.checkbox("ElasticSearch")
                         .classes("w-full")
+                        .tooltip("Coming soon!")
                         .set_enabled(False)
                     )
 
-                ui.button("Create Project", on_click=self._create_project).classes(
-                    "w-full py-3 text-lg font-bold  mt-4"
-                )
+                ui.button(
+                    "Create Project", on_click=self._confirm_create_project
+                ).classes("w-full py-3 text-lg font-bold  mt-4")
 
-    def _create_project(self) -> None:
+                with ui.dialog() as self.confirm_dialog, ui.card():
+                    ui.label("Confirm Project Creation").classes("text-lg font-bold")
+                    with ui.row().classes("w-full gap-2"):
+                        ui.button("Cancel", on_click=self.confirm_dialog.close)
+                        ui.button("Confirm", on_click=self._create_project)
+
+    def _confirm_create_project(self) -> None:
+        """Open the confirmation dialog when the 'Create Project' button is clicked."""
+
         if not self.project_name.value:
             ui.notify("Project Name is required!", type="negative")
             return
+
+        self.confirm_dialog.open()
+
+    def _create_project(self) -> None:
+        """Handle the project creation after confirmation."""
+        self.confirm_dialog.close()
 
         try:
             models = self.generate_models()
@@ -551,7 +622,7 @@ class ProjectConfigPanel(ui.right_drawer):
             ui.notify(f"Error creating Project: {e}", type="negative")
 
 
-def init(reload: bool = False) -> None:
+def init(reload: bool = False, use_defaults: bool = False) -> None:
     ui.add_head_html(
         '<link href="https://unpkg.com/eva-icons@1.1.3/style/eva-icons.css" rel="stylesheet" />'
     )
@@ -563,9 +634,11 @@ def init(reload: bool = False) -> None:
     with ui.column().classes("w-full h-full items-center justify-center mt-4"):
         model_editor_card = ModelEditorCard()
     model_panel = ModelPanel(
+        use_defaults=use_defaults,
         on_select_model=model_editor_card.update_selected_model,
     )
     ProjectConfigPanel(
+        use_defaults=use_defaults,
         generate_models=model_panel.generate_model_instances,
     )
 
@@ -577,4 +650,4 @@ def init(reload: bool = False) -> None:
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    init(reload=True)
+    init(reload=True, use_defaults=True)
