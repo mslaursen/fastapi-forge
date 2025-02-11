@@ -77,8 +77,10 @@ class ModelCreate(ui.row):
     def _build(self) -> None:
         with self.classes("w-full flex items-center justify-between"):
             self.model_input = ui.input(placeholder="Model name").classes("self-center")
-            self.add_button = ui.button(icon="add", on_click=self._add_model).classes(
-                "self-center"
+            self.add_button = (
+                ui.button(icon="add", on_click=self._add_model)
+                .classes("self-center")
+                .tooltip("Add Model")
             )
 
     def _add_model(self) -> None:
@@ -196,7 +198,6 @@ class ModelPanel(ui.left_drawer):
                 )
 
     def generate_model_instances(self) -> list[Model]:
-        """Convert the models dictionary into a list of Model objects."""
         try:
             model_objects = []
 
@@ -254,7 +255,9 @@ class ModelEditorCard(ui.card):
         with self:
             with ui.row().classes("w-full justify-between items-center"):
                 self.model_name_display = ui.label().classes("text-lg font-bold")
-                ui.button(icon="add", on_click=self._open_modal).classes("self-end")
+                ui.button(icon="add", on_click=self._open_modal).classes(
+                    "self-end"
+                ).tooltip("Add Field")
 
             self.table = ui.table(
                 columns=COLUMNS,
@@ -465,6 +468,7 @@ class ProjectConfigPanel(ui.right_drawer):
                     ui.label("Project Name").classes("text-lg font-bold")
                     self.project_name = ui.input(
                         placeholder="Project Name",
+                        value="restaurant_service" if self.use_defaults else "",
                     ).classes("w-full")
 
                 with ui.column().classes("w-full gap-2"):
@@ -538,14 +542,14 @@ class ProjectConfigPanel(ui.right_drawer):
 
                 with ui.column().classes("w-full gap-2"):
                     ui.label("Task Queues").classes("text-lg font-bold")
-                    self.use_celery = (
-                        ui.checkbox("Celery")
+                    self.use_taskiq = (
+                        ui.checkbox("Taskiq")
                         .classes("w-full")
                         .tooltip("Coming soon!")
                         .set_enabled(False)
                     )
-                    self.use_taskiq = (
-                        ui.checkbox("Taskiq")
+                    self.use_celery = (
+                        ui.checkbox("Celery")
                         .classes("w-full")
                         .tooltip("Coming soon!")
                         .set_enabled(False)
@@ -568,28 +572,18 @@ class ProjectConfigPanel(ui.right_drawer):
                         .set_enabled(False)
                     )
 
-                ui.button(
-                    "Create Project", on_click=self._confirm_create_project
-                ).classes("w-full py-3 text-lg font-bold  mt-4")
+                with ui.column().classes("w-full gap-2"):
+                    self.loading_spinner = ui.spinner(size="lg").classes(
+                        "hidden mt-4 self-center"
+                    )
 
-                with ui.dialog() as self.confirm_dialog, ui.card():
-                    ui.label("Confirm Project Creation").classes("text-lg font-bold")
-                    with ui.row().classes("w-full gap-2"):
-                        ui.button("Cancel", on_click=self.confirm_dialog.close)
-                        ui.button("Confirm", on_click=self._create_project)
+                    self.create_button = ui.button(
+                        "Create Project", on_click=self._create_project
+                    ).classes("w-full py-3 text-lg font-bold mt-4")
 
-    def _confirm_create_project(self) -> None:
-        """Open the confirmation dialog when the 'Create Project' button is clicked."""
-
-        if not self.project_name.value:
-            ui.notify("Project Name is required!", type="negative")
-            return
-
-        self.confirm_dialog.open()
-
-    def _create_project(self) -> None:
-        """Handle the project creation after confirmation."""
-        self.confirm_dialog.close()
+    async def _create_project(self) -> None:
+        self.create_button.classes("hidden")
+        self.loading_spinner.classes(remove="hidden")
 
         try:
             models = self.generate_models()
@@ -613,13 +607,15 @@ class ProjectConfigPanel(ui.right_drawer):
                 create_tests=self.create_tests.value,
                 models=models,
             )
-
-            build_project(project_spec)
+            await build_project(project_spec)
 
             ui.notify("Project created successfully!", type="positive")
 
         except Exception as e:
             ui.notify(f"Error creating Project: {e}", type="negative")
+        finally:
+            self.create_button.classes(remove="hidden")
+            self.loading_spinner.classes("hidden")
 
 
 def init(reload: bool = False, use_defaults: bool = False) -> None:
