@@ -8,10 +8,12 @@ def main() -> None:
 
 
 @main.command()
-def start() -> None:
+@click.option(
+    "--use-defaults", is_flag=True, help="Use default values for project creation."
+)
+def start(use_defaults: bool) -> None:
     """Start the server, and open the browser."""
-
-    init()
+    init(use_defaults=use_defaults)
 
 
 @main.command()
