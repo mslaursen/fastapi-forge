@@ -4,189 +4,7 @@ from fastapi_forge.enums import FieldDataType, RelationshipType
 from fastapi_forge.dtos import Model, ModelField, ModelRelationship, ProjectSpec
 from fastapi_forge.utils import snake_to_camel
 from fastapi_forge.forge import build_project
-
-test_models = [
-    {
-        "name": "AppUser",
-        "fields": [
-            {
-                "name": "id",
-                "type": FieldDataType.UUID,
-                "primary_key": True,
-                "nullable": False,
-                "unique": True,
-                "index": True,
-                "foreign_key": False,
-                "relationship_type": None,
-            },
-            {
-                "name": "email",
-                "type": FieldDataType.STRING,
-                "primary_key": False,
-                "nullable": False,
-                "unique": True,
-                "index": True,
-                "foreign_key": False,
-                "relationship_type": None,
-            },
-            {
-                "name": "password",
-                "type": FieldDataType.STRING,
-                "primary_key": False,
-                "nullable": False,
-                "unique": False,
-                "index": False,
-                "foreign_key": False,
-                "relationship_type": None,
-            },
-        ],
-    },
-    {
-        "name": "Restaurant",
-        "fields": [
-            {
-                "name": "id",
-                "type": FieldDataType.UUID,
-                "primary_key": True,
-                "nullable": False,
-                "unique": True,
-                "index": True,
-                "foreign_key": False,
-                "relationship_type": None,
-            },
-            {
-                "name": "name",
-                "type": FieldDataType.STRING,
-                "primary_key": False,
-                "nullable": False,
-                "unique": False,
-                "index": False,
-                "foreign_key": False,
-                "relationship_type": None,
-            },
-            {
-                "name": "address",
-                "type": FieldDataType.STRING,
-                "primary_key": False,
-                "nullable": False,
-                "unique": False,
-                "index": False,
-                "foreign_key": False,
-                "relationship_type": None,
-            },
-            {
-                "name": "phone_number",
-                "type": FieldDataType.STRING,
-                "primary_key": False,
-                "nullable": True,
-                "unique": False,
-                "index": False,
-                "foreign_key": False,
-                "relationship_type": None,
-            },
-        ],
-    },
-    {
-        "name": "Table",
-        "fields": [
-            {
-                "name": "id",
-                "type": FieldDataType.UUID,
-                "primary_key": True,
-                "nullable": False,
-                "unique": True,
-                "index": True,
-                "foreign_key": False,
-                "relationship_type": None,
-            },
-            {
-                "name": "number",
-                "type": FieldDataType.INTEGER,
-                "primary_key": False,
-                "nullable": False,
-                "unique": False,
-                "index": False,
-                "foreign_key": False,
-                "relationship_type": None,
-            },
-            {
-                "name": "seats",
-                "type": FieldDataType.INTEGER,
-                "primary_key": False,
-                "nullable": False,
-                "unique": False,
-                "index": False,
-                "foreign_key": False,
-                "relationship_type": None,
-            },
-            {
-                "name": "restaurant_id",
-                "type": FieldDataType.UUID,
-                "primary_key": False,
-                "nullable": False,
-                "unique": False,
-                "index": False,
-                "foreign_key": True,
-                "relationship_type": str(RelationshipType.MANY_TO_ONE),
-            },
-        ],
-    },
-    {
-        "name": "Reservation",
-        "fields": [
-            {
-                "name": "id",
-                "type": FieldDataType.UUID,
-                "primary_key": True,
-                "nullable": False,
-                "unique": True,
-                "index": True,
-                "foreign_key": False,
-                "relationship_type": None,
-            },
-            {
-                "name": "app_user_id",
-                "type": FieldDataType.UUID,
-                "primary_key": False,
-                "nullable": False,
-                "unique": False,
-                "index": False,
-                "foreign_key": True,
-                "relationship_type": str(RelationshipType.MANY_TO_ONE),
-            },
-            {
-                "name": "restaurant_id",
-                "type": FieldDataType.UUID,
-                "primary_key": False,
-                "nullable": False,
-                "unique": False,
-                "index": False,
-                "foreign_key": True,
-                "relationship_type": str(RelationshipType.MANY_TO_ONE),
-            },
-            {
-                "name": "table_id",
-                "type": FieldDataType.UUID,
-                "primary_key": False,
-                "nullable": False,
-                "unique": False,
-                "index": False,
-                "foreign_key": True,
-                "relationship_type": str(RelationshipType.MANY_TO_ONE),
-            },
-            {
-                "name": "reservation_time",
-                "type": FieldDataType.DATETIME,
-                "primary_key": False,
-                "nullable": False,
-                "unique": False,
-                "index": False,
-                "foreign_key": False,
-                "relationship_type": None,
-            },
-        ],
-    },
-]
+from fastapi_forge.test_data import test_models
 
 COLUMNS = [
     {
@@ -229,9 +47,20 @@ class Header(ui.header):
 
     def _build(self) -> None:
         with self:
+            ui.button(
+                icon="eva-github",
+                color="white",
+                on_click=lambda: ui.navigate.to(
+                    "https://github.com/mslaursen/fastapi-forge"
+                ),
+            ).classes("self-center", remove="bg-white").tooltip(
+                "Drop a ⭐️ if you like FastAPI Forge!"
+            )
+
             ui.label(text="FastAPI Forge").classes(
                 "font-bold ml-auto self-center text-2xl"
             )
+
             ui.button(
                 icon="dark_mode",
                 color="white",
@@ -620,39 +449,86 @@ class ProjectConfigPanel(ui.right_drawer):
 
     def _build(self) -> None:
         with self:
-            with ui.column().classes("items-align content-start w-full") as self.column:
-                self.project_name = ui.input(
-                    placeholder="Project Name", value="restaurant_service"
-                ).classes(
-                    "self-center",
-                )
-                self.use_postgres = ui.checkbox("Use Postgres", value=True).classes(
-                    "self-center"
-                )
-                self.use_alembic = ui.checkbox("Use Alembic", value=True).classes(
-                    "self-center"
-                )
-                self.use_builtin_auth = ui.checkbox(
-                    "Use Builtin Auth", value=True
-                ).classes("self-center")
-                self.builtin_jwt_token_expire = ui.input(
-                    placeholder="Builtin JWT Token Expire (minutes)",
-                    value=30,
-                ).classes("self-center")
-                self.create_routes = ui.checkbox("Create Routes", value=True).classes(
-                    "self-center"
-                )
-                self.create_tests = ui.checkbox("Create Tests", value=True).classes(
-                    "self-center"
-                )
+            with ui.column().classes(
+                "items-align content-start w-full gap-4"
+            ) as self.column:
+                with ui.column().classes("w-full gap-2"):
+                    ui.label("Project Name").classes("text-lg font-bold")
+                    self.project_name = ui.input(placeholder="Project Name").classes(
+                        "w-full"
+                    )
+
+                with ui.column().classes("w-full gap-2"):
+                    ui.label("Code Generation").classes("text-lg font-bold")
+                    self.create_routes = ui.checkbox("Create Routes").classes("w-full")
+                    self.create_tests = ui.checkbox("Create Tests").classes("w-full")
+
+                with ui.column().classes("w-full gap-2"):
+                    ui.label("Database").classes("text-lg font-bold")
+                    self.use_postgres = ui.checkbox("Postgres").classes("w-full")
+                    self.use_alembic = ui.checkbox("Alembic").classes("w-full")
+
+                with ui.column().classes("w-full gap-2"):
+                    ui.label("Authentication").classes("text-lg font-bold")
+                    self.use_builtin_auth = ui.checkbox("Builtin Auth").classes(
+                        "w-full"
+                    )
+                    self.builtin_jwt_token_expire = ui.number(
+                        placeholder="JWT Token Expire (minutes)",
+                        min=1,
+                        max=365,
+                    ).classes("w-full")
+
+                with ui.column().classes("w-full gap-2"):
+                    ui.label("Messaging").classes("text-lg font-bold")
+                    self.use_kafka = (
+                        ui.checkbox("Kafka").classes("w-full").set_enabled(False)
+                    )
+                    self.use_rabbitmq = (
+                        ui.checkbox("RabbitMQ").classes("w-full").set_enabled(False)
+                    )
+
+                with ui.column().classes("w-full gap-2"):
+                    ui.label("Task Queues").classes("text-lg font-bold")
+                    self.use_celery = (
+                        ui.checkbox("Celery").classes("w-full").set_enabled(False)
+                    )
+                    self.use_taskiq = (
+                        ui.checkbox("Taskiq").classes("w-full").set_enabled(False)
+                    )
+
+                with ui.column().classes("w-full gap-2"):
+                    ui.label("Metrics").classes("text-lg font-bold")
+                    self.use_prometheus = (
+                        ui.checkbox("Prometheus").classes("w-full").set_enabled(False)
+                    )
+
+                with ui.column().classes("w-full gap-2"):
+                    ui.label("NoSQL").classes("text-lg font-bold")
+                    self.use_elasticsearch = (
+                        ui.checkbox("ElasticSearch")
+                        .classes("w-full")
+                        .set_enabled(False)
+                    )
 
                 ui.button("Create Project", on_click=self._create_project).classes(
-                    "self-center"
+                    "w-full py-3 text-lg font-bold  mt-4"
                 )
 
     def _create_project(self) -> None:
-        models = self.generate_models()
-        if not models:
+        if not self.project_name.value:
+            ui.notify("Project Name is required!", type="negative")
+            return
+
+        try:
+            models = self.generate_models()
+
+            if not models:
+                ui.notify("No models to generate!", type="negative")
+                return
+
+        except Exception as e:
+            ui.notify(f"Error generating Models: {e}", type="negative")
             return
 
         try:
@@ -661,7 +537,7 @@ class ProjectConfigPanel(ui.right_drawer):
                 use_postgres=self.use_postgres.value,
                 use_alembic=self.use_alembic.value,
                 use_builtin_auth=self.use_builtin_auth.value,
-                builtin_jwt_token_expire=self.builtin_jwt_token_expire.value,
+                builtin_jwt_token_expire=int(self.builtin_jwt_token_expire.value),
                 create_routes=self.create_routes.value,
                 create_tests=self.create_tests.value,
                 models=models,
@@ -676,12 +552,16 @@ class ProjectConfigPanel(ui.right_drawer):
 
 
 def init(reload: bool = False) -> None:
+    ui.add_head_html(
+        '<link href="https://unpkg.com/eva-icons@1.1.3/style/eva-icons.css" rel="stylesheet" />'
+    )
     ui.button.default_props("round flat dense")
     ui.input.default_props("dense")
 
     Header()
 
-    model_editor_card = ModelEditorCard()
+    with ui.column().classes("w-full h-full items-center justify-center mt-4"):
+        model_editor_card = ModelEditorCard()
     model_panel = ModelPanel(
         on_select_model=model_editor_card.update_selected_model,
     )
@@ -697,4 +577,4 @@ def init(reload: bool = False) -> None:
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    init()
+    init(reload=True)
