@@ -1,4 +1,4 @@
-DOCKER_CMD = docker exec -it $$(docker ps | grep "{{ cookiecutter.project_name }}-api" | awk '{print $$1}') 
+DOCKER_CMD = docker compose exec -it api
 
 
 run:
