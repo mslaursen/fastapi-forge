@@ -239,6 +239,7 @@ class ModelPanel(ui.left_drawer):
 
         except Exception as e:
             ui.notify(f"Error creating Model objects: {e}", type="negative")
+            return []
 
         return model_objects
 
