@@ -28,3 +28,10 @@ make up
 
 * The project, along with its dependencies, will now run in Docker using Docker Compose.
 * The SwaggerUI/OpenAPI documentation is available at `localhost:8000/docs`
+
+## Options
+Use the `--use-defaults` for a quicker start:
+
+```
+fastapi-forge start --use-defaults
+```
