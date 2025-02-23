@@ -8,7 +8,7 @@ import factory
 from typing import Any
 
 {% for model in cookiecutter.models.models -%}
-from src.models.{{ model.name | camel_to_snake }}_models import {{ model.name }}
+from src.models.{{ model.name }}_models import {{ model.name_cc }}
 {% endfor %}
 
 
@@ -76,22 +76,22 @@ class BaseFactory[Model: Base](factory.Factory):
 
 
 {% for model in cookiecutter.models.models %}
-class {{ model.name }}Factory(BaseFactory[{{ model.name }}]):
+class {{ model.name_cc }}Factory(BaseFactory[{{ model.name_cc }}]):
     """{{ model.name }} factory."""
     class Meta:
-        model = {{ model.name }}
+        model = {{ model.name_cc }}
 
     {%- for field in model.fields %}
     {%- if "id" not in field.name %}
-    {{ field.name | camel_to_snake }} = {{ field.factory_field_value }}
+    {{ field.name }} = {{ field.factory_field_value }}
     {%- endif %}
     {%- endfor %}
 
     {%- if model.relationships %}
     @classmethod
     async def _create_model(
-        cls, model_class: type[BaseFactory[{{ model.name }}]], *args: Any, **kwargs: Any
-    ) -> BaseFactory[{{ model.name }}]:
+        cls, model_class: type[BaseFactory[{{ model.name_cc }}]], *args: Any, **kwargs: Any
+    ) -> BaseFactory[{{ model.name_cc }}]:
         """Create a new instance of the model."""
 
         {%- for relationship in model.relationships %}

@@ -3,7 +3,7 @@ from fastapi_forge.enums import FieldDataType, RelationshipType
 
 test_models = [
     {
-        "name": "AppUser",
+        "name": "app_user",
         "fields": [
             {
                 "name": "id",
@@ -38,7 +38,7 @@ test_models = [
         ],
     },
     {
-        "name": "Restaurant",
+        "name": "restaurant",
         "fields": [
             {
                 "name": "id",
@@ -83,7 +83,7 @@ test_models = [
         ],
     },
     {
-        "name": "Table",
+        "name": "table",
         "fields": [
             {
                 "name": "id",
@@ -128,7 +128,7 @@ test_models = [
         ],
     },
     {
-        "name": "Reservation",
+        "name": "reservation",
         "fields": [
             {
                 "name": "id",
