@@ -2,33 +2,40 @@ from pydantic import BaseModel, computed_field, Field, model_validator
 from typing import Annotated
 from fastapi_forge.enums import FieldDataType, RelationshipType
 from typing_extensions import Self
-from fastapi_forge.utils import camel_to_snake
+from fastapi_forge.utils import camel_to_snake, snake_to_camel, camel_to_snake_hyphen
 
 
 BoundedStr = Annotated[str, Field(..., min_length=1, max_length=100)]
 ForeignKey = Annotated[str, Field(..., pattern=r"^[A-Z][a-zA-Z]*\.id$")]
-ModelName = Annotated[str, Field(..., pattern=r"^[A-Z][a-zA-Z]*$")]
+ModelName = Annotated[
+    BoundedStr,
+    Field(..., pattern=r"^[a-z][a-z0-9_]*$"),
+]
+ModelFieldName = Annotated[
+    BoundedStr,
+    Field(..., pattern=r"^[a-z][a-z0-9_]*$"),
+]
 ProjectName = Annotated[
-    str,
-    Field(
-        ...,
-        min_length=1,
-        max_length=100,
-        pattern=r"^[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9])?$",
-    ),
+    BoundedStr,
+    Field(..., pattern=r"^[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9])?$"),
 ]
 
 
 class ModelField(BaseModel):
     """ModelField DTO."""
 
-    name: BoundedStr
+    name: ModelFieldName
     type: FieldDataType
     primary_key: bool = False
     nullable: bool = False
     unique: bool = False
     index: bool = False
     foreign_key: ForeignKey | None = None
+
+    @computed_field
+    @property
+    def name_cc(self) -> str:
+        return snake_to_camel(self.name)
 
     @model_validator(mode="after")
     def _validate(self) -> Self:
@@ -40,11 +47,7 @@ class ModelField(BaseModel):
                 raise ValueError("Primary key cannot be nullable.")
 
             if not self.unique:
-                raise ValueError("Primary key must be unique.")
-
-        if self.foreign_key:
-            if self.foreign_key.split(".")[0] == self.name:
-                raise ValueError("Foreign key cannot reference the same model.")
+                self.unique = True
 
         return self
 
@@ -90,6 +93,16 @@ class Model(BaseModel):
     name: ModelName
     fields: list[ModelField]
     relationships: list[ModelRelationship] = []
+
+    @computed_field
+    @property
+    def name_cc(self) -> str:
+        return snake_to_camel(self.name)
+
+    @computed_field
+    @property
+    def name_hyphen(self) -> str:
+        return camel_to_snake_hyphen(self.name)
 
     @model_validator(mode="after")
     def _validate(self) -> Self:

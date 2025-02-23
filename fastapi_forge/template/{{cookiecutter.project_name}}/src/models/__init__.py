@@ -1,9 +1,9 @@
 {%- for model in cookiecutter.models.models -%}
-from src.models.{{ model.name | camel_to_snake }}_models import {{ model.name }}
+from src.models.{{ model.name }}_models import {{ model.name_cc }}
 {% endfor %}
 
 __all__ = [
     {% for model in cookiecutter.models.models %}
-    "{{ model.name }}",
+    "{{ model.name_cc }}",
     {% endfor %}
 ]
