@@ -2,7 +2,6 @@ from nicegui import ui, native
 from typing import Callable, Any
 from fastapi_forge.enums import FieldDataType, RelationshipType
 from fastapi_forge.dtos import Model, ModelField, ModelRelationship, ProjectSpec
-from fastapi_forge.utils import snake_to_camel
 from fastapi_forge.forge import build_project
 from fastapi_forge.test_data import test_models
 
@@ -206,20 +205,13 @@ class ModelPanel(ui.left_drawer):
                 fields, relationships = [], []
 
                 for field in model["fields"]:
-                    field_name_transformed = snake_to_camel(field["name"])
-                    foreign_key = (
-                        f"{field_name_transformed}.id"
-                        if field.get("foreign_key")
-                        else None
-                    )
-
+                    mr = None
                     if field.get("foreign_key"):
-                        relationships.append(
-                            ModelRelationship(
-                                target=field_name_transformed,
-                                type=RelationshipType(field["relationship_type"]),
-                            )
+                        mr = ModelRelationship(
+                            field_name=field["name"],
+                            type=RelationshipType(field["relationship_type"]),
                         )
+                        relationships.append(mr)
 
                     fields.append(
                         ModelField(
@@ -229,7 +221,7 @@ class ModelPanel(ui.left_drawer):
                             nullable=field.get("nullable", False),
                             unique=field.get("unique", False),
                             index=field.get("index", False),
-                            foreign_key=foreign_key,
+                            foreign_key=mr.target_id if mr else None,
                         )
                     )
 

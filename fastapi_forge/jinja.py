@@ -15,7 +15,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid import UUID
 from datetime import datetime
 {% for relation in model.relationships -%}
-from src.models.{{ relation.target | camel_to_snake }}_models import {{ relation.target }}
+from src.models.{{ relation.field_name_no_id }}_models import {{ relation.target }}
 {% endfor %}
 
 
@@ -46,8 +46,8 @@ class {{ model.name_cc }}(Base):
 
     {% for relation in model.relationships %}
         {% if relation.type == "ManyToOne" %}
-    {{ relation.target | camel_to_snake }}: Mapped[{{ relation.target }}] = relationship(
-        "{{ relation.target }}",
+    {{ relation.field_name_no_id }}: Mapped[{{ relation.target }}] = relationship(
+        "{{ relation.field_name_no_id }}",
         foreign_keys=[{{ relation.field_name }}],
         uselist=False,
     )
@@ -206,7 +206,7 @@ async def test_post_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> Non
 
     {%- for relation in model.relationships %}
     {% if relation.type == "ManyToOne" %}
-    {{ relation.target | camel_to_snake }} = await factories.{{ relation.target }}Factory.create()
+    {{ relation.field_name_no_id }} = await factories.{{ relation.target }}Factory.create()
     {% endif %}
     {% endfor %}
     input_json = {
@@ -317,7 +317,7 @@ async def test_patch_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> No
 
     {%- for relation in model.relationships %}
     {% if relation.type == "ManyToOne" %}
-    {{ relation.target | camel_to_snake }} = await factories.{{ relation.target }}Factory.create()
+    {{ relation.field_name_no_id }} = await factories.{{ relation.target }}Factory.create()
     {% endif %}
     {% endfor %}
     {{ model.name }} = await factories.{{ model.name_cc }}Factory.create()

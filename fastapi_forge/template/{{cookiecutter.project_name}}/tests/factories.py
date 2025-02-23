@@ -95,8 +95,8 @@ class {{ model.name_cc }}Factory(BaseFactory[{{ model.name_cc }}]):
         """Create a new instance of the model."""
 
         {%- for relationship in model.relationships %}
-        if "{{ relationship.target | camel_to_snake }}" not in kwargs:
-            kwargs["{{ relationship.target | camel_to_snake }}"] = await {{ relationship.target }}Factory.create()
+        if "{{ relationship.field_name_no_id }}" not in kwargs:
+            kwargs["{{ relationship.field_name_no_id }}"] = await {{ relationship.target }}Factory.create()
         {%- endfor %}
         return await super()._create_model(model_class, *args, **kwargs)
     {%- endif %}

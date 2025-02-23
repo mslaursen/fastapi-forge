@@ -1,6 +1,6 @@
 import pytest
-from fastapi_forge.dtos import ModelField
-from fastapi_forge.enums import FieldDataType
+from fastapi_forge.dtos import ModelField, ModelRelationship
+from fastapi_forge.enums import FieldDataType, RelationshipType
 from pydantic import ValidationError
 
 ########################
@@ -79,3 +79,28 @@ def test_factory_field_value(
 ) -> None:
     model_field = ModelField(name="name", type=data_type)
     assert model_field.factory_field_value == expected_factory_value
+
+
+###############################
+# ModelRelationship DTO tests #
+###############################
+
+
+def test_fields() -> None:
+    model_relationship = ModelRelationship(
+        type=RelationshipType.MANY_TO_ONE,
+        field_name="restaurant_id",
+    )
+    assert model_relationship.target == "Restaurant"
+    assert model_relationship.target_id == "Restaurant.id"
+    assert model_relationship.field_name == "restaurant_id"
+    assert model_relationship.field_name_no_id == "restaurant"
+
+
+def test_field_name_not_endswith_id() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        ModelRelationship(
+            type=RelationshipType.MANY_TO_ONE,
+            field_name="restaurant",
+        )
+    assert "Relationship field names must endwith '_id'." in str(exc_info.value)
