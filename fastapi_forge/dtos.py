@@ -1,20 +1,18 @@
-from pydantic import BaseModel, computed_field, Field, model_validator
+from pydantic import BaseModel, computed_field, Field, model_validator, field_validator
 from typing import Annotated
 from fastapi_forge.enums import FieldDataType, RelationshipType
 from typing_extensions import Self
-from fastapi_forge.utils import camel_to_snake, snake_to_camel, camel_to_snake_hyphen
+from fastapi_forge.utils import snake_to_camel, camel_to_snake_hyphen
 
 
 BoundedStr = Annotated[str, Field(..., min_length=1, max_length=100)]
 ForeignKey = Annotated[str, Field(..., pattern=r"^[A-Z][a-zA-Z]*\.id$")]
-ModelName = Annotated[
+SnakeCaseStr = Annotated[
     BoundedStr,
     Field(..., pattern=r"^[a-z][a-z0-9_]*$"),
 ]
-ModelFieldName = Annotated[
-    BoundedStr,
-    Field(..., pattern=r"^[a-z][a-z0-9_]*$"),
-]
+ModelName = SnakeCaseStr
+ModelFieldName = SnakeCaseStr
 ProjectName = Annotated[
     BoundedStr,
     Field(..., pattern=r"^[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9])?$"),
@@ -42,13 +40,10 @@ class ModelField(BaseModel):
         if self.primary_key:
             if self.foreign_key:
                 raise ValueError("Primary key fields cannot be foreign keys.")
-
             if self.nullable:
                 raise ValueError("Primary key cannot be nullable.")
-
             if not self.unique:
                 self.unique = True
-
         return self
 
     @computed_field
@@ -79,12 +74,28 @@ class ModelRelationship(BaseModel):
     """ModelRelationship DTO."""
 
     type: RelationshipType
-    target: BoundedStr
+    field_name: str
+
+    @field_validator("field_name")
+    def _validate(value: str) -> str:
+        if not value.endswith("_id"):
+            raise ValueError("Relationship field names must endwith '_id'.")
+        return value
 
     @computed_field
     @property
-    def field_name(self) -> str:
-        return f"{camel_to_snake(self.target)}_id"
+    def field_name_no_id(self) -> str:
+        return self.field_name[:-3]
+
+    @computed_field
+    @property
+    def target(self) -> str:
+        return snake_to_camel(self.field_name)
+
+    @computed_field
+    @property
+    def target_id(self) -> str:
+        return f"{self.target}.id"
 
 
 class Model(BaseModel):
@@ -112,7 +123,7 @@ class Model(BaseModel):
 
         relationship_targets = [relation.target for relation in self.relationships]
         if len(relationship_targets) != len(set(relationship_targets)):
-            raise ValueError(f"Model '{self.name} contains duplicate relationships.")
+            raise ValueError(f"Model '{self.name}' contains duplicate relationships.")
 
         if sum(field.primary_key for field in self.fields) != 1:
             raise ValueError(
@@ -125,13 +136,11 @@ class Model(BaseModel):
         for field in self.fields:
             if field.foreign_key is None:
                 continue
-
             if field.name not in relationship_target_field_names:
                 raise ValueError(
-                    f"Model foreign key '{self.name}.{field.name}, "
-                    f"not a relation: {relationship_target_field_names}",
+                    f"Model foreign key '{self.name}.{field.name}', "
+                    f"not a relation: {relationship_target_field_names}"
                 )
-
         return self
 
 
@@ -155,12 +164,12 @@ class ProjectSpec(BaseModel):
             raise ValueError("Model names must be unique.")
 
         if self.use_alembic and not self.use_postgres:
-            raise ValueError("Cannot use Alembic, if PostgreSQL is not enabled.")
+            raise ValueError("Cannot use Alembic if PostgreSQL is not enabled.")
 
         if self.builtin_jwt_token_expire and not self.use_builtin_auth:
-            raise ValueError("Cannot set JWT expiration, if auth is not enabled.")
+            raise ValueError("Cannot set JWT expiration if auth is not enabled.")
 
         if self.create_tests and not self.create_routes:
-            raise ValueError("Cannot create tests, if routes are not created.")
+            raise ValueError("Cannot create tests if routes are not created.")
 
         return self
