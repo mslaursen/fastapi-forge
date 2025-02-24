@@ -515,8 +515,8 @@ if __name__ == "__main__":
             ],
             relationships=[
                 ModelRelationship(
+                    field_name="app_user_id",
                     type=RelationshipType.MANY_TO_ONE,
-                    target="AppUser",
                 )
             ],
         ),
