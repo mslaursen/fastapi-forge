@@ -5,6 +5,7 @@ from typing import AsyncGenerator
 from fastapi import FastAPI
 from src.settings import settings
 from src.routes import base_router
+from src.middleware import add_middleware
 {% if cookiecutter.use_postgres %}
 from src.db import db_lifetime
 {% endif %}
@@ -30,5 +31,8 @@ def get_app() -> FastAPI:
         )
 
     app = FastAPI(lifespan=lifespan)
+
+    add_middleware(app)
+
     app.include_router(base_router)
     return app
