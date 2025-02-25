@@ -14,6 +14,9 @@
     "use_builtin_auth": {
         "default": true
     },
+    "use_redis": {
+        "default": true
+    },
     "builtin_jwt_token_expire": {
         "default": 15
     },

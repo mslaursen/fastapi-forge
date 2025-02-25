@@ -9,6 +9,9 @@ from src.middleware import add_middleware
 {% if cookiecutter.use_postgres %}
 from src.db import db_lifetime
 {% endif %}
+{% if cookiecutter.use_redis %}
+from src.services.redis import redis_lifetime
+{% endif %}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -16,9 +19,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     {% if cookiecutter.use_postgres %}
     await db_lifetime.setup_db(app)
     {% endif %}
+    {%- if cookiecutter.use_redis %}
+    await redis_lifetime.setup_redis(app)
+    {% endif %}
+    
     yield
     {% if cookiecutter.use_postgres %}
     await db_lifetime.shutdown_db(app)
+    {% endif %}
+    {%- if cookiecutter.use_redis %}
+    await redis_lifetime.shutdown_redis(app)
     {% endif %}
 
 
@@ -31,8 +41,6 @@ def get_app() -> FastAPI:
         )
 
     app = FastAPI(lifespan=lifespan)
-
     add_middleware(app)
-
     app.include_router(base_router)
     return app

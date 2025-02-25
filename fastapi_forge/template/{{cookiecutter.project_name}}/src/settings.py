@@ -46,6 +46,29 @@ class PGSettings(BaseSettings):
             path=f"/{self.database}",
         )
 {% endif %}
+{% if cookiecutter.use_redis %}
+class RedisSettings(BaseSettings):
+    """Configuration for Redis."""
+
+    host: str = "redis"
+    port: int = 6379
+    password: SecretStr = SecretStr("")
+    max_connections: int = 50
+
+    @property
+    def url(self) -> URL:
+        """Generates a URL for the Redis connection."""
+
+        return URL.build(
+            scheme="redis"  ,
+            host=self.host,
+            port=self.port,
+            password=self.password.get_secret_value(),
+        )
+
+    model_config = SettingsConfigDict(env_file=".env", env_prefix=f"{PREFIX}REDIS_")
+
+{% endif %}
 {% if cookiecutter.use_builtin_auth %}
 class JWTSettings(BaseSettings):
     """Configuration for JWT."""
@@ -63,10 +86,13 @@ class Settings(BaseSettings):
     workers: int = 1
     log_level: str = "info"
     reload: bool = False
-    {% if cookiecutter.use_postgres %}
+    {%- if cookiecutter.use_postgres %}
     pg: PGSettings = PGSettings()
     {% endif %}
-    {% if cookiecutter.use_builtin_auth %}
+    {%- if cookiecutter.use_redis %}
+    redis: RedisSettings = RedisSettings()
+    {% endif %}
+    {%- if cookiecutter.use_builtin_auth %}
     jwt: JWTSettings = JWTSettings()
     {% endif %}
     model_config = SettingsConfigDict(

@@ -556,6 +556,7 @@ class ProjectConfigPanel(ui.right_drawer):
                         .tooltip("Coming soon!")
                         .set_enabled(False)
                     )
+
                 with ui.column().classes("w-full gap-2"):
                     ui.label("NoSQL").classes("text-lg font-bold")
                     self.use_elasticsearch = (
@@ -564,6 +565,12 @@ class ProjectConfigPanel(ui.right_drawer):
                         .tooltip("Coming soon!")
                         .set_enabled(False)
                     )
+
+                with ui.column().classes("w-full gap-2"):
+                    ui.label("Caching").classes("text-lg font-bold")
+                    self.use_redis = ui.checkbox(
+                        "Redis", value=self.use_defaults
+                    ).classes("w-full")
 
                 with ui.column().classes("w-full gap-2"):
                     self.loading_spinner = ui.spinner(size="lg").classes(
@@ -595,6 +602,7 @@ class ProjectConfigPanel(ui.right_drawer):
                 use_postgres=self.use_postgres.value,
                 use_alembic=self.use_alembic.value,
                 use_builtin_auth=self.use_builtin_auth.value,
+                use_redis=self.use_redis.value,
                 builtin_jwt_token_expire=int(self.builtin_jwt_token_expire.value),
                 create_routes=self.create_routes.value,
                 create_tests=self.create_tests.value,
