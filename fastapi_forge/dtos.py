@@ -77,7 +77,7 @@ class ModelRelationship(BaseModel):
     field_name: str
 
     @field_validator("field_name")
-    def _validate(value: str) -> str:
+    def _validate(cls: Self, value: str) -> str:
         if not value.endswith("_id"):
             raise ValueError("Relationship field names must endwith '_id'.")
         return value
