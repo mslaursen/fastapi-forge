@@ -151,6 +151,7 @@ class ProjectSpec(BaseModel):
     use_postgres: bool
     use_alembic: bool
     use_builtin_auth: bool
+    use_redis: bool
     builtin_jwt_token_expire: int | None = Field(None, ge=1, le=365)
     create_routes: bool
     create_tests: bool

@@ -47,7 +47,7 @@ class {{ model.name_cc }}(Base):
     {% for relation in model.relationships %}
         {% if relation.type == "ManyToOne" %}
     {{ relation.field_name_no_id }}: Mapped[{{ relation.target }}] = relationship(
-        "{{ relation.field_name_no_id }}",
+        "{{ relation.target }}",
         foreign_keys=[{{ relation.field_name }}],
         uselist=False,
     )
