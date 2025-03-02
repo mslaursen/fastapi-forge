@@ -753,7 +753,7 @@ def init(reload: bool = False, use_defaults: bool = False) -> None:
     ui.run(
         reload=reload,
         title="FastAPI Forge",
-        port=native.find_open_port(),
+        port=native.find_open_port(8777, 8999),
     )
 
 
