@@ -11,7 +11,13 @@ class FieldDataType(StrEnum):
 
 
 class RelationshipType(StrEnum):
-    ONE_TO_ONE = "OneToOne"
-    ONE_TO_MANY = "OneToMany"
+    """
+    RelationshipType Enum.
+
+    Commented out enums are not yet supported.
+    """
+
+    # ONE_TO_ONE = "OneToOne"
+    # ONE_TO_MANY = "OneToMany"
     MANY_TO_ONE = "ManyToOne"
-    MANY_TO_MANY = "ManyToMany"
+    # MANY_TO_MANY = "ManyToMany"

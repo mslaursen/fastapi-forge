@@ -96,6 +96,7 @@ class ModelRow(ui.row):
         on_delete: Callable[[dict[str, Any]], None],
         on_edit: Callable[[dict[str, Any], str], None],
         on_select: Callable[[dict[str, Any]], None],
+        color: str | None = None,
     ):
         super().__init__(wrap=False)
         self.model = model
@@ -103,11 +104,14 @@ class ModelRow(ui.row):
         self.on_edit = on_edit
         self.on_select = on_select
         self.is_editing = False
+        self.color = color
         self._build()
 
     def _build(self) -> None:
         with self.classes("w-full flex items-center justify-between cursor-pointer"):
             self.name_label = ui.label(text=self.model["name"]).classes("self-center")
+            if self.color:
+                self.name_label.classes(add=self.color)
             self.name_input = (
                 ui.input(value=self.model["name"])
                 .classes("self-center")
@@ -147,10 +151,8 @@ class ModelPanel(ui.left_drawer):
     ):
         super().__init__(value=True, elevated=True, bottom_corner=True)
         self.models: list[dict[str, Any]] = test_models if use_defaults else []
-
         self.selected_model: dict[str, Any] | None = None
         self.on_select_model = on_select_model
-
         self._build()
 
     def _build(self) -> None:
@@ -161,7 +163,22 @@ class ModelPanel(ui.left_drawer):
                 self._render_model_list()
 
     def _add_model(self, model_name: str) -> None:
-        self.models.append({"name": model_name, "fields": []})
+        if any(model["name"] == model_name for model in self.models):
+            ui.notify(f"Model '{model_name}' already exists.", type="negative")
+            return
+
+        default_id_field = {
+            "name": "id",
+            "type": FieldDataType.UUID,
+            "primary_key": True,
+            "nullable": False,
+            "unique": True,
+            "index": False,
+            "foreign_key": None,
+            "relationship_type": None,
+        }
+
+        self.models.append({"name": model_name, "fields": [default_id_field]})
         self._render_model_list()
 
     def _on_delete_model(self, model: dict[str, Any]) -> None:
@@ -172,6 +189,10 @@ class ModelPanel(ui.left_drawer):
         self._render_model_list()
 
     def _on_edit_model(self, model: dict[str, Any], new_name: str) -> None:
+        if any(m["name"] == new_name for m in self.models if m != model):
+            ui.notify(f"Model '{new_name}' already exists.", type="negative")
+            return
+
         model["name"] = new_name
         if self.selected_model == model:
             self.on_select_model(model)
@@ -189,11 +210,14 @@ class ModelPanel(ui.left_drawer):
 
         with self.model_list:
             for model in self.models:
+                is_app_user = model["name"] == "app_user"
+                color = "text-green-500" if is_app_user else None
                 ModelRow(
                     model,
                     on_delete=self._on_delete_model,
                     on_edit=self._on_edit_model,
                     on_select=self._on_select_model,
+                    color=color,
                 )
 
     def generate_model_instances(self) -> list[Model]:
@@ -320,27 +344,37 @@ class ModelEditorCard(ui.card):
         if not name or not type:
             return
 
-        new_field = {
-            "name": name,
-            "type": type,
-            "primary_key": primary_key,
-            "nullable": nullable,
-            "unique": unique,
-            "index": index,
-            "foreign_key": foreign_key,
-            "relationship_type": relationship_type,
-        }
-
         if self.selected_model:
+            if any(field["name"] == name for field in self.selected_model["fields"]):
+                ui.notify(
+                    f"Field '{name}' already exists in this model.", type="negative"
+                )
+                return
+
+            new_field = {
+                "name": name,
+                "type": type,
+                "primary_key": primary_key,
+                "nullable": nullable,
+                "unique": unique,
+                "index": index,
+                "foreign_key": foreign_key,
+                "relationship_type": relationship_type,
+            }
+
             self.selected_model["fields"].append(new_field)
             self.table.rows = self.selected_model["fields"]
             self.modal.close()
 
     def _on_select_field(self, selection: list[dict[str, Any]]) -> None:
-        self.selected_field = selection[0] if selection else None
+        if selection and selection[0]["name"] == "id":
+            self.selected_field = None
+            self.table.selected = []
+        else:
+            self.selected_field = selection[0] if selection else None
 
     def _update_field(self) -> None:
-        if not self.selected_field:
+        if not self.selected_field or self.selected_field["name"] == "id":
             return
 
         with ui.dialog() as self.update_modal, ui.card():
@@ -407,18 +441,28 @@ class ModelEditorCard(ui.card):
         if not name or not type:
             return
 
-        updated_field = {
-            "name": name,
-            "type": type,
-            "primary_key": primary_key,
-            "nullable": nullable,
-            "unique": unique,
-            "index": index,
-            "foreign_key": foreign_key,
-            "relationship_type": relationship_type,
-        }
-
         if self.selected_model and self.selected_field:
+            if any(
+                field["name"] == name
+                for field in self.selected_model["fields"]
+                if field != self.selected_field
+            ):
+                ui.notify(
+                    f"Field '{name}' already exists in this model.", type="negative"
+                )
+                return
+
+            updated_field = {
+                "name": name,
+                "type": type,
+                "primary_key": primary_key,
+                "nullable": nullable,
+                "unique": unique,
+                "index": index,
+                "foreign_key": foreign_key,
+                "relationship_type": relationship_type,
+            }
+
             index = self.selected_model["fields"].index(self.selected_field)
             self.selected_model["fields"][index] = updated_field
             self.table.rows = self.selected_model["fields"]
@@ -426,7 +470,11 @@ class ModelEditorCard(ui.card):
             self.selected_field = None
 
     def _delete_field(self) -> None:
-        if self.selected_model and self.selected_field:
+        if (
+            self.selected_model
+            and self.selected_field
+            and self.selected_field["name"] != "id"
+        ):
             self.selected_model["fields"].remove(self.selected_field)
             self.table.rows = self.selected_model["fields"]
             self.selected_field = None
@@ -446,10 +494,12 @@ class ProjectConfigPanel(ui.right_drawer):
         self,
         use_defaults: bool,
         generate_models: Callable[[], list[Model]],
+        model_panel: ModelPanel,
     ):
         super().__init__(value=True, elevated=True, bottom_corner=True)
         self.use_defaults = use_defaults
         self.generate_models = generate_models
+        self.model_panel = model_panel
         self._build()
 
     def _build(self) -> None:
@@ -503,7 +553,13 @@ class ProjectConfigPanel(ui.right_drawer):
                 with ui.column().classes("w-full gap-2"):
                     ui.label("Authentication").classes("text-lg font-bold")
                     self.use_builtin_auth = (
-                        ui.checkbox("Builtin Auth", value=self.use_defaults)
+                        ui.checkbox(
+                            "Builtin Auth",
+                            value=self.use_defaults,
+                            on_change=lambda e: self._handle_builtin_auth_change(
+                                e.value
+                            ),
+                        )
                         .classes("w-full")
                         .bind_enabled_from(self.use_postgres, "value")
                     )
@@ -581,6 +637,60 @@ class ProjectConfigPanel(ui.right_drawer):
                         "Create Project", on_click=self._create_project
                     ).classes("w-full py-3 text-lg font-bold mt-4")
 
+    def _handle_builtin_auth_change(self, enabled: bool) -> None:
+        if enabled:
+            if any(model["name"] == "app_user" for model in self.model_panel.models):
+                ui.notify("The 'app_user' model already exists.", type="negative")
+                self.use_builtin_auth.value = False
+                return
+
+            app_user_model = {
+                "name": "app_user",
+                "fields": [
+                    {
+                        "name": "id",
+                        "type": FieldDataType.UUID,
+                        "primary_key": True,
+                        "nullable": False,
+                        "unique": True,
+                        "index": True,
+                        "foreign_key": False,
+                        "relationship_type": None,
+                    },
+                    {
+                        "name": "email",
+                        "type": FieldDataType.STRING,
+                        "primary_key": False,
+                        "nullable": False,
+                        "unique": True,
+                        "index": True,
+                        "foreign_key": False,
+                        "relationship_type": None,
+                    },
+                    {
+                        "name": "password",
+                        "type": FieldDataType.STRING,
+                        "primary_key": False,
+                        "nullable": False,
+                        "unique": False,
+                        "index": False,
+                        "foreign_key": False,
+                        "relationship_type": None,
+                    },
+                ],
+            }
+            self.model_panel.models.append(app_user_model)
+            self.model_panel._render_model_list()
+            ui.notify("The 'app_user' model has been created.", type="positive")
+        else:
+            self.model_panel.models = [
+                model
+                for model in self.model_panel.models
+                if model["name"] != "app_user"
+            ]
+            self.model_panel._render_model_list()
+            ui.notify("The 'app_user' model has been deleted.", type="positive")
+
     async def _create_project(self) -> None:
         self.create_button.classes("hidden")
         self.loading_spinner.classes(remove="hidden")
@@ -637,6 +747,7 @@ def init(reload: bool = False, use_defaults: bool = False) -> None:
     ProjectConfigPanel(
         use_defaults=use_defaults,
         generate_models=model_panel.generate_model_instances,
+        model_panel=model_panel,
     )
 
     ui.run(
