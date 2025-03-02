@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from src.dtos.auth_dtos import UserLoginDTO, UserCreateDTO, LoginResponse, TokenData
-from src.dtos.app_user_dtos import AppUserDTO, AppUserInputDTO
+from src.dtos.auth_user_dtos import AuthUserDTO, AuthUserInputDTO
 from src.dtos import DataResponse, CreatedResponse
 from src.daos import GetDAOs
 from src import exceptions
@@ -18,7 +18,7 @@ async def login(
 ) -> DataResponse[LoginResponse]:
     """Login by email and password."""
 
-    user = await daos.app_user.filter_first(email=input_dto.email)
+    user = await daos.auth_user.filter_first(email=input_dto.email)
 
     if user is None:
         raise exceptions.Http401("Wrong email or password")
@@ -46,13 +46,13 @@ async def register(
 ) -> DataResponse:
     """Register by email and password."""
 
-    user = await daos.app_user.filter_first(email=input_dto.email)
+    user = await daos.auth_user.filter_first(email=input_dto.email)
 
     if user:
         raise exceptions.Http401("User already exists")
 
-    user_id = await daos.app_user.create(
-        AppUserInputDTO(
+    user_id = await daos.auth_user.create(
+        AuthUserInputDTO(
             email=input_dto.email,
             password=auth_utils.hash_password(
                 input_dto.password.get_secret_value(),
@@ -71,7 +71,7 @@ async def register(
 @router.get("/users/me", status_code=200)
 async def get_current_user(
     current_user: GetCurrentUser,
-) -> DataResponse[AppUserDTO]:
+) -> DataResponse[AuthUserDTO]:
     """Get current user."""
 
     return DataResponse(data=current_user)

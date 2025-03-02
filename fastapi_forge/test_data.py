@@ -3,7 +3,7 @@ from fastapi_forge.enums import FieldDataType, RelationshipType
 
 test_models = [
     {
-        "name": "app_user",
+        "name": "auth_user",
         "fields": [
             {
                 "name": "id",
@@ -141,7 +141,7 @@ test_models = [
                 "relationship_type": None,
             },
             {
-                "name": "app_user_id",
+                "name": "auth_user_id",
                 "type": FieldDataType.UUID,
                 "primary_key": False,
                 "nullable": False,
