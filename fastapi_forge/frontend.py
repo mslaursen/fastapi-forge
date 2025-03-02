@@ -174,7 +174,7 @@ class ModelPanel(ui.left_drawer):
             "nullable": False,
             "unique": True,
             "index": False,
-            "foreign_key": None,
+            "foreign_key": False,
             "relationship_type": None,
         }
 
