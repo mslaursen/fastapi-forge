@@ -461,7 +461,7 @@ def render_model_to_delete_test(model: Model) -> str:
 if __name__ == "__main__":
     models = [
         Model(
-            name="AppUser",
+            name="AuthUser",
             fields=[
                 ModelField(
                     name="id",
@@ -507,15 +507,15 @@ if __name__ == "__main__":
                     nullable=True,
                 ),
                 ModelField(
-                    name="app_user_id",
+                    name="auth_user_id",
                     type=FieldDataType.UUID,
-                    foreign_key="AppUser.id",
+                    foreign_key="AuthUser.id",
                     nullable=False,
                 ),
             ],
             relationships=[
                 ModelRelationship(
-                    field_name="app_user_id",
+                    field_name="auth_user_id",
                     type=RelationshipType.MANY_TO_ONE,
                 )
             ],

@@ -210,8 +210,8 @@ class ModelPanel(ui.left_drawer):
 
         with self.model_list:
             for model in self.models:
-                is_app_user = model["name"] == "app_user"
-                color = "text-green-500" if is_app_user else None
+                is_auth_user = model["name"] == "auth_user"
+                color = "text-green-500" if is_auth_user else None
                 ModelRow(
                     model,
                     on_delete=self._on_delete_model,
@@ -639,13 +639,13 @@ class ProjectConfigPanel(ui.right_drawer):
 
     def _handle_builtin_auth_change(self, enabled: bool) -> None:
         if enabled:
-            if any(model["name"] == "app_user" for model in self.model_panel.models):
-                ui.notify("The 'app_user' model already exists.", type="negative")
+            if any(model["name"] == "auth_user" for model in self.model_panel.models):
+                ui.notify("The 'auth_user' model already exists.", type="negative")
                 self.use_builtin_auth.value = False
                 return
 
-            app_user_model = {
-                "name": "app_user",
+            auth_user_model = {
+                "name": "auth_user",
                 "fields": [
                     {
                         "name": "id",
@@ -679,17 +679,17 @@ class ProjectConfigPanel(ui.right_drawer):
                     },
                 ],
             }
-            self.model_panel.models.append(app_user_model)
+            self.model_panel.models.append(auth_user_model)
             self.model_panel._render_model_list()
-            ui.notify("The 'app_user' model has been created.", type="positive")
+            ui.notify("The 'auth_user' model has been created.", type="positive")
         else:
             self.model_panel.models = [
                 model
                 for model in self.model_panel.models
-                if model["name"] != "app_user"
+                if model["name"] != "auth_user"
             ]
             self.model_panel._render_model_list()
-            ui.notify("The 'app_user' model has been deleted.", type="positive")
+            ui.notify("The 'auth_user' model has been deleted.", type="positive")
 
     async def _create_project(self) -> None:
         self.create_button.classes("hidden")

@@ -1,6 +1,6 @@
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPBearer as _HTTPBearer
-from src.dtos.app_user_dtos import AppUserDTO
+from src.dtos.auth_user_dtos import AuthUserDTO
 from src.daos import GetDAOs
 from src import exceptions
 from src.utils import auth_utils
@@ -36,16 +36,16 @@ GetToken = Annotated[str, Depends(get_token)]
 async def get_current_user(
     token: GetToken,
     daos: GetDAOs,
-) -> AppUserDTO:
+) -> AuthUserDTO:
     """Get current user from token data."""
     token_data = auth_utils.decode_token(token)
 
-    user = await daos.app_user.filter_first(id=token_data.user_id)
+    user = await daos.auth_user.filter_first(id=token_data.user_id)
 
     if not user:
         raise exceptions.Http404("Decoded user not found.")
 
-    return AppUserDTO.model_validate(user)
+    return AuthUserDTO.model_validate(user)
 
 
-GetCurrentUser = Annotated[AppUserDTO, Depends(get_current_user)]
+GetCurrentUser = Annotated[AuthUserDTO, Depends(get_current_user)]
