@@ -304,7 +304,10 @@ class ModelEditorCard(ui.card):
                 nullable = ui.checkbox("Nullable").classes("w-full")
                 unique = ui.checkbox("Unique").classes("w-full")
                 index = ui.checkbox("Index").classes("w-full")
-                foreign_key = ui.checkbox("Foreign Key").classes("w-full")
+                foreign_key = ui.checkbox(
+                    "Foreign Key",
+                    on_change=lambda e: self._warn_foreign_key(e.value),
+                ).classes("w-full")
 
             relationship_type = (
                 ui.select(list(RelationshipType), label="Relationship Type")
@@ -329,6 +332,14 @@ class ModelEditorCard(ui.card):
                 )
 
         self.modal.open()
+
+    def _warn_foreign_key(self, enabled: bool) -> None:
+        if enabled:
+            ui.notify(
+                "ForeignKey field names should refer to a different table followed by '_id'. "
+                "Example: 'restaurant_id'",
+                type="warning",
+            )
 
     def _add_field(
         self,
