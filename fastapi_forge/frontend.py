@@ -149,7 +149,8 @@ class ModelPanel(ui.left_drawer):
         use_defaults: bool,
         on_select_model: Callable[[dict[str, Any]], None],
     ):
-        super().__init__(value=True, elevated=True, bottom_corner=True)
+        super().__init__(value=True, elevated=False, bottom_corner=True)
+        self.classes("border-right[1px]")
         self.models: list[dict[str, Any]] = test_models if use_defaults else []
         self.selected_model: dict[str, Any] | None = None
         self.on_select_model = on_select_model
@@ -282,7 +283,7 @@ class ModelEditorCard(ui.card):
                 row_key="name",
                 selection="single",
                 on_select=lambda e: self._on_select_field(e.selection),
-            ).classes("w-full")
+            ).classes("w-full no-shadow border-[1px]")
 
             with ui.row().classes("w-full justify-end gap-2"):
                 ui.button(
@@ -293,7 +294,7 @@ class ModelEditorCard(ui.card):
                 ).bind_visibility_from(self, "selected_field")
 
     def _open_modal(self) -> None:
-        with ui.dialog() as self.modal, ui.card():
+        with ui.dialog() as self.modal, ui.card().classes("no-shadow border-[1px]"):
             ui.label("Add New Field").classes("text-lg font-bold")
             with ui.row().classes("w-full gap-2"):
                 field_name = ui.input(label="Field Name").classes("w-full")
@@ -388,7 +389,10 @@ class ModelEditorCard(ui.card):
         if not self.selected_field or self.selected_field["name"] == "id":
             return
 
-        with ui.dialog() as self.update_modal, ui.card():
+        with (
+            ui.dialog() as self.update_modal,
+            ui.card().classes("no-shadow border-[1px]"),
+        ):
             ui.label("Update Field").classes("text-lg font-bold")
             with ui.row().classes("w-full gap-2"):
                 field_name = ui.input(
@@ -507,7 +511,7 @@ class ProjectConfigPanel(ui.right_drawer):
         generate_models: Callable[[], list[Model]],
         model_panel: ModelPanel,
     ):
-        super().__init__(value=True, elevated=True, bottom_corner=True)
+        super().__init__(value=True, elevated=False, bottom_corner=True)
         self.use_defaults = use_defaults
         self.generate_models = generate_models
         self.model_panel = model_panel
@@ -750,7 +754,7 @@ def init(reload: bool = False, use_defaults: bool = False) -> None:
     Header()
 
     with ui.column().classes("w-full h-full items-center justify-center mt-4"):
-        model_editor_card = ModelEditorCard()
+        model_editor_card = ModelEditorCard().classes("no-shadow")
     model_panel = ModelPanel(
         use_defaults=use_defaults,
         on_select_model=model_editor_card.update_selected_model,
