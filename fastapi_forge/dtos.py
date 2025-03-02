@@ -17,7 +17,7 @@ ProjectName = Annotated[
     Field(..., pattern=r"^[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9])?$"),
 ]
 ForeignKey = Annotated[
-    BoundedStr, 
+    BoundedStr,
     Field(..., pattern=r"^[A-Z][a-zA-Z]*\.id$"),
 ]
 
