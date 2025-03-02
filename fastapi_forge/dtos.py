@@ -6,7 +6,6 @@ from fastapi_forge.utils import snake_to_camel, camel_to_snake_hyphen
 
 
 BoundedStr = Annotated[str, Field(..., min_length=1, max_length=100)]
-ForeignKey = Annotated[str, Field(..., pattern=r"^[A-Z][a-zA-Z]*\.id$")]
 SnakeCaseStr = Annotated[
     BoundedStr,
     Field(..., pattern=r"^[a-z][a-z0-9_]*$"),
@@ -16,6 +15,10 @@ ModelFieldName = SnakeCaseStr
 ProjectName = Annotated[
     BoundedStr,
     Field(..., pattern=r"^[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9])?$"),
+]
+ForeignKey = Annotated[
+    BoundedStr, 
+    Field(..., pattern=r"^[A-Z][a-zA-Z]*\.id$"),
 ]
 
 
