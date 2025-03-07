@@ -1,13 +1,13 @@
 from typing import Any
 from jinja2 import Environment
 from fastapi_forge.dtos import Model, ModelField, ModelRelationship
-from fastapi_forge.utils import camel_to_snake, camel_to_snake_hyphen
-from fastapi_forge.enums import FieldDataType, RelationshipType
+from fastapi_forge.enums import FieldDataType
+from fastapi_forge.jinja_utils import generate_relationship, generate_field
 
 
 env = Environment()
-env.filters["camel_to_snake"] = camel_to_snake
-env.filters["camel_to_snake_hyphen"] = camel_to_snake_hyphen
+env.filters["generate_relationship"] = generate_relationship
+env.filters["generate_field"] = generate_field
 
 model_template = """
 import sqlalchemy as sa
@@ -27,31 +27,11 @@ class {{ model.name_cc }}(Base):
     __tablename__ = "{{ model.name }}"
     
     {% for field in model.fields -%}
-    {% if not field.primary_key -%}
-    {% if field.name.endswith('_id') %}
-    {{ field.name }}: Mapped[UUID] = mapped_column(
-        sa.UUID(as_uuid=True), sa.ForeignKey("{{ field.foreign_key | camel_to_snake }}", ondelete="CASCADE"),
-    )
-    {% elif field.nullable %}
-    {{ field.name }}: Mapped[{{ type_mapping[field.type] }} | None] = mapped_column(
-        sa.{% if field.type == 'DateTime' %}DateTime(timezone=True){% else %}{{ field.type }}{% endif %}{% if field.type == 'UUID' %}(as_uuid=True){% endif %}, {% if field.unique == True %}unique=True,{% endif %}
-    )
-    {% else %}
-    {{ field.name }}: Mapped[{{ type_mapping[field.type] }}] = mapped_column(
-        sa.{% if field.type == 'DateTime' %}DateTime(timezone=True){% else %}{{ field.type }}{% endif %}{% if field.type == 'UUID' %}(as_uuid=True){% endif %}, {% if field.unique == True %}unique=True,{% endif %}
-    )
-    {% endif %}
-    {% endif %}
+    {{ field | generate_field }}
     {% endfor %}
 
     {% for relation in model.relationships %}
-        {% if relation.type == "ManyToOne" %}
-    {{ relation.field_name_no_id }}: Mapped[{{ relation.target }}] = relationship(
-        "{{ relation.target }}",
-        foreign_keys=[{{ relation.field_name }}],
-        uselist=False,
-    )
-        {% endif %}
+    {{ relation | generate_relationship }}
     {% endfor %}
 """
 
@@ -205,9 +185,7 @@ async def test_post_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> Non
     \"\"\"Test create {{ model.name_cc }}: 201.\"\"\"
 
     {%- for relation in model.relationships %}
-    {% if relation.type == "ManyToOne" %}
     {{ relation.field_name_no_id }} = await factories.{{ relation.target }}Factory.create()
-    {% endif %}
     {% endfor %}
     input_json = {
         {%- for field in model.fields -%}
@@ -316,9 +294,7 @@ async def test_patch_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> No
     \"\"\"Test patch {{ model.name_cc }}: 200.\"\"\"
 
     {%- for relation in model.relationships %}
-    {% if relation.type == "ManyToOne" %}
     {{ relation.field_name_no_id }} = await factories.{{ relation.target }}Factory.create()
-    {% endif %}
     {% endfor %}
     {{ model.name }} = await factories.{{ model.name_cc }}Factory.create()
 
@@ -461,7 +437,7 @@ def render_model_to_delete_test(model: Model) -> str:
 if __name__ == "__main__":
     models = [
         Model(
-            name="AuthUser",
+            name="auth_user",
             fields=[
                 ModelField(
                     name="id",
@@ -483,7 +459,7 @@ if __name__ == "__main__":
             ],
         ),
         Model(
-            name="Reservation",
+            name="reservation",
             fields=[
                 ModelField(
                     name="id",
@@ -516,7 +492,6 @@ if __name__ == "__main__":
             relationships=[
                 ModelRelationship(
                     field_name="auth_user_id",
-                    type=RelationshipType.MANY_TO_ONE,
                 )
             ],
         ),
@@ -541,4 +516,4 @@ if __name__ == "__main__":
         print("=" * 80)
         print()
 
-        print(fn(models[0]))
+        print(fn(models[1]))

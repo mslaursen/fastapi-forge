@@ -16,8 +16,8 @@ from fastapi_forge.jinja import (
     render_model_to_get_id_test,
     render_model_to_patch_test,
     render_model_to_delete_test,
-    camel_to_snake,
 )
+from fastapi_forge.string_utils import camel_to_snake
 from fastapi_forge.logger import logger
 
 

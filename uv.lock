@@ -264,7 +264,6 @@ wheels = [
 
 [[package]]
 name = "fastapi-forge"
-version = "0.2.11.dev6+g216eb0f.d20250225"
 source = { editable = "." }
 dependencies = [
     { name = "click" },

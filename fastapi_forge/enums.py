@@ -9,15 +9,12 @@ class FieldDataType(StrEnum):
     DATETIME = "DateTime"
     UUID = "UUID"
 
-
-class RelationshipType(StrEnum):
-    """
-    RelationshipType Enum.
-
-    Commented out enums are not yet supported.
-    """
-
-    # ONE_TO_ONE = "OneToOne"
-    # ONE_TO_MANY = "OneToMany"
-    MANY_TO_ONE = "ManyToOne"
-    # MANY_TO_MANY = "ManyToMany"
+    def as_python_type(self) -> str:
+        return {
+            FieldDataType.STRING: "str",
+            FieldDataType.INTEGER: "int",
+            FieldDataType.FLOAT: "float",
+            FieldDataType.BOOLEAN: "bool",
+            FieldDataType.DATETIME: "str",
+            FieldDataType.UUID: "UUID",
+        }[self]
