@@ -1,4 +1,4 @@
-from fastapi_forge.enums import FieldDataType, RelationshipType
+from fastapi_forge.enums import FieldDataType
 
 
 test_models = [
@@ -13,7 +13,6 @@ test_models = [
                 "unique": True,
                 "index": True,
                 "foreign_key": False,
-                "relationship_type": None,
             },
             {
                 "name": "email",
@@ -23,7 +22,6 @@ test_models = [
                 "unique": True,
                 "index": True,
                 "foreign_key": False,
-                "relationship_type": None,
             },
             {
                 "name": "password",
@@ -33,7 +31,6 @@ test_models = [
                 "unique": False,
                 "index": False,
                 "foreign_key": False,
-                "relationship_type": None,
             },
         ],
     },
@@ -48,7 +45,6 @@ test_models = [
                 "unique": True,
                 "index": True,
                 "foreign_key": False,
-                "relationship_type": None,
             },
             {
                 "name": "name",
@@ -58,7 +54,6 @@ test_models = [
                 "unique": False,
                 "index": False,
                 "foreign_key": False,
-                "relationship_type": None,
             },
             {
                 "name": "address",
@@ -68,7 +63,6 @@ test_models = [
                 "unique": False,
                 "index": False,
                 "foreign_key": False,
-                "relationship_type": None,
             },
             {
                 "name": "phone_number",
@@ -78,7 +72,6 @@ test_models = [
                 "unique": False,
                 "index": False,
                 "foreign_key": False,
-                "relationship_type": None,
             },
         ],
     },
@@ -93,7 +86,6 @@ test_models = [
                 "unique": True,
                 "index": True,
                 "foreign_key": False,
-                "relationship_type": None,
             },
             {
                 "name": "number",
@@ -103,7 +95,6 @@ test_models = [
                 "unique": False,
                 "index": False,
                 "foreign_key": False,
-                "relationship_type": None,
             },
             {
                 "name": "seats",
@@ -113,7 +104,6 @@ test_models = [
                 "unique": False,
                 "index": False,
                 "foreign_key": False,
-                "relationship_type": None,
             },
             {
                 "name": "restaurant_id",
@@ -123,7 +113,6 @@ test_models = [
                 "unique": False,
                 "index": False,
                 "foreign_key": True,
-                "relationship_type": str(RelationshipType.MANY_TO_ONE),
             },
         ],
     },
@@ -138,7 +127,6 @@ test_models = [
                 "unique": True,
                 "index": True,
                 "foreign_key": False,
-                "relationship_type": None,
             },
             {
                 "name": "auth_user_id",
@@ -148,7 +136,6 @@ test_models = [
                 "unique": False,
                 "index": False,
                 "foreign_key": True,
-                "relationship_type": str(RelationshipType.MANY_TO_ONE),
             },
             {
                 "name": "restaurant_id",
@@ -158,7 +145,6 @@ test_models = [
                 "unique": False,
                 "index": False,
                 "foreign_key": True,
-                "relationship_type": str(RelationshipType.MANY_TO_ONE),
             },
             {
                 "name": "table_id",
@@ -168,7 +154,6 @@ test_models = [
                 "unique": False,
                 "index": False,
                 "foreign_key": True,
-                "relationship_type": str(RelationshipType.MANY_TO_ONE),
             },
             {
                 "name": "reservation_time",
@@ -178,7 +163,6 @@ test_models = [
                 "unique": False,
                 "index": False,
                 "foreign_key": False,
-                "relationship_type": None,
             },
         ],
     },

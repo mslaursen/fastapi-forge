@@ -1,6 +1,6 @@
 from nicegui import ui, native
 from typing import Callable, Any
-from fastapi_forge.enums import FieldDataType, RelationshipType
+from fastapi_forge.enums import FieldDataType
 from fastapi_forge.dtos import Model, ModelField, ModelRelationship, ProjectSpec
 from fastapi_forge.forge import build_project
 from fastapi_forge.test_data import test_models
@@ -27,12 +27,6 @@ COLUMNS = [
         "name": "foreign_key",
         "label": "Foreign Key",
         "field": "foreign_key",
-        "align": "left",
-    },
-    {
-        "name": "relationship_type",
-        "label": "Relationship Type",
-        "field": "relationship_type",
         "align": "left",
     },
 ]
@@ -176,7 +170,6 @@ class ModelPanel(ui.left_drawer):
             "unique": True,
             "index": False,
             "foreign_key": False,
-            "relationship_type": None,
         }
 
         self.models.append({"name": model_name, "fields": [default_id_field]})
@@ -234,7 +227,6 @@ class ModelPanel(ui.left_drawer):
                     if field.get("foreign_key"):
                         mr = ModelRelationship(
                             field_name=field["name"],
-                            type=RelationshipType(field["relationship_type"]),
                         )
                         relationships.append(mr)
 
@@ -310,12 +302,6 @@ class ModelEditorCard(ui.card):
                     on_change=lambda e: self._warn_foreign_key(e.value),
                 ).classes("w-full")
 
-            relationship_type = (
-                ui.select(list(RelationshipType), label="Relationship Type")
-                .classes("w-full")
-                .bind_visibility_from(foreign_key, "value")
-            )
-
             with ui.row().classes("w-full justify-end gap-2"):
                 ui.button("Close", on_click=self.modal.close)
                 ui.button(
@@ -328,7 +314,6 @@ class ModelEditorCard(ui.card):
                         unique.value,
                         index.value,
                         foreign_key.value,
-                        relationship_type.value,
                     ),
                 )
 
@@ -351,7 +336,6 @@ class ModelEditorCard(ui.card):
         unique: bool,
         index: bool,
         foreign_key: str,
-        relationship_type: str,
     ) -> None:
         if not name or not type:
             return
@@ -371,7 +355,6 @@ class ModelEditorCard(ui.card):
                 "unique": unique,
                 "index": index,
                 "foreign_key": foreign_key,
-                "relationship_type": relationship_type,
             }
 
             self.selected_model["fields"].append(new_field)
@@ -418,11 +401,6 @@ class ModelEditorCard(ui.card):
                 foreign_key = ui.checkbox(
                     "Foreign Key", value=self.selected_field["foreign_key"]
                 ).classes("w-full")
-            relationship_type = ui.select(
-                list(RelationshipType),
-                label="Relationship Type",
-                value=self.selected_field["relationship_type"] or None,
-            ).classes("w-full")
 
             with ui.row().classes("w-full justify-end gap-2"):
                 ui.button("Close", on_click=self.update_modal.close)
@@ -436,7 +414,6 @@ class ModelEditorCard(ui.card):
                         unique.value,
                         index.value,
                         foreign_key.value,
-                        relationship_type.value,
                     ),
                 )
 
@@ -451,7 +428,6 @@ class ModelEditorCard(ui.card):
         unique: bool,
         index: bool,
         foreign_key: str,
-        relationship_type: str,
     ) -> None:
         if not name or not type:
             return
@@ -475,7 +451,6 @@ class ModelEditorCard(ui.card):
                 "unique": unique,
                 "index": index,
                 "foreign_key": foreign_key,
-                "relationship_type": relationship_type,
             }
 
             index = self.selected_model["fields"].index(self.selected_field)
@@ -670,7 +645,6 @@ class ProjectConfigPanel(ui.right_drawer):
                         "unique": True,
                         "index": True,
                         "foreign_key": False,
-                        "relationship_type": None,
                     },
                     {
                         "name": "email",
@@ -680,7 +654,6 @@ class ProjectConfigPanel(ui.right_drawer):
                         "unique": True,
                         "index": True,
                         "foreign_key": False,
-                        "relationship_type": None,
                     },
                     {
                         "name": "password",
@@ -690,7 +663,6 @@ class ProjectConfigPanel(ui.right_drawer):
                         "unique": False,
                         "index": False,
                         "foreign_key": False,
-                        "relationship_type": None,
                     },
                 ],
             }

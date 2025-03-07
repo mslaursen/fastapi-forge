@@ -1,8 +1,8 @@
 from pydantic import BaseModel, computed_field, Field, model_validator, field_validator
 from typing import Annotated
-from fastapi_forge.enums import FieldDataType, RelationshipType
+from fastapi_forge.enums import FieldDataType
 from typing_extensions import Self
-from fastapi_forge.utils import snake_to_camel, camel_to_snake_hyphen
+from fastapi_forge.string_utils import snake_to_camel, camel_to_snake_hyphen
 
 
 BoundedStr = Annotated[str, Field(..., min_length=1, max_length=100)]
@@ -37,6 +37,11 @@ class ModelField(BaseModel):
     @property
     def name_cc(self) -> str:
         return snake_to_camel(self.name)
+
+    @computed_field
+    @property
+    def foreign_key_model(self) -> str | None:
+        return snake_to_camel(self.foreign_key) if self.foreign_key else None
 
     @model_validator(mode="after")
     def _validate(self) -> Self:
@@ -76,8 +81,8 @@ class ModelField(BaseModel):
 class ModelRelationship(BaseModel):
     """ModelRelationship DTO."""
 
-    type: RelationshipType
     field_name: str
+    back_populates: str | None = None
 
     @field_validator("field_name")
     def _validate(cls: Self, value: str) -> str:
