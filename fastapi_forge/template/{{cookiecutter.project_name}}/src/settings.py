@@ -17,7 +17,7 @@ class BaseSettings(PydanticBaseSettings):
     )
 
 {% if cookiecutter.use_postgres %}
-class PGSettings(BaseSettings):
+class DBSettings(BaseSettings):
     """Configuration for PostgreSQL connection."""
 
     host: str = "localhost"
@@ -87,7 +87,7 @@ class Settings(BaseSettings):
     log_level: str = "info"
     reload: bool = False
     {%- if cookiecutter.use_postgres %}
-    pg: PGSettings = PGSettings()
+    db: DBSettings = DBSettings()
     {% endif %}
     {%- if cookiecutter.use_redis %}
     redis: RedisSettings = RedisSettings()

@@ -12,7 +12,7 @@ from src.db import meta
 from alembic import context
 
 config = context.config
-config.set_main_option("sqlalchemy.url", str(settings.pg.url))
+config.set_main_option("sqlalchemy.url", str(settings.db.url))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

@@ -1,3 +1,4 @@
+{%- if cookiecutter.use_builtin_auth %}
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from src.dtos.auth_dtos import TokenData
@@ -68,3 +69,4 @@ def decode_token(token: str) -> TokenData:
 
     except jwt.exceptions.PyJWTError:
         raise exceptions.Http401(detail="Invalid token")
+{% endif %}

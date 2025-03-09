@@ -1,3 +1,4 @@
+{%- if cookiecutter.use_builtin_auth %}
 from fastapi import APIRouter
 from src.dtos.auth_dtos import UserLoginDTO, UserCreateDTO, LoginResponse, TokenData
 from src.dtos.auth_user_dtos import AuthUserDTO, AuthUserInputDTO
@@ -75,4 +76,4 @@ async def get_current_user(
     """Get current user."""
 
     return DataResponse(data=current_user)
-
+{% endif %}

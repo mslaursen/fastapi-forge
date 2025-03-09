@@ -1,3 +1,4 @@
+{%- if cookiecutter.use_builtin_auth %}
 from uuid import UUID
 from pydantic import BaseModel, SecretStr
 
@@ -26,3 +27,4 @@ class LoginResponse(BaseModel):
     """Response model for login."""
 
     access_token: str
+{% endif %}

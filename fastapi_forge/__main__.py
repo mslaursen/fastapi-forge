@@ -9,11 +9,23 @@ def main() -> None:
 
 @main.command()
 @click.option(
-    "--use-defaults", is_flag=True, help="Use default values for project creation."
+    "--use-defaults",
+    is_flag=True,
+    help="Use default values for project creation.",
 )
-def start(use_defaults: bool) -> None:
+@click.option(
+    "--no-ui",
+    is_flag=True,
+    help="Create a new project without UI for testing.",
+)
+def start(use_defaults: bool, no_ui: bool) -> None:
     """Start the server, and open the browser."""
-    init(use_defaults=use_defaults)
+    init(use_defaults=use_defaults, no_ui=no_ui)
+
+
+@main.command()
+def dry_run() -> None:
+    """Run cookiecutter without generating files."""
 
 
 @main.command()
