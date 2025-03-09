@@ -530,24 +530,17 @@ class ProjectConfigPanel(ui.right_drawer):
                     ui.label("Authentication").classes("text-lg font-bold")
                     self.use_builtin_auth = (
                         ui.checkbox(
-                            "Builtin Auth",
+                            "JWT Auth",
                             value=self.use_defaults,
                             on_change=lambda e: self._handle_builtin_auth_change(
                                 e.value
                             ),
                         )
-                        .classes("w-full")
-                        .bind_enabled_from(self.use_postgres, "value")
-                    )
-                    self.builtin_jwt_token_expire = (
-                        ui.number(
-                            placeholder="JWT Token Expire (minutes)",
-                            min=1,
-                            max=365,
-                            value=30 if self.use_defaults else None,
+                        .tooltip(
+                            "Authentication is built in the API itself, using JWT."
                         )
                         .classes("w-full")
-                        .bind_enabled_from(self.use_builtin_auth, "value")
+                        .bind_enabled_from(self.use_postgres, "value")
                     )
 
                 with ui.column().classes("w-full gap-2"):
@@ -610,7 +603,7 @@ class ProjectConfigPanel(ui.right_drawer):
                     )
 
                     self.create_button = ui.button(
-                        "Create Project", on_click=self._create_project
+                        "Generate", icon="rocket", on_click=self._create_project
                     ).classes("w-full py-3 text-lg font-bold mt-4")
 
     def _handle_builtin_auth_change(self, enabled: bool) -> None:
@@ -686,7 +679,7 @@ class ProjectConfigPanel(ui.right_drawer):
                 use_alembic=self.use_alembic.value,
                 use_builtin_auth=self.use_builtin_auth.value,
                 use_redis=self.use_redis.value,
-                builtin_jwt_token_expire=int(self.builtin_jwt_token_expire.value),
+                builtin_jwt_token_expire=30,
                 models=models,
             )
             await build_project(project_spec)
