@@ -7,14 +7,14 @@ async def create_test_db() -> None:
     """Create a test database."""
 
     engine = create_async_engine(
-        str(settings.pg.url.with_path("/postgres")),
+        str(settings.db.url.with_path("/postgres")),
         isolation_level="AUTOCOMMIT",
     )
 
     async with engine.begin() as conn:
         exists = await conn.scalar(
             sa.text(
-                f"SELECT 1 FROM pg_database WHERE datname = '{settings.pg.database}'"
+                f"SELECT 1 FROM pg_database WHERE datname = '{settings.db.database}'"
             )
         )
 
@@ -23,7 +23,7 @@ async def create_test_db() -> None:
 
     async with engine.connect() as conn:
         await conn.execute(
-            sa.text(f'CREATE DATABASE "{settings.pg.database}"'),
+            sa.text(f'CREATE DATABASE "{settings.db.database}"'),
         )
 
 
@@ -31,7 +31,7 @@ async def drop_test_db() -> None:
     """Drop the test database, terminating all connections first."""
 
     engine = create_async_engine(
-        str(settings.pg.url.with_path("/postgres")),
+        str(settings.db.url.with_path("/postgres")),
         isolation_level="AUTOCOMMIT",
     )
 
@@ -41,12 +41,12 @@ async def drop_test_db() -> None:
                 f"""
                 SELECT pg_terminate_backend(pg_stat_activity.pid)
                 FROM pg_stat_activity
-                WHERE pg_stat_activity.datname = '{settings.pg.database}'
+                WHERE pg_stat_activity.datname = '{settings.db.database}'
                   AND pid <> pg_backend_pid();
                 """
             ),
         )
 
         await conn.execute(
-            sa.text(f'DROP DATABASE "{settings.pg.database}"'),
+            sa.text(f'DROP DATABASE "{settings.db.database}"'),
         )

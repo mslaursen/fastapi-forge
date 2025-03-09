@@ -8,9 +8,6 @@
     "use_alembic": {
         "default": true
     },
-    "use_sqlalchemy": {
-        "default": true
-    },
     "use_builtin_auth": {
         "default": true
     },
@@ -20,10 +17,10 @@
     "builtin_jwt_token_expire": {
         "default": 15
     },
-    "create_daos": {
+    "create_routes": {
         "default": true
     },
-    "create_routes": {
+    "create_tests": {
         "default": true
     },
     "models": {

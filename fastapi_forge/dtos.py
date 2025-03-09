@@ -161,8 +161,6 @@ class ProjectSpec(BaseModel):
     use_builtin_auth: bool
     use_redis: bool
     builtin_jwt_token_expire: int | None = Field(None, ge=1, le=365)
-    create_routes: bool
-    create_tests: bool
     models: list[Model]
 
     @model_validator(mode="after")
@@ -177,8 +175,5 @@ class ProjectSpec(BaseModel):
 
         if self.builtin_jwt_token_expire and not self.use_builtin_auth:
             raise ValueError("Cannot set JWT expiration if auth is not enabled.")
-
-        if self.create_tests and not self.create_routes:
-            raise ValueError("Cannot create tests if routes are not created.")
 
         return self

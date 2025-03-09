@@ -20,15 +20,15 @@ COLUMNS = [
         "field": "primary_key",
         "align": "center",
     },
-    {"name": "nullable", "label": "Nullable", "field": "nullable", "align": "center"},
-    {"name": "unique", "label": "Unique", "field": "unique", "align": "center"},
-    {"name": "index", "label": "Index", "field": "index", "align": "center"},
     {
         "name": "foreign_key",
         "label": "Foreign Key",
         "field": "foreign_key",
         "align": "left",
     },
+    {"name": "nullable", "label": "Nullable", "field": "nullable", "align": "center"},
+    {"name": "unique", "label": "Unique", "field": "unique", "align": "center"},
+    {"name": "index", "label": "Index", "field": "index", "align": "center"},
 ]
 
 
@@ -137,6 +137,45 @@ class ModelRow(ui.row):
         self.on_delete(self.model)
 
 
+def _generate_model_instances(models: list[dict[str, Any]]) -> list[Model]:
+    try:
+        model_objects = []
+
+        for model in models:
+            name = model["name"]
+            fields, relationships = [], []
+
+            for field in model["fields"]:
+                mr = None
+                if field.get("foreign_key"):
+                    mr = ModelRelationship(
+                        field_name=field["name"],
+                    )
+                    relationships.append(mr)
+
+                fields.append(
+                    ModelField(
+                        name=field["name"],
+                        type=FieldDataType(field["type"]),
+                        primary_key=field.get("primary_key", False),
+                        nullable=field.get("nullable", False),
+                        unique=field.get("unique", False),
+                        index=field.get("index", False),
+                        foreign_key=mr.target_id if mr else None,
+                    )
+                )
+
+            model_objects.append(
+                Model(name=name, fields=fields, relationships=relationships)
+            )
+
+    except Exception as e:
+        ui.notify(f"Error creating Model objects: {e}", type="negative")
+        return []
+
+    return model_objects
+
+
 class ModelPanel(ui.left_drawer):
     def __init__(
         self,
@@ -213,44 +252,6 @@ class ModelPanel(ui.left_drawer):
                     on_select=self._on_select_model,
                     color=color,
                 )
-
-    def generate_model_instances(self) -> list[Model]:
-        try:
-            model_objects = []
-
-            for model in self.models:
-                name = model["name"]
-                fields, relationships = [], []
-
-                for field in model["fields"]:
-                    mr = None
-                    if field.get("foreign_key"):
-                        mr = ModelRelationship(
-                            field_name=field["name"],
-                        )
-                        relationships.append(mr)
-
-                    fields.append(
-                        ModelField(
-                            name=field["name"],
-                            type=FieldDataType(field["type"]),
-                            primary_key=field.get("primary_key", False),
-                            nullable=field.get("nullable", False),
-                            unique=field.get("unique", False),
-                            index=field.get("index", False),
-                            foreign_key=mr.target_id if mr else None,
-                        )
-                    )
-
-                model_objects.append(
-                    Model(name=name, fields=fields, relationships=relationships)
-                )
-
-        except Exception as e:
-            ui.notify(f"Error creating Model objects: {e}", type="negative")
-            return []
-
-        return model_objects
 
 
 class ModelEditorCard(ui.card):
@@ -483,12 +484,10 @@ class ProjectConfigPanel(ui.right_drawer):
     def __init__(
         self,
         use_defaults: bool,
-        generate_models: Callable[[], list[Model]],
         model_panel: ModelPanel,
     ):
         super().__init__(value=True, elevated=False, bottom_corner=True)
         self.use_defaults = use_defaults
-        self.generate_models = generate_models
         self.model_panel = model_panel
         self._build()
 
@@ -525,19 +524,6 @@ class ProjectConfigPanel(ui.right_drawer):
                             self.use_postgres or self.use_mysql,
                             "value",
                         )
-                    )
-
-                with ui.column().classes("w-full gap-2"):
-                    ui.label("Code Generation").classes("text-lg font-bold")
-                    self.create_routes = (
-                        ui.checkbox("Create Routes", value=self.use_defaults)
-                        .classes("w-full")
-                        .bind_enabled_from(self.use_postgres, "value")
-                    )
-                    self.create_tests = (
-                        ui.checkbox("Create Tests", value=self.use_defaults)
-                        .classes("w-full")
-                        .bind_enabled_from(self.use_postgres, "value")
                     )
 
                 with ui.column().classes("w-full gap-2"):
@@ -604,7 +590,7 @@ class ProjectConfigPanel(ui.right_drawer):
                     )
 
                 with ui.column().classes("w-full gap-2"):
-                    ui.label("NoSQL").classes("text-lg font-bold")
+                    ui.label("Search").classes("text-lg font-bold")
                     self.use_elasticsearch = (
                         ui.checkbox("ElasticSearch")
                         .classes("w-full")
@@ -683,7 +669,7 @@ class ProjectConfigPanel(ui.right_drawer):
         self.loading_spinner.classes(remove="hidden")
 
         try:
-            models = self.generate_models()
+            models = _generate_model_instances(self.model_panel.models)
 
             if not models:
                 ui.notify("No models to generate!", type="negative")
@@ -701,8 +687,6 @@ class ProjectConfigPanel(ui.right_drawer):
                 use_builtin_auth=self.use_builtin_auth.value,
                 use_redis=self.use_redis.value,
                 builtin_jwt_token_expire=int(self.builtin_jwt_token_expire.value),
-                create_routes=self.create_routes.value,
-                create_tests=self.create_tests.value,
                 models=models,
             )
             await build_project(project_spec)
@@ -716,7 +700,31 @@ class ProjectConfigPanel(ui.right_drawer):
             self.loading_spinner.classes("hidden")
 
 
-def init(reload: bool = False, use_defaults: bool = False) -> None:
+async def _init_no_ui(use_defaults: bool) -> None:
+    models: list[Model] = _generate_model_instances(test_models) if use_defaults else []
+    project_spec = ProjectSpec(
+        project_name="restaurant_service" if use_defaults else "test_project",
+        use_postgres=use_defaults,
+        use_alembic=use_defaults,
+        use_builtin_auth=use_defaults,
+        use_redis=use_defaults,
+        builtin_jwt_token_expire=30 if use_defaults else None,
+        models=models,
+    )
+    await build_project(project_spec)
+
+
+def init(
+    reload: bool = False,
+    use_defaults: bool = False,
+    no_ui: bool = False,
+) -> None:
+    if no_ui:
+        import asyncio
+
+        asyncio.run(_init_no_ui(use_defaults))
+        return
+
     ui.add_head_html(
         '<link href="https://unpkg.com/eva-icons@1.1.3/style/eva-icons.css" rel="stylesheet" />'
     )
@@ -733,7 +741,6 @@ def init(reload: bool = False, use_defaults: bool = False) -> None:
     )
     ProjectConfigPanel(
         use_defaults=use_defaults,
-        generate_models=model_panel.generate_model_instances,
         model_panel=model_panel,
     )
 

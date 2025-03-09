@@ -9,8 +9,8 @@ async def setup_db(app: FastAPI) -> None:
     """Setup database."""
 
     engine = create_async_engine(
-        str(settings.pg.url),
-        echo=settings.pg.echo,
+        str(settings.db.url),
+        echo=settings.db.echo,
     )
     session_factory = async_sessionmaker(
         engine,

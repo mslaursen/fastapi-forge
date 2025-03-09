@@ -35,7 +35,7 @@ async def engine() -> AsyncGenerator[AsyncEngine, None]:
     It yields an instance of `AsyncEngine` for database operations.
     """
     await create_test_db()
-    engine = create_async_engine(str(settings.pg.url))
+    engine = create_async_engine(str(settings.db.url))
 
     async with engine.begin() as conn:
         await conn.run_sync(meta.create_all)

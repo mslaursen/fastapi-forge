@@ -1,3 +1,4 @@
+{%- if cookiecutter.use_builtin_auth %}
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPBearer as _HTTPBearer
 from src.dtos.auth_user_dtos import AuthUserDTO
@@ -49,3 +50,4 @@ async def get_current_user(
 
 
 GetCurrentUser = Annotated[AuthUserDTO, Depends(get_current_user)]
+{% endif %}

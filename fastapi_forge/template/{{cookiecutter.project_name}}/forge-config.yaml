@@ -1,0 +1,29 @@
+# Used for post project generation tasks.
+# You may delete this file!
+
+config:
+  use_postgres:
+    value: {{cookiecutter.use_postgres | lower}}
+    type: bool
+    paths:
+
+  use_alembic:
+    value: {{cookiecutter.use_alembic | lower}}
+    type: bool
+    paths:
+      - migrations
+
+  use_builtin_auth:
+    value: {{cookiecutter.use_builtin_auth | lower}}
+    type: bool
+    paths:
+      - src/dependencies/auth_dependencies.py
+      - src/dtos/auth_dtos.py
+      - src/routes/auth_routes.py
+
+  use_redis:
+    value: {{cookiecutter.use_redis | lower}}
+    type: bool
+    paths:
+      - src/services/redis
+      - src/utils/auth_utils.py
