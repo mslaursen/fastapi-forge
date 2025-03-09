@@ -295,13 +295,13 @@ class ModelEditorCard(ui.card):
                     "w-full"
                 )
                 primary_key = ui.checkbox("Primary Key").classes("w-full")
-                nullable = ui.checkbox("Nullable").classes("w-full")
-                unique = ui.checkbox("Unique").classes("w-full")
-                index = ui.checkbox("Index").classes("w-full")
                 foreign_key = ui.checkbox(
                     "Foreign Key",
                     on_change=lambda e: self._warn_foreign_key(e.value),
                 ).classes("w-full")
+                nullable = ui.checkbox("Nullable").classes("w-full")
+                unique = ui.checkbox("Unique").classes("w-full")
+                index = ui.checkbox("Index").classes("w-full")
 
             with ui.row().classes("w-full justify-end gap-2"):
                 ui.button("Close", on_click=self.modal.close)
@@ -328,6 +328,56 @@ class ModelEditorCard(ui.card):
                 type="warning",
             )
 
+    def _validate_field_input(
+        self,
+        name: str,
+        type: str,
+        primary_key: bool,
+        nullable: bool,
+        unique: bool,
+        index: bool,
+        foreign_key: str,
+    ) -> bool:
+        missing = [
+            field for field, value in [("Name", name), ("Type", type)] if not value
+        ]
+        if missing:
+            ui.notify(
+                f"Field could not be created: Missing {', '.join(missing)}",
+                type="negative",
+            )
+            return False
+
+        if primary_key and foreign_key:
+            ui.notify(
+                "A field can't be both a primary and a foreign key.", type="negative"
+            )
+            return False
+
+        if primary_key and nullable:
+            ui.notify("Primary key can't be nullable.", type="negative")
+            return False
+
+        if self.selected_model:
+            for field in self.selected_model["fields"]:
+                if field["name"] == name and field != getattr(
+                    self, "selected_field", None
+                ):
+                    ui.notify(
+                        f"Field '{name}' already exists in this model.", type="negative"
+                    )
+                    return False
+
+                if field["primary_key"] and primary_key:
+                    ui.notify(
+                        "A model cannot have multiple primary keys. "
+                        f"Current primary key: '{field['name']}'",
+                        type="negative",
+                    )
+                    return False
+
+        return True
+
     def _add_field(
         self,
         name: str,
@@ -338,29 +388,32 @@ class ModelEditorCard(ui.card):
         index: bool,
         foreign_key: str,
     ) -> None:
-        if not name or not type:
+        if not self._validate_field_input(
+            name,
+            type,
+            primary_key,
+            nullable,
+            unique,
+            index,
+            foreign_key,
+        ):
             return
 
-        if self.selected_model:
-            if any(field["name"] == name for field in self.selected_model["fields"]):
-                ui.notify(
-                    f"Field '{name}' already exists in this model.", type="negative"
-                )
-                return
+        new_field = {
+            "name": name,
+            "type": type,
+            "primary_key": primary_key,
+            "nullable": nullable,
+            "unique": unique,
+            "index": index,
+            "foreign_key": foreign_key,
+        }
 
-            new_field = {
-                "name": name,
-                "type": type,
-                "primary_key": primary_key,
-                "nullable": nullable,
-                "unique": unique,
-                "index": index,
-                "foreign_key": foreign_key,
-            }
-
-            self.selected_model["fields"].append(new_field)
-            self.table.rows = self.selected_model["fields"]
-            self.modal.close()
+        if self.selected_model is None:
+            return
+        self.selected_model["fields"].append(new_field)
+        self.table.rows = self.selected_model["fields"]
+        self.modal.close()
 
     def _on_select_field(self, selection: list[dict[str, Any]]) -> None:
         if selection and selection[0]["name"] == "id":
@@ -390,6 +443,9 @@ class ModelEditorCard(ui.card):
                 primary_key = ui.checkbox(
                     "Primary Key", value=self.selected_field["primary_key"]
                 ).classes("w-full")
+                foreign_key = ui.checkbox(
+                    "Foreign Key", value=self.selected_field["foreign_key"]
+                ).classes("w-full")
                 nullable = ui.checkbox(
                     "Nullable", value=self.selected_field["nullable"]
                 ).classes("w-full")
@@ -398,9 +454,6 @@ class ModelEditorCard(ui.card):
                 ).classes("w-full")
                 index = ui.checkbox(
                     "Index", value=self.selected_field["index"]
-                ).classes("w-full")
-                foreign_key = ui.checkbox(
-                    "Foreign Key", value=self.selected_field["foreign_key"]
                 ).classes("w-full")
 
             with ui.row().classes("w-full justify-end gap-2"):
@@ -430,35 +483,35 @@ class ModelEditorCard(ui.card):
         index: bool,
         foreign_key: str,
     ) -> None:
-        if not name or not type:
+        if not self._validate_field_input(
+            name,
+            type,
+            primary_key,
+            nullable,
+            unique,
+            index,
+            foreign_key,
+        ):
             return
 
-        if self.selected_model and self.selected_field:
-            if any(
-                field["name"] == name
-                for field in self.selected_model["fields"]
-                if field != self.selected_field
-            ):
-                ui.notify(
-                    f"Field '{name}' already exists in this model.", type="negative"
-                )
-                return
+        if not self.selected_model or not self.selected_field:
+            return
 
-            updated_field = {
-                "name": name,
-                "type": type,
-                "primary_key": primary_key,
-                "nullable": nullable,
-                "unique": unique,
-                "index": index,
-                "foreign_key": foreign_key,
-            }
+        updated_field = {
+            "name": name,
+            "type": type,
+            "primary_key": primary_key,
+            "nullable": nullable,
+            "unique": unique,
+            "index": index,
+            "foreign_key": foreign_key,
+        }
 
-            index = self.selected_model["fields"].index(self.selected_field)
-            self.selected_model["fields"][index] = updated_field
-            self.table.rows = self.selected_model["fields"]
-            self.update_modal.close()
-            self.selected_field = None
+        index = self.selected_model["fields"].index(self.selected_field)
+        self.selected_model["fields"][index] = updated_field
+        self.table.rows = self.selected_model["fields"]
+        self.update_modal.close()
+        self.selected_field = None
 
     def _delete_field(self) -> None:
         if (
