@@ -20,9 +20,10 @@ async def setup_db(app: FastAPI) -> None:
     app.state.db_engine = engine
     app.state.db_session_factory = session_factory
 
+    {%- if not cookiecutter.use_alembic %}
     async with engine.begin() as conn:
         await conn.run_sync(meta.create_all)
-
+    {% endif %}
     await engine.dispose()
 
 
