@@ -21,16 +21,16 @@ def generate_relationship(relation: ModelRelationship) -> str:
 def _gen_field(field: ModelField, sa_type: str) -> str:
     args = []
     args.append(f"sa.{sa_type}")
+    if field.foreign_key:
+        args.append(
+            f'sa.ForeignKey("{camel_to_snake(field.foreign_key)}", ondelete="CASCADE")'
+        )
     if field.primary_key:
         args.append("primary_key=True")
     if field.unique:
         args.append("unique=True")
     if field.index:
         args.append("index=True")
-    if field.foreign_key:
-        args.append(
-            f'sa.ForeignKey("{camel_to_snake(field.foreign_key)}", ondelete="CASCADE")'
-        )
 
     return f"""
     {field.name}: Mapped[{field.type.as_python_type()}{" | None" if field.nullable else ""}] = mapped_column(

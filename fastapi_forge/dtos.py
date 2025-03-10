@@ -177,3 +177,24 @@ class ProjectSpec(BaseModel):
             raise ValueError("Cannot set JWT expiration if auth is not enabled.")
 
         return self
+
+
+class LoadedField(BaseModel):
+    name: str
+    type: FieldDataType
+    primary_key: bool
+    foreign_key: bool
+    nullable: bool
+    unique: bool
+    index: bool
+
+    @model_validator(mode="after")
+    def _validate(self) -> Self:
+        if self.foreign_key and self.type != FieldDataType.UUID:
+            raise ValueError("Foreign Key fields must be UUID.")
+        return self
+
+
+class LoadedModel(BaseModel):
+    name: str
+    fields: list[LoadedField]
