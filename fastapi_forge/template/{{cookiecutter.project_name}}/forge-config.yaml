@@ -20,10 +20,10 @@ config:
       - src/dependencies/auth_dependencies.py
       - src/dtos/auth_dtos.py
       - src/routes/auth_routes.py
+      - src/utils/auth_utils.py
 
   use_redis:
     value: {{cookiecutter.use_redis | lower}}
     type: bool
     paths:
       - src/services/redis
-      - src/utils/auth_utils.py

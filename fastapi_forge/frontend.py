@@ -1,9 +1,12 @@
+import asyncio
 from nicegui import ui, native
 from typing import Callable, Any
 from fastapi_forge.enums import FieldDataType
 from fastapi_forge.dtos import Model, ModelField, ModelRelationship, ProjectSpec
 from fastapi_forge.forge import build_project
-from fastapi_forge.test_data import test_models
+from fastapi_forge.project_loader import ProjectLoader
+from pathlib import Path
+import os
 
 COLUMNS = [
     {
@@ -137,7 +140,7 @@ class ModelRow(ui.row):
         self.on_delete(self.model)
 
 
-def _generate_model_instances(models: list[dict[str, Any]]) -> list[Model]:
+def generate_model_instances(models: list[dict[str, Any]]) -> list[Model]:
     try:
         model_objects = []
 
@@ -170,8 +173,7 @@ def _generate_model_instances(models: list[dict[str, Any]]) -> list[Model]:
             )
 
     except Exception as e:
-        ui.notify(f"Error creating Model objects: {e}", type="negative")
-        return []
+        raise e
 
     return model_objects
 
@@ -179,12 +181,12 @@ def _generate_model_instances(models: list[dict[str, Any]]) -> list[Model]:
 class ModelPanel(ui.left_drawer):
     def __init__(
         self,
-        use_defaults: bool,
         on_select_model: Callable[[dict[str, Any]], None],
+        initial_models: list[dict[str, Any]] | None = None,
     ):
         super().__init__(value=True, elevated=False, bottom_corner=True)
         self.classes("border-right[1px]")
-        self.models: list[dict[str, Any]] = test_models if use_defaults else []
+        self.models = initial_models or []
         self.selected_model: dict[str, Any] | None = None
         self.on_select_model = on_select_model
         self._build()
@@ -356,6 +358,10 @@ class ModelEditorCard(ui.card):
 
         if primary_key and nullable:
             ui.notify("Primary key can't be nullable.", type="negative")
+            return False
+
+        if foreign_key and type != FieldDataType.UUID.value:
+            ui.notify("Foreign Key fields must be UUID.", type="negative")
             return False
 
         if self.selected_model:
@@ -536,12 +542,12 @@ class ModelEditorCard(ui.card):
 class ProjectConfigPanel(ui.right_drawer):
     def __init__(
         self,
-        use_defaults: bool,
         model_panel: ModelPanel,
+        initial_project: dict[str, Any] | None = None,
     ):
         super().__init__(value=True, elevated=False, bottom_corner=True)
-        self.use_defaults = use_defaults
         self.model_panel = model_panel
+        self.initial_project = initial_project or {}
         self._build()
 
     def _build(self) -> None:
@@ -553,13 +559,14 @@ class ProjectConfigPanel(ui.right_drawer):
                     ui.label("Project Name").classes("text-lg font-bold")
                     self.project_name = ui.input(
                         placeholder="Project Name",
-                        value="restaurant_service" if self.use_defaults else "",
+                        value=self.initial_project.get("project_name", ""),
                     ).classes("w-full")
 
                 with ui.column().classes("w-full gap-2"):
                     ui.label("Database").classes("text-lg font-bold")
                     self.use_postgres = ui.checkbox(
-                        "Postgres", value=self.use_defaults
+                        "Postgres",
+                        value=self.initial_project.get("use_postgres", False),
                     ).classes("w-full")
                     self.use_mysql = (
                         ui.checkbox("MySQL")
@@ -570,7 +577,7 @@ class ProjectConfigPanel(ui.right_drawer):
                     self.use_alembic = (
                         ui.checkbox(
                             "Alembic (Migrations)",
-                            value=self.use_defaults,
+                            value=self.initial_project.get("use_alembic", False),
                         )
                         .classes("w-full")
                         .bind_enabled_from(
@@ -584,7 +591,7 @@ class ProjectConfigPanel(ui.right_drawer):
                     self.use_builtin_auth = (
                         ui.checkbox(
                             "JWT Auth",
-                            value=self.use_defaults,
+                            value=self.initial_project.get("use_builtin_auth", False),
                             on_change=lambda e: self._handle_builtin_auth_change(
                                 e.value
                             ),
@@ -647,7 +654,7 @@ class ProjectConfigPanel(ui.right_drawer):
                 with ui.column().classes("w-full gap-2"):
                     ui.label("Caching").classes("text-lg font-bold")
                     self.use_redis = ui.checkbox(
-                        "Redis", value=self.use_defaults
+                        "Redis", value=self.initial_project.get("use_redis", False)
                     ).classes("w-full")
 
                 with ui.column().classes("w-full gap-2"):
@@ -715,7 +722,7 @@ class ProjectConfigPanel(ui.right_drawer):
         self.loading_spinner.classes(remove="hidden")
 
         try:
-            models = _generate_model_instances(self.model_panel.models)
+            models = generate_model_instances(self.model_panel.models)
 
             if not models:
                 ui.notify("No models to generate!", type="negative")
@@ -746,29 +753,27 @@ class ProjectConfigPanel(ui.right_drawer):
             self.loading_spinner.classes("hidden")
 
 
-async def _init_no_ui(use_defaults: bool) -> None:
-    models: list[Model] = _generate_model_instances(test_models) if use_defaults else []
-    project_spec = ProjectSpec(
-        project_name="restaurant_service" if use_defaults else "test_project",
-        use_postgres=use_defaults,
-        use_alembic=use_defaults,
-        use_builtin_auth=use_defaults,
-        use_redis=use_defaults,
-        builtin_jwt_token_expire=30 if use_defaults else None,
-        models=models,
-    )
+async def _init_no_ui(project_path: Path) -> None:
+    project_spec = ProjectLoader(
+        project_path, generate_model_instances
+    ).load_project_spec()
     await build_project(project_spec)
 
 
 def init(
     reload: bool = False,
-    use_defaults: bool = False,
+    use_example: bool = False,
     no_ui: bool = False,
+    yaml_path: Path | None = None,
 ) -> None:
-    if no_ui:
-        import asyncio
+    base_path = Path(os.getcwd()) / "fastapi_forge/example-projects"
+    default_path = base_path / "dry-service.yaml"
+    example_path = base_path / "restaurant-service.yaml"
 
-        asyncio.run(_init_no_ui(use_defaults))
+    path = example_path if use_example else yaml_path if yaml_path else default_path
+
+    if no_ui:
+        asyncio.run(_init_no_ui(path))
         return
 
     ui.add_head_html(
@@ -781,13 +786,22 @@ def init(
 
     with ui.column().classes("w-full h-full items-center justify-center mt-4"):
         model_editor_card = ModelEditorCard().classes("no-shadow")
+
+    initial_project = None
+    initial_models = None
+    if path in {yaml_path, example_path}:
+        initial_project = ProjectLoader(
+            project_path=path, model_generator_func=generate_model_instances
+        ).load_project_dict()
+        initial_models = initial_project.get("models", None)
+
     model_panel = ModelPanel(
-        use_defaults=use_defaults,
+        initial_models=initial_models,
         on_select_model=model_editor_card.update_selected_model,
     )
     ProjectConfigPanel(
-        use_defaults=use_defaults,
         model_panel=model_panel,
+        initial_project=initial_project,
     )
 
     ui.run(
@@ -798,4 +812,4 @@ def init(
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    init(reload=True, use_defaults=True)
+    init(reload=True, use_example=True)
