@@ -160,6 +160,7 @@ class ProjectSpec(BaseModel):
     use_alembic: bool
     use_builtin_auth: bool
     use_redis: bool
+    use_rabbitmq: bool
     builtin_jwt_token_expire: int | None = Field(None, ge=1, le=365)
     models: list[Model]
 

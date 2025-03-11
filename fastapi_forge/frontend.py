@@ -611,11 +611,9 @@ class ProjectConfigPanel(ui.right_drawer):
                         .tooltip("Coming soon!")
                         .set_enabled(False)
                     )
-                    self.use_rabbitmq = (
-                        ui.checkbox("RabbitMQ")
-                        .classes("w-full")
-                        .tooltip("Coming soon!")
-                        .set_enabled(False)
+                    self.use_rabbitmq = ui.checkbox(
+                        "RabbitMQ",
+                        value=self.initial_project.get("use_rabbitmq", False),
                     )
 
                 with ui.column().classes("w-full gap-2"):
@@ -739,6 +737,7 @@ class ProjectConfigPanel(ui.right_drawer):
                 use_alembic=self.use_alembic.value,
                 use_builtin_auth=self.use_builtin_auth.value,
                 use_redis=self.use_redis.value,
+                use_rabbitmq=self.use_rabbitmq.value,
                 builtin_jwt_token_expire=30,
                 models=models,
             )

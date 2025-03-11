@@ -4,6 +4,7 @@ project:
   use_alembic: true
   use_builtin_auth: true
   use_redis: true
+  use_rabbitmq: true
   builtin_jwt_token_expire: 30
 
   models:

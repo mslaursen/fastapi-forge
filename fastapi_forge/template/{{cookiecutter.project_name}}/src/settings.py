@@ -69,6 +69,33 @@ class RedisSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_prefix=f"{PREFIX}REDIS_")
 
 {% endif %}
+{% if cookiecutter.use_rabbitmq %}
+class RabbitMQSettings(BaseSettings):
+    """Configuration for RabbitMQ."""
+
+    host: str = "rabbitmq"
+    port: int = 5672
+    user: str = "user"
+    password: SecretStr = SecretStr("password")
+    vhost: str = "/"
+    connection_pool_size: int = 2
+    channel_pool_size: int = 10
+
+    model_config = SettingsConfigDict(env_file=".env", env_prefix=f"{PREFIX}RABBITMQ_")
+
+
+    @property
+    def url(self) -> URL:
+        """Generates a URL for RabbitMQ connection."""
+        return URL.build(
+            scheme="amqp",
+            host=self.host,
+            port=self.port,
+            user=self.user,
+            password=self.password.get_secret_value(),
+            path=self.vhost,
+        )
+{% endif %}
 {% if cookiecutter.use_builtin_auth %}
 class JWTSettings(BaseSettings):
     """Configuration for JWT."""
@@ -86,14 +113,18 @@ class Settings(BaseSettings):
     workers: int = 1
     log_level: str = "info"
     reload: bool = False
-    {%- if cookiecutter.use_postgres %}
+    
+    {%- if cookiecutter.use_postgres -%}
     db: DBSettings = DBSettings()
     {% endif %}
-    {%- if cookiecutter.use_redis %}
+    {%- if cookiecutter.use_redis -%}
     redis: RedisSettings = RedisSettings()
     {% endif %}
-    {%- if cookiecutter.use_builtin_auth %}
+    {%- if cookiecutter.use_builtin_auth -%}
     jwt: JWTSettings = JWTSettings()
+    {% endif %}
+    {%- if cookiecutter.use_rabbitmq -%}
+    rabbitmq: RabbitMQSettings = RabbitMQSettings()
     {% endif %}
     model_config = SettingsConfigDict(
         env_file=DOTENV,
