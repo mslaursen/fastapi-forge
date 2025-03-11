@@ -12,7 +12,7 @@ dependencies = [
     "loguru>=0.7.3",
     "yarl>=1.18.3",
     "ruff>=0.9.4",
-    {% if cookiecutter.use_postgres -%}
+    {%- if cookiecutter.use_postgres -%}
     "sqlalchemy[asyncio]>=2.0.37",
     {% endif %}
     {%- if cookiecutter.use_postgres -%}
@@ -29,8 +29,11 @@ dependencies = [
     "pytest-env>=1.1.5",
     "httpx==0.28.1",
     "factory-boy>=3.3.3",
-    {% if cookiecutter.use_redis -%}
+    {%- if cookiecutter.use_redis -%}
     "redis>=5.2.1",
+    {% endif %}
+    {%- if cookiecutter.use_rabbitmq -%}
+    "aio-pika>=9.5.5",
     {% endif %}
 ]
 

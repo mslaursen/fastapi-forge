@@ -24,10 +24,21 @@ services:
       {{ cookiecutter.project_name|upper|replace('-', '_') }}_PG_USER: {{ cookiecutter.project_name }}
       {{ cookiecutter.project_name|upper|replace('-', '_') }}_PG_PASS: {{ cookiecutter.project_name }}
       {{ cookiecutter.project_name|upper|replace('-', '_') }}_PG_DATABASE: {{ cookiecutter.project_name }}
+      {%- if cookiecutter.use_redis %}
       {{ cookiecutter.project_name|upper|replace('-', '_') }}_REDIS_HOST: "redis"
       {{ cookiecutter.project_name|upper|replace('-', '_') }}_REDIS_PORT: 6379
       {{ cookiecutter.project_name|upper|replace('-', '_') }}_REDIS_PASSWORD: ""
       {{ cookiecutter.project_name|upper|replace('-', '_') }}_REDIS_MAX_CONNECTIONS: 50
+      {% endif %}
+      {%- if cookiecutter.use_rabbitmq -%}
+      {{ cookiecutter.project_name|upper|replace('-', '_') }}_RABBITMQ_HOST: "rabbitmq"
+      {{ cookiecutter.project_name|upper|replace('-', '_') }}_RABBITMQ_PORT: 5672
+      {{ cookiecutter.project_name|upper|replace('-', '_') }}_RABBITMQ_USER: "user"
+      {{ cookiecutter.project_name|upper|replace('-', '_') }}_RABBITMQ_PASSWORD: "password"
+      {{ cookiecutter.project_name|upper|replace('-', '_') }}_RABBITMQ_VHOST: "/"
+      {{ cookiecutter.project_name|upper|replace('-', '_') }}_RABBITMQ_CONNECTION_POOL_SIZE: 2
+      {{ cookiecutter.project_name|upper|replace('-', '_') }}_RABBITMQ_CHANNEL_POOL_SIZE: 10
+      {% endif %}
     volumes:
     - ./src:/app/src
     - ./tests:/app/tests

@@ -27,3 +27,9 @@ config:
     type: bool
     paths:
       - src/services/redis
+
+  use_rabbitmq:
+    value: {{cookiecutter.use_rabbitmq | lower}}
+    type: bool
+    paths:
+      - src/services/rabbitmq
