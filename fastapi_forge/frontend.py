@@ -767,7 +767,7 @@ def init(
 ) -> None:
     base_path = Path(os.getcwd()) / "fastapi_forge/example-projects"
     default_path = base_path / "dry-service.yaml"
-    example_path = base_path / "restaurant-service.yaml"
+    example_path = base_path / "trustpilot-api.yaml"
 
     path = example_path if use_example else yaml_path if yaml_path else default_path
 

@@ -1,0 +1,126 @@
+project:
+  project_name: trustpilot_api
+  use_postgres: true
+  use_alembic: true
+  use_builtin_auth: true
+  use_redis: true
+  use_rabbitmq: true
+  builtin_jwt_token_expire: 30
+
+  models:
+    - name: auth_user
+      fields:
+        - name: id
+          type: UUID
+          primary_key: true
+          nullable: false
+          unique: true
+          index: true
+          foreign_key: false
+        - name: email
+          type: String
+          primary_key: false
+          nullable: false
+          unique: true
+          index: true
+          foreign_key: false
+        - name: password
+          type: String
+          primary_key: false
+          nullable: false
+          unique: false
+          index: false
+          foreign_key: false
+
+    - name: company
+      fields:
+        - name: id
+          type: UUID
+          primary_key: true
+          nullable: false
+          unique: true
+          index: true
+          foreign_key: false
+        - name: name
+          type: String
+          primary_key: false
+          nullable: false
+          unique: true
+          index: true
+          foreign_key: false
+        - name: description
+          type: String
+          primary_key: false
+          nullable: true
+          unique: false
+          index: false
+          foreign_key: false
+        - name: website
+          type: String
+          primary_key: false
+          nullable: true
+          unique: false
+          index: false
+          foreign_key: false
+        - name: category_id
+          type: UUID
+          primary_key: false
+          nullable: true
+          unique: false
+          index: true
+          foreign_key: true
+
+    - name: category
+      fields:
+        - name: id
+          type: UUID
+          primary_key: true
+          nullable: false
+          unique: true
+          index: true
+          foreign_key: false
+        - name: name
+          type: String
+          primary_key: false
+          nullable: false
+          unique: true
+          index: true
+          foreign_key: false
+
+    - name: review
+      fields:
+        - name: id
+          type: UUID
+          primary_key: true
+          nullable: false
+          unique: true
+          index: true
+          foreign_key: false
+        - name: auth_user_id
+          type: UUID
+          primary_key: false
+          nullable: false
+          unique: false
+          index: true
+          foreign_key: true
+        - name: company_id
+          type: UUID
+          primary_key: false
+          nullable: false
+          unique: false
+          index: true
+          foreign_key: true
+        - name: rating
+          type: Integer
+          primary_key: false
+          nullable: false
+          unique: false
+          index: false
+          foreign_key: false
+        - name: comment
+          type: String
+          primary_key: false
+          nullable: true
+          unique: false
+          index: false
+          foreign_key: false
