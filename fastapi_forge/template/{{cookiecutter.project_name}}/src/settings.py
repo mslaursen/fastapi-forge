@@ -114,7 +114,7 @@ class Settings(BaseSettings):
     log_level: str = "info"
     reload: bool = False
     
-    {%- if cookiecutter.use_postgres -%}
+    {% if cookiecutter.use_postgres -%}
     db: DBSettings = DBSettings()
     {% endif %}
     {%- if cookiecutter.use_redis -%}
