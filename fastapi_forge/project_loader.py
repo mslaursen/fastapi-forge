@@ -1,8 +1,8 @@
-from fastapi_forge.dtos import Model
+from importlib.resources import as_file
 from typing import Any
 import yaml
 from typing import Callable
-from fastapi_forge.dtos import LoadedModel, ProjectSpec
+from fastapi_forge.dtos import LoadedModel, ProjectSpec, Model
 from pathlib import Path
 
 
@@ -20,17 +20,18 @@ class ProjectLoader:
         print(f"Loading project from: {project_path}")
 
     def _load_project_to_dict(self) -> dict[str, Any]:
-        if not self.project_path.exists():
-            raise FileNotFoundError(
-                f"Project config file not found: {self.project_path}"
-            )
+        with as_file(self.project_path) as resolved_path:
+            if not resolved_path.exists():
+                raise FileNotFoundError(
+                    f"Project config file not found: {resolved_path}"
+                )
 
-        with open(self.project_path) as stream:
-            try:
-                y = yaml.safe_load(stream)
-                return y["project"]
-            except Exception as e:
-                raise e
+            with open(resolved_path) as stream:
+                try:
+                    y = yaml.safe_load(stream)
+                    return y["project"]
+                except Exception as e:
+                    raise e
 
     def load_project_spec(self) -> ProjectSpec:
         project_dict = self._load_project_to_dict()
