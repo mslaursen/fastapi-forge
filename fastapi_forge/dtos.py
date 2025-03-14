@@ -56,7 +56,7 @@ class ModelField(BaseModel):
 
     @computed_field
     @property
-    def factory_field_value(self) -> str | None:
+    def factory_field_value(self) -> str | dict | None:
         """Return the appropriate factory default for the model field."""
 
         faker_placeholder = "factory.Faker({placeholder})"
@@ -70,10 +70,14 @@ class ModelField(BaseModel):
             FieldDataType.FLOAT: "random_float",
             FieldDataType.BOOLEAN: "boolean",
             FieldDataType.DATETIME: "date_time",
+            FieldDataType.JSONB: "{}",
         }
 
         if self.type not in type_to_faker:
             return None
+
+        if self.type == FieldDataType.JSONB:
+            return type_to_faker[FieldDataType.JSONB]
 
         return faker_placeholder.format(placeholder=f'"{type_to_faker[self.type]}"')
 

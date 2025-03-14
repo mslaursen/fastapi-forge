@@ -86,7 +86,6 @@ project:
           unique: true
           index: true
           foreign_key: false
-
     - name: review
       fields:
         - name: id
