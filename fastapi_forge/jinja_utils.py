@@ -18,9 +18,9 @@ def generate_relationship(relation: ModelRelationship) -> str:
     """
 
 
-def _gen_field(field: ModelField, sa_type: str) -> str:
+def _gen_field(field: ModelField, sa_type: str, prefix_sa: bool = True) -> str:
     args = []
-    args.append(f"sa.{sa_type}")
+    args.append(f"{'sa.' if prefix_sa else ''}{sa_type}")
     if field.foreign_key:
         args.append(
             f'sa.ForeignKey("{camel_to_snake(field.foreign_key)}", ondelete="CASCADE")'
@@ -63,6 +63,10 @@ def _gen_datetime_field(field: ModelField) -> str:
     return _gen_field(field, "DateTime(timezone=True)")
 
 
+def _gen_jsonb_field(field: ModelField) -> str:
+    return _gen_field(field, "JSONB", prefix_sa=False)
+
+
 def generate_field(field: ModelField) -> str:
     # currently, primary keys fields are applied by the base class
     # of the model, so we don't need to generate them here
@@ -76,6 +80,7 @@ def generate_field(field: ModelField) -> str:
         FieldDataType.FLOAT: _gen_float_field,
         FieldDataType.BOOLEAN: _gen_boolean_field,
         FieldDataType.DATETIME: _gen_datetime_field,
+        FieldDataType.JSONB: _gen_jsonb_field,
     }
 
     if field.type not in type_to_fn:

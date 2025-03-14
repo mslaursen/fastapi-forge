@@ -8,6 +8,7 @@ class FieldDataType(StrEnum):
     BOOLEAN = "Boolean"
     DATETIME = "DateTime"
     UUID = "UUID"
+    JSONB = "JSONB"
 
     def as_python_type(self) -> str:
         return {
@@ -17,4 +18,5 @@ class FieldDataType(StrEnum):
             FieldDataType.BOOLEAN: "bool",
             FieldDataType.DATETIME: "str",
             FieldDataType.UUID: "UUID",
+            FieldDataType.JSONB: "dict[str, Any]",
         }[self]

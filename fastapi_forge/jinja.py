@@ -12,7 +12,9 @@ env.filters["generate_field"] = generate_field
 model_template = """
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.dialects.postgresql import JSONB
 from uuid import UUID
+from typing import Any, Annotated
 from datetime import datetime
 {% for relation in model.relationships -%}
 from src.models.{{ relation.field_name_no_id }}_models import {{ relation.target }}
@@ -40,7 +42,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 from fastapi import Depends
 from uuid import UUID
-from typing import Annotated
+from typing import Annotated, Any
 from src.dtos import BaseOrmModel
 
 
@@ -176,6 +178,7 @@ from tests import factories
 from src.daos import AllDAOs
 from httpx import AsyncClient
 from datetime import datetime, timezone
+from typing import Any
 from uuid import UUID
 
 URI = "/api/v1/{{ model.name_hyphen }}s/"
@@ -285,6 +288,7 @@ from tests import factories
 from src.daos import AllDAOs
 from httpx import AsyncClient
 from datetime import datetime, timezone
+from typing import Any
 from uuid import UUID
 
 URI = "/api/v1/{{ model.name_hyphen }}s/{ {{- model.name -}}_id}"
@@ -360,6 +364,7 @@ TYPE_MAPPING = {
     "String": "str",
     "UUID": "UUID",
     "DateTime": "datetime",
+    "JSONB": "dict[str, Any]",
 }
 
 TYPE_TO_INPUT_VALUE_MAPPING = {
@@ -367,6 +372,7 @@ TYPE_TO_INPUT_VALUE_MAPPING = {
     "String": "'string'",
     "UUID": "UUID('00000000-0000-0000-0000-000000000000')",
     "DateTime": "datetime.now(timezone.utc)",
+    "JSONB": '{"json": "value"}',
 }
 
 
