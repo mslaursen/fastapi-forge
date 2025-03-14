@@ -6,7 +6,6 @@ from fastapi_forge.dtos import Model, ModelField, ModelRelationship, ProjectSpec
 from fastapi_forge.forge import build_project
 from fastapi_forge.project_loader import ProjectLoader
 from pathlib import Path
-import os
 
 COLUMNS = [
     {
@@ -765,7 +764,7 @@ def init(
     no_ui: bool = False,
     yaml_path: Path | None = None,
 ) -> None:
-    base_path = Path(os.getcwd()) / "fastapi_forge/example-projects"
+    base_path = Path("fastapi_forge/example-projects")
     default_path = base_path / "dry-service.yaml"
     example_path = base_path / "trustpilot-api.yaml"
 
