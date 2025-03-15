@@ -34,7 +34,7 @@ async def _write_file(path: str, content: str) -> None:
 
 
 class ProjectLoader:
-    """Load project from yaml file."""
+    """Load project from YAML file."""
 
     def __init__(
         self,
@@ -79,6 +79,8 @@ class ProjectLoader:
 
 
 class ProjectExporter:
+    """Export project to YAML file."""
+
     def __init__(
         self,
         project_dict: dict[str, Any],
