@@ -72,7 +72,13 @@ class ModelCreate(ui.row):
 
     def _build(self) -> None:
         with self.classes("w-full flex items-center justify-between"):
-            self.model_input = ui.input(placeholder="Model name").classes("self-center")
+            self.model_input = (
+                ui.input(placeholder="Model name")
+                .classes("self-center")
+                .tooltip(
+                    "Model names should be singular (e.g., 'user' instead of 'users')."
+                )
+            )
             self.add_button = (
                 ui.button(icon="add", on_click=self._add_model)
                 .classes("self-center")
@@ -255,6 +261,12 @@ class ModelPanel(ui.left_drawer):
         if any(model["name"] == model_name for model in self.models):
             ui.notify(f"Model '{model_name}' already exists.", type="negative")
             return
+
+        if model_name.endswith("s") and len(model_name) > 1:
+            ui.notify(
+                "Model names should be singular (e.g., 'user' instead of 'users').",
+                type="warning",
+            )
 
         default_id_field = {
             "name": "id",
