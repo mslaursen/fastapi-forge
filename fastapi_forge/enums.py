@@ -20,3 +20,11 @@ class FieldDataType(StrEnum):
             FieldDataType.UUID: "UUID",
             FieldDataType.JSONB: "dict[str, Any]",
         }[self]
+
+
+class HTTPMethod(StrEnum):
+    GET = "get"
+    GET_ID = "get_id"
+    POST = "post"
+    PATCH = "patch"
+    DELETE = "delete"

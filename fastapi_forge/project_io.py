@@ -1,0 +1,182 @@
+from fastapi_forge.dtos import Model
+from typing import Any
+import yaml
+from typing import Callable
+from fastapi_forge.dtos import LoadedModel, ProjectSpec
+from pathlib import Path
+from fastapi_forge.enums import HTTPMethod
+import os
+import aiofiles
+from fastapi_forge.jinja import (
+    render_model_to_dto,
+    render_model_to_model,
+    render_model_to_dao,
+    render_model_to_routers,
+    render_model_to_post_test,
+    render_model_to_get_test,
+    render_model_to_get_id_test,
+    render_model_to_patch_test,
+    render_model_to_delete_test,
+)
+from fastapi_forge.string_utils import camel_to_snake
+from fastapi_forge.logger import logger
+
+
+async def _write_file(path: str, content: str) -> None:
+    """Write content to a file."""
+    try:
+        async with aiofiles.open(path, "w") as file:
+            await file.write(content)
+        logger.info(f"Created file: {path}")
+    except IOError as e:
+        logger.error(f"Failed to write file {path}: {e}")
+        raise
+
+
+class ProjectLoader:
+    """Load project from yaml file."""
+
+    def __init__(
+        self,
+        project_path: Path,
+        model_generator_func: Callable[[list[dict[str, Any]]], list[Model]],
+    ) -> None:
+        self.project_path = project_path
+        self.model_generator_func = model_generator_func
+
+        print(f"Loading project from: {project_path}")
+
+    def _load_project_to_dict(self) -> dict[str, Any]:
+        if not self.project_path.exists():
+            raise FileNotFoundError(
+                f"Project config file not found: {self.project_path}"
+            )
+
+        with open(self.project_path) as stream:
+            try:
+                y = yaml.safe_load(stream)
+                return y["project"]
+            except Exception as e:
+                raise e
+
+    def load_project_spec(self) -> ProjectSpec:
+        project_dict = self._load_project_to_dict()
+        loaded_models = [
+            LoadedModel(**model) for model in project_dict.get("models", None) or []
+        ]
+        models: list[Model] = self.model_generator_func(
+            [m.model_dump() for m in loaded_models]
+        )
+        # remaining will be project config kwargs
+        project_dict.pop("models")
+        return ProjectSpec(
+            **project_dict,
+            models=models,
+        )
+
+    def load_project_dict(self) -> dict[str, Any]:
+        return self._load_project_to_dict()
+
+
+class ProjectExporter:
+    def __init__(
+        self,
+        project_dict: dict[str, Any],
+    ) -> None:
+        self.project_dict = project_dict
+
+    async def export_project(self) -> None:
+        models = self.project_dict.pop("models")
+        yaml_structure: dict[str, Any] = {
+            "project": {
+                **self.project_dict,
+                "models": models,
+            }
+        }
+
+        file_name = f"{self.project_dict['project_name']}.yaml"
+        file_path = Path.cwd() / file_name
+
+        await _write_file(
+            str(file_path),
+            yaml.dump(yaml_structure, default_flow_style=False, sort_keys=False),
+        )
+
+
+TEST_RENDERERS: dict[HTTPMethod, Callable[[Model], str]] = {
+    HTTPMethod.GET: render_model_to_get_test,
+    HTTPMethod.GET_ID: render_model_to_get_id_test,
+    HTTPMethod.POST: render_model_to_post_test,
+    HTTPMethod.PATCH: render_model_to_patch_test,
+    HTTPMethod.DELETE: render_model_to_delete_test,
+}
+
+
+class ProjectBuilder:
+    """Handles the creation of project artifacts."""
+
+    def __init__(self, project_name: str, base_path: str | None = None) -> None:
+        self.project_name = project_name
+        self.base_path = base_path or os.getcwd()
+        self.project_dir = os.path.join(self.base_path, self.project_name)
+        self.src_dir = os.path.join(self.project_dir, "src")
+
+    async def _create_directory(self, path: str) -> None:
+        """Create a directory if it doesn't exist."""
+        if not os.path.exists(path):
+            os.makedirs(path)
+            logger.info(f"Created directory: {path}")
+
+    async def _init_project_directories(self) -> None:
+        """Initialize project directories."""
+        await self._create_directory(self.project_dir)
+        await self._create_directory(self.src_dir)
+
+    async def _create_module_path(self, module: str) -> str:
+        """Create a path for a module (e.g., dtos, models, daos, routes)."""
+        path = os.path.join(self.src_dir, module)
+        await self._create_directory(path)
+        return path
+
+    async def _write_artifact(
+        self,
+        module: str,
+        model: Model,
+        render_func: Callable[[Model], str],
+    ) -> None:
+        """Write an artifact (e.g., DTO, model, DAO, router) to a file."""
+        path = await self._create_module_path(module)
+        file_name = f"{camel_to_snake(model.name)}_{module}.py"
+        file_path = os.path.join(path, file_name)
+        await _write_file(file_path, render_func(model))
+
+    async def _write_tests(self, model: Model) -> None:
+        """Write test files for a model."""
+        test_dir = os.path.join(
+            self.project_dir, "tests", "endpoint_tests", camel_to_snake(model.name)
+        )
+        await self._create_directory(test_dir)
+
+        init_file = os.path.join(test_dir, "__init__.py")
+        await _write_file(init_file, "# Automatically generated by FastAPI Forge\n")
+
+        for method, render_func in TEST_RENDERERS.items():
+            method_suffix = "id" if method == HTTPMethod.GET_ID else ""
+            file_name = (
+                f"test_{method.value.replace('_id', '')}_"
+                f"{camel_to_snake(model.name)}"
+                f"{f'_{method_suffix}' if method_suffix else ''}.py"
+            )
+            file_path = os.path.join(test_dir, file_name)
+            await _write_file(file_path, render_func(model))
+
+    async def build_artifacts(self, models: list[Model]) -> None:
+        """Build all project artifacts for the given models."""
+        await self._init_project_directories()
+
+        for model in models:
+            await self._write_artifact("dtos", model, render_model_to_dto)
+            await self._write_artifact("models", model, render_model_to_model)
+            await self._write_artifact("daos", model, render_model_to_dao)
+            await self._write_artifact("routes", model, render_model_to_routers)
+            await self._write_tests(model)

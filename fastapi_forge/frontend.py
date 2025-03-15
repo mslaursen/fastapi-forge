@@ -4,8 +4,9 @@ from typing import Callable, Any
 from fastapi_forge.enums import FieldDataType
 from fastapi_forge.dtos import Model, ModelField, ModelRelationship, ProjectSpec
 from fastapi_forge.forge import build_project
-from fastapi_forge.project_loader import ProjectLoader
+from fastapi_forge.project_io import ProjectLoader, ProjectExporter
 from pathlib import Path
+import yaml
 
 COLUMNS = [
     {
@@ -181,6 +182,7 @@ class ModelPanel(ui.left_drawer):
     def __init__(
         self,
         on_select_model: Callable[[dict[str, Any]], None],
+        project_config_panel: "ProjectConfigPanel | None" = None,
         initial_models: list[dict[str, Any]] | None = None,
     ):
         super().__init__(value=True, elevated=False, bottom_corner=True)
@@ -188,6 +190,7 @@ class ModelPanel(ui.left_drawer):
         self.models = initial_models or []
         self.selected_model: dict[str, Any] | None = None
         self.on_select_model = on_select_model
+        self.project_config_panel = project_config_panel
         self._build()
 
     def _build(self) -> None:
@@ -196,6 +199,57 @@ class ModelPanel(ui.left_drawer):
             with ui.column().classes("items-align content-start w-full") as self.column:
                 self.model_create = ModelCreate(on_add_model=self._add_model)
                 self._render_model_list()
+
+                ui.button(
+                    "Export",
+                    on_click=self._export_project,
+                    icon="file_download",
+                ).classes("w-full py-3 text-lg font-bold").tooltip(
+                    "Generates a YAML file containing the project configuration."
+                )
+
+    async def _export_project(self) -> None:
+        """Export the project configuration to a YAML file."""
+        if self.project_config_panel is None:
+            ui.notify(
+                "Project configuration panel is not initialized.", type="negative"
+            )
+            return
+
+        project_details = {
+            "models": self.models,
+            "project_name": self.project_config_panel.project_name.value,
+            "use_postgres": self.project_config_panel.use_postgres.value,
+            "use_alembic": self.project_config_panel.use_alembic.value,
+            "use_builtin_auth": self.project_config_panel.use_builtin_auth.value,
+            "use_redis": self.project_config_panel.use_redis.value,
+            "use_rabbitmq": self.project_config_panel.use_rabbitmq.value,
+            "builtin_jwt_token_expire": 30,  # use default for now
+        }
+
+        if not project_details["project_name"]:
+            ui.notify("Project name is required.", type="negative")
+            return
+
+        if not project_details["models"]:
+            ui.notify("No models to export.", type="negative")
+            return
+
+        try:
+            exporter = ProjectExporter(project_details)
+            await exporter.export_project()
+            ui.notify(
+                f"Project configuration exported to {project_details['project_name']}.yaml",
+                type="positive",
+            )
+        except FileNotFoundError as e:
+            ui.notify(f"File not found: {e}", type="negative")
+        except yaml.YAMLError as e:
+            ui.notify(f"Error writing YAML file: {e}", type="negative")
+        except IOError as e:
+            ui.notify(f"Error writing file: {e}", type="negative")
+        except Exception as e:
+            ui.notify(f"An unexpected error occurred: {e}", type="negative")
 
     def _add_model(self, model_name: str) -> None:
         if any(model["name"] == model_name for model in self.models):
@@ -797,10 +851,12 @@ def init(
         initial_models=initial_models,
         on_select_model=model_editor_card.update_selected_model,
     )
-    ProjectConfigPanel(
+    project_config_panel = ProjectConfigPanel(
         model_panel=model_panel,
         initial_project=initial_project,
     )
+
+    model_panel.project_config_panel = project_config_panel
 
     ui.run(
         reload=reload,
