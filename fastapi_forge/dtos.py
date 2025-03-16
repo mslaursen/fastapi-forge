@@ -1,31 +1,31 @@
-from pydantic import BaseModel, computed_field, Field, model_validator, field_validator
+from pydantic import (
+    BaseModel,
+    computed_field,
+    Field,
+    model_validator,
+    field_validator,
+    ConfigDict,
+)
 from typing import Annotated
 from fastapi_forge.enums import FieldDataType
 from typing_extensions import Self
 from fastapi_forge.string_utils import snake_to_camel, camel_to_snake_hyphen
 
-
 BoundedStr = Annotated[str, Field(..., min_length=1, max_length=100)]
-SnakeCaseStr = Annotated[
-    BoundedStr,
-    Field(..., pattern=r"^[a-z][a-z0-9_]*$"),
-]
+SnakeCaseStr = Annotated[BoundedStr, Field(..., pattern=r"^[a-z][a-z0-9_]*$")]
 ModelName = SnakeCaseStr
-ModelFieldName = SnakeCaseStr
+FieldName = SnakeCaseStr
+BackPopulates = Annotated[str, Field(..., pattern=r"^[a-z][a-z0-9_]*$")]
 ProjectName = Annotated[
-    BoundedStr,
-    Field(..., pattern=r"^[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9])?$"),
+    BoundedStr, Field(..., pattern=r"^[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9])?$")
 ]
-ForeignKey = Annotated[
-    BoundedStr,
-    Field(..., pattern=r"^[A-Z][a-zA-Z]*\.id$"),
-]
+ForeignKey = Annotated[BoundedStr, Field(..., pattern=r"^[A-Z][a-zA-Z]*\.id$")]
 
 
 class ModelField(BaseModel):
-    """ModelField DTO."""
+    """Represents a field in a model with validation and computed properties."""
 
-    name: ModelFieldName
+    name: FieldName
     type: FieldDataType
     primary_key: bool = False
     nullable: bool = False
@@ -36,15 +36,18 @@ class ModelField(BaseModel):
     @computed_field
     @property
     def name_cc(self) -> str:
+        """Convert field name to camelCase."""
         return snake_to_camel(self.name)
 
     @computed_field
     @property
     def foreign_key_model(self) -> str | None:
+        """Convert foreign key to camelCase if it exists."""
         return snake_to_camel(self.foreign_key) if self.foreign_key else None
 
     @model_validator(mode="after")
     def _validate(self) -> Self:
+        """Validate field constraints."""
         if self.primary_key:
             if self.foreign_key:
                 raise ValueError("Primary key fields cannot be foreign keys.")
@@ -58,7 +61,6 @@ class ModelField(BaseModel):
     @property
     def factory_field_value(self) -> str | dict | None:
         """Return the appropriate factory default for the model field."""
-
         faker_placeholder = "factory.Faker({placeholder})"
 
         if "email" in self.name:
@@ -83,35 +85,39 @@ class ModelField(BaseModel):
 
 
 class ModelRelationship(BaseModel):
-    """ModelRelationship DTO."""
+    """Represents a relationship between models."""
 
-    field_name: str
-    back_populates: str | None = None
+    field_name: FieldName
+    back_populates: BackPopulates | None = None
 
     @field_validator("field_name")
-    def _validate(cls: Self, value: str) -> str:
+    def _validate_field_name(cls, value: str) -> str:
+        """Ensure relationship field names end with '_id'."""
         if not value.endswith("_id"):
-            raise ValueError("Relationship field names must endwith '_id'.")
+            raise ValueError("Relationship field names must end with '_id'.")
         return value
 
     @computed_field
     @property
     def field_name_no_id(self) -> str:
+        """Remove '_id' suffix from the field name."""
         return self.field_name[:-3]
 
     @computed_field
     @property
     def target(self) -> str:
+        """Convert field name to camelCase."""
         return snake_to_camel(self.field_name)
 
     @computed_field
     @property
     def target_id(self) -> str:
+        """Return the target ID in the format 'Target.id'."""
         return f"{self.target}.id"
 
 
 class Model(BaseModel):
-    """Model DTO."""
+    """Represents a model with fields and relationships."""
 
     name: ModelName
     fields: list[ModelField]
@@ -129,6 +135,7 @@ class Model(BaseModel):
 
     @model_validator(mode="after")
     def _validate(self) -> Self:
+        """Validate model constraints."""
         field_names = [field.name for field in self.fields]
         if len(field_names) != len(set(field_names)):
             raise ValueError(f"Model '{self.name}' contains duplicate fields.")
@@ -138,28 +145,23 @@ class Model(BaseModel):
             raise ValueError(f"Model '{self.name}' contains duplicate relationships.")
 
         if sum(field.primary_key for field in self.fields) != 1:
-            raise ValueError(
-                f"Model '{self.name}' has more or less than 1 primary key."
-            )
+            raise ValueError(f"Model '{self.name}' must have exactly one primary key.")
 
         relationship_target_field_names = {
             relation.field_name for relation in self.relationships
         }
         for field in self.fields:
-            if field.foreign_key is None:
-                continue
-            if field.name not in relationship_target_field_names:
+            if field.foreign_key and field.name not in relationship_target_field_names:
                 raise ValueError(
-                    f"Model foreign key '{self.name}.{field.name}', "
-                    f"not a relation: {relationship_target_field_names}"
+                    f"Model foreign key '{self.name}.{field.name}' is not a valid relationship."
                 )
         return self
 
 
 class ProjectSpec(BaseModel):
-    """ProjectSpec DTO."""
+    """Represents a project specification with models and configurations."""
 
-    project_name: BoundedStr
+    project_name: ProjectName
     use_postgres: bool
     use_alembic: bool
     use_builtin_auth: bool
@@ -170,7 +172,7 @@ class ProjectSpec(BaseModel):
 
     @model_validator(mode="after")
     def validate_models(self) -> Self:
-        """Ensure that the models are valid."""
+        """Validate project-level constraints."""
         model_names = [model.name for model in self.models]
         if len(model_names) != len(set(model_names)):
             raise ValueError("Model names must be unique.")
@@ -184,22 +186,73 @@ class ProjectSpec(BaseModel):
         return self
 
 
-class LoadedField(BaseModel):
-    name: str
+class FieldInput(BaseModel):
+    """Input model for creating or updating a field."""
+
+    model_config = ConfigDict(use_enum_values=True)
+
+    name: FieldName
     type: FieldDataType
-    primary_key: bool
-    foreign_key: bool
-    nullable: bool
-    unique: bool
-    index: bool
+    primary_key: bool = False
+    nullable: bool = False
+    unique: bool = False
+    index: bool = False
+    foreign_key: bool = False
+    back_populates: BackPopulates | None = None
 
     @model_validator(mode="after")
     def _validate(self) -> Self:
+        """Validate field input constraints."""
         if self.foreign_key and self.type != FieldDataType.UUID:
             raise ValueError("Foreign Key fields must be UUID.")
+        if not self.foreign_key and self.back_populates:
+            raise ValueError("Back Populates can only be set on Foreign Keys.")
+        if self.primary_key and self.foreign_key:
+            raise ValueError("Primary Keys cannot be Foreign Keys.")
+        if self.foreign_key and not self.name.endswith("_id"):
+            raise ValueError("Foreign Key field names must end with '_id'.")
         return self
 
 
-class LoadedModel(BaseModel):
-    name: str
-    fields: list[LoadedField]
+class ModelInput(BaseModel):
+    """Input model for creating or updating a model."""
+
+    name: ModelName
+    fields: list[FieldInput]
+
+    @model_validator(mode="after")
+    def _validate(self) -> Self:
+        """Validate model input constraints."""
+        field_names = [field.name for field in self.fields]
+        if len(set(field_names)) != len(field_names):
+            raise ValueError("Duplicate field names are not allowed.")
+        if sum(field.primary_key for field in self.fields) != 1:
+            raise ValueError(f"Model '{self.name}' must have exactly one primary key.")
+        return self
+
+
+class ProjectInput(BaseModel):
+    """Input model for creating or updating a project."""
+
+    project_name: ProjectName
+    use_postgres: bool = False
+    use_alembic: bool = False
+    use_builtin_auth: bool = False
+    use_redis: bool = False
+    use_rabbitmq: bool = False
+    builtin_jwt_token_expire: int | None = Field(None, ge=1, le=365)
+    models: list[ModelInput] = []
+
+    @model_validator(mode="after")
+    def _validate(self) -> Self:
+        if self.use_alembic and not self.use_postgres:
+            raise ValueError("Cannot use Alembic if PostgreSQL is not enabled.")
+
+        if self.builtin_jwt_token_expire and not self.use_builtin_auth:
+            raise ValueError("Cannot set JWT expiration if auth is not enabled.")
+
+        model_names = [model.name for model in self.models]
+        if len(model_names) != len(set(model_names)):
+            raise ValueError("Model names must be unique.")
+
+        return self
