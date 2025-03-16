@@ -914,7 +914,7 @@ def init(
     no_ui: bool = False,
     yaml_path: Path | None = None,
 ) -> None:
-    base_path = Path("fastapi_forge/example-projects")
+    base_path = Path(__file__).parent / "example-projects"
     default_path = base_path / "dry-service.yaml"
     example_path = base_path / "trustpilot-api.yaml"
 
