@@ -251,7 +251,6 @@ class ModelPanel(ui.left_drawer):
                 use_builtin_auth=self.project_config_panel.use_builtin_auth.value,
                 use_redis=self.project_config_panel.use_redis.value,
                 use_rabbitmq=self.project_config_panel.use_rabbitmq.value,
-                builtin_jwt_token_expire=30,  # use default for now
                 models=self.models,
             )
 
@@ -839,7 +838,6 @@ class ProjectConfigPanel(ui.right_drawer):
                 use_builtin_auth=self.use_builtin_auth.value,
                 use_redis=self.use_redis.value,
                 use_rabbitmq=self.use_rabbitmq.value,
-                builtin_jwt_token_expire=30,
                 models=models,
             )
             await build_project(project_spec)
@@ -870,7 +868,10 @@ def setup_ui() -> None:
     ui.input.default_props("dense")
     Header()
 
-def load_initial_project(path: Path) -> tuple[ProjectInput | None, list[ModelInput] | None]:
+
+def load_initial_project(
+    path: Path,
+) -> tuple[ProjectInput | None, list[ModelInput] | None]:
     initial_project = None
     initial_models = None
     if path:
@@ -880,7 +881,10 @@ def load_initial_project(path: Path) -> tuple[ProjectInput | None, list[ModelInp
         initial_models = initial_project.models
     return initial_project, initial_models
 
-def create_ui_components(initial_project: ProjectInput | None, initial_models: list[ModelInput] | None) -> None:
+
+def create_ui_components(
+    initial_project: ProjectInput | None, initial_models: list[ModelInput] | None
+) -> None:
     with ui.column().classes("w-full h-full items-center justify-center mt-4"):
         model_editor_card = ModelEditorCard().classes("no-shadow")
 
@@ -895,12 +899,14 @@ def create_ui_components(initial_project: ProjectInput | None, initial_models: l
 
     model_panel.project_config_panel = project_config_panel
 
+
 def run_ui(reload: bool) -> None:
     ui.run(
         reload=reload,
         title="FastAPI Forge",
         port=native.find_open_port(8777, 8999),
     )
+
 
 def init(
     reload: bool = False,
@@ -919,7 +925,12 @@ def init(
         return
 
     setup_ui()
-    initial_project, initial_models = load_initial_project(path)
+
+    initial_project = None
+    initial_models = None
+    if use_example or yaml_path:
+        initial_project, initial_models = load_initial_project(path)
+
     create_ui_components(initial_project, initial_models)
     run_ui(reload)
 

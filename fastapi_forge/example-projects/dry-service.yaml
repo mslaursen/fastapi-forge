@@ -4,7 +4,7 @@ project:
   use_alembic: false
   use_builtin_auth: false
   use_redis: false
-  builtin_jwt_token_expire: null
+  use_rabbitmq: false
 
   models:
     

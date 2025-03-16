@@ -167,7 +167,6 @@ class ProjectSpec(BaseModel):
     use_builtin_auth: bool
     use_redis: bool
     use_rabbitmq: bool
-    builtin_jwt_token_expire: int | None = Field(None, ge=1, le=365)
     models: list[Model]
 
     @model_validator(mode="after")
@@ -179,9 +178,6 @@ class ProjectSpec(BaseModel):
 
         if self.use_alembic and not self.use_postgres:
             raise ValueError("Cannot use Alembic if PostgreSQL is not enabled.")
-
-        if self.builtin_jwt_token_expire and not self.use_builtin_auth:
-            raise ValueError("Cannot set JWT expiration if auth is not enabled.")
 
         return self
 
@@ -240,16 +236,12 @@ class ProjectInput(BaseModel):
     use_builtin_auth: bool = False
     use_redis: bool = False
     use_rabbitmq: bool = False
-    builtin_jwt_token_expire: int | None = Field(None, ge=1, le=365)
     models: list[ModelInput] = []
 
     @model_validator(mode="after")
     def _validate(self) -> Self:
         if self.use_alembic and not self.use_postgres:
             raise ValueError("Cannot use Alembic if PostgreSQL is not enabled.")
-
-        if self.builtin_jwt_token_expire and not self.use_builtin_auth:
-            raise ValueError("Cannot set JWT expiration if auth is not enabled.")
 
         model_names = [model.name for model in self.models]
         if len(model_names) != len(set(model_names)):

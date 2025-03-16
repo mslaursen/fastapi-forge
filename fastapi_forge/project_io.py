@@ -56,7 +56,7 @@ class ProjectLoader:
     def load_project_spec(self) -> ProjectSpec:
         project_dict = self._load_project_to_dict()
         loaded_models = [
-            ModelInput(**model) for model in project_dict.get("models", [])
+            ModelInput(**model) for model in project_dict.get("models", []) or []
         ]
         models = self.model_generator_func(loaded_models)
         project_dict.pop("models")
