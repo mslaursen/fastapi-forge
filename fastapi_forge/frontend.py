@@ -159,6 +159,7 @@ def generate_model_instances(models: list[dict[str, Any]]) -> list[Model]:
                 if field.get("foreign_key"):
                     mr = ModelRelationship(
                         field_name=field["name"],
+                        back_populates=field.get("back_populates", None),
                     )
                     relationships.append(mr)
 
@@ -327,6 +328,7 @@ class ModelEditorCard(ui.card):
         self.selected_model: dict[str, Any] | None = None
         self.selected_field: dict[str, Any] | None = None
         self.visible = False
+        self.foreign_key_enabled = False
         self._build()
 
     def _build(self) -> None:
@@ -354,6 +356,8 @@ class ModelEditorCard(ui.card):
                 ).bind_visibility_from(self, "selected_field")
 
     def _open_modal(self) -> None:
+        self.foreign_key_enabled = False
+
         with ui.dialog() as self.modal, ui.card().classes("no-shadow border-[1px]"):
             ui.label("Add New Field").classes("text-lg font-bold")
             with ui.row().classes("w-full gap-2"):
@@ -364,11 +368,19 @@ class ModelEditorCard(ui.card):
                 primary_key = ui.checkbox("Primary Key").classes("w-full")
                 foreign_key = ui.checkbox(
                     "Foreign Key",
-                    on_change=lambda e: self._warn_foreign_key(e.value),
+                    on_change=lambda e: self._toggle_foreign_key(e.value),
                 ).classes("w-full")
                 nullable = ui.checkbox("Nullable").classes("w-full")
                 unique = ui.checkbox("Unique").classes("w-full")
                 index = ui.checkbox("Index").classes("w-full")
+                self.back_populates_input = (
+                    ui.input(
+                        label="Back Populates",
+                        placeholder="Enter the back_populates value",
+                    )
+                    .classes("w-full")
+                    .bind_visibility_from(self, "foreign_key_enabled")
+                )
 
             with ui.row().classes("w-full justify-end gap-2"):
                 ui.button("Close", on_click=self.modal.close)
@@ -382,18 +394,27 @@ class ModelEditorCard(ui.card):
                         unique.value,
                         index.value,
                         foreign_key.value,
+                        self.back_populates_input.value if foreign_key.value else None,
                     ),
                 )
 
         self.modal.open()
 
-    def _warn_foreign_key(self, enabled: bool) -> None:
+    def _toggle_foreign_key(self, enabled: bool) -> None:
+        """Enable/disable the back_populates input based on foreign_key."""
+        self.foreign_key_enabled = enabled
         if enabled:
-            ui.notify(
-                "ForeignKey field names should refer to a different table followed by '_id'. "
-                "Example: 'restaurant_id'",
-                type="warning",
-            )
+            self._warn_foreign_key()
+        else:
+            self.back_populates_input.value = ""
+
+    def _warn_foreign_key(self) -> None:
+        """Show a warning when foreign_key is enabled."""
+        ui.notify(
+            "ForeignKey field names should refer to a different table followed by '_id'. "
+            "Example: 'restaurant_id'",
+            type="warning",
+        )
 
     def _validate_field_input(
         self,
@@ -404,6 +425,7 @@ class ModelEditorCard(ui.card):
         unique: bool,
         index: bool,
         foreign_key: str,
+        back_populates: str | None = None,
     ) -> bool:
         missing = [
             field for field, value in [("Name", name), ("Type", type)] if not value
@@ -458,6 +480,7 @@ class ModelEditorCard(ui.card):
         unique: bool,
         index: bool,
         foreign_key: str,
+        back_populates: str | None = None,
     ) -> None:
         if not self._validate_field_input(
             name,
@@ -467,6 +490,7 @@ class ModelEditorCard(ui.card):
             unique,
             index,
             foreign_key,
+            back_populates,
         ):
             return
 
@@ -478,6 +502,7 @@ class ModelEditorCard(ui.card):
             "unique": unique,
             "index": index,
             "foreign_key": foreign_key,
+            "back_populates": back_populates if foreign_key else None,
         }
 
         if self.selected_model is None:
@@ -496,6 +521,8 @@ class ModelEditorCard(ui.card):
     def _update_field(self) -> None:
         if not self.selected_field or self.selected_field["name"] == "id":
             return
+
+        self.foreign_key_enabled = self.selected_field.get("foreign_key", False)
 
         with (
             ui.dialog() as self.update_modal,
@@ -526,6 +553,15 @@ class ModelEditorCard(ui.card):
                 index = ui.checkbox(
                     "Index", value=self.selected_field["index"]
                 ).classes("w-full")
+                self.back_populates_input = (
+                    ui.input(
+                        label="Back Populates",
+                        placeholder="Not required",
+                        value=self.selected_field.get("back_populates", ""),
+                    )
+                    .classes("w-full")
+                    .bind_visibility_from(self, "foreign_key_enabled")
+                )
 
             with ui.row().classes("w-full justify-end gap-2"):
                 ui.button("Close", on_click=self.update_modal.close)
@@ -539,6 +575,7 @@ class ModelEditorCard(ui.card):
                         unique.value,
                         index.value,
                         foreign_key.value,
+                        self.back_populates_input.value if foreign_key.value else None,
                     ),
                 )
 
@@ -553,6 +590,7 @@ class ModelEditorCard(ui.card):
         unique: bool,
         index: bool,
         foreign_key: str,
+        back_populates: str | None = None,
     ) -> None:
         if not self._validate_field_input(
             name,
@@ -562,6 +600,7 @@ class ModelEditorCard(ui.card):
             unique,
             index,
             foreign_key,
+            back_populates,
         ):
             return
 
@@ -576,6 +615,7 @@ class ModelEditorCard(ui.card):
             "unique": unique,
             "index": index,
             "foreign_key": foreign_key,
+            "back_populates": back_populates if foreign_key else None,
         }
 
         index = self.selected_model["fields"].index(self.selected_field)
