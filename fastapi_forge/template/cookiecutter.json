@@ -17,9 +17,6 @@
     "use_rabbitmq": {
         "default": true
     },
-    "builtin_jwt_token_expire": {
-        "default": 15
-    },
     "create_routes": {
         "default": true
     },
