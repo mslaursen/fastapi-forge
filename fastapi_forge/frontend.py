@@ -862,6 +862,46 @@ async def _init_no_ui(project_path: Path) -> None:
     await build_project(project_spec)
 
 
+def setup_ui() -> None:
+    ui.add_head_html(
+        '<link href="https://unpkg.com/eva-icons@1.1.3/style/eva-icons.css" rel="stylesheet" />'
+    )
+    ui.button.default_props("round flat dense")
+    ui.input.default_props("dense")
+    Header()
+
+def load_initial_project(path: Path) -> tuple[ProjectInput | None, list[ModelInput] | None]:
+    initial_project = None
+    initial_models = None
+    if path:
+        initial_project = ProjectLoader(
+            project_path=path, model_generator_func=generate_model_instances
+        ).load_project_input()
+        initial_models = initial_project.models
+    return initial_project, initial_models
+
+def create_ui_components(initial_project: ProjectInput | None, initial_models: list[ModelInput] | None) -> None:
+    with ui.column().classes("w-full h-full items-center justify-center mt-4"):
+        model_editor_card = ModelEditorCard().classes("no-shadow")
+
+    model_panel = ModelPanel(
+        initial_models=initial_models,
+        on_select_model=model_editor_card.update_selected_model,
+    )
+    project_config_panel = ProjectConfigPanel(
+        model_panel=model_panel,
+        initial_project=initial_project,
+    )
+
+    model_panel.project_config_panel = project_config_panel
+
+def run_ui(reload: bool) -> None:
+    ui.run(
+        reload=reload,
+        title="FastAPI Forge",
+        port=native.find_open_port(8777, 8999),
+    )
+
 def init(
     reload: bool = False,
     use_example: bool = False,
@@ -878,41 +918,10 @@ def init(
         asyncio.run(_init_no_ui(path))
         return
 
-    ui.add_head_html(
-        '<link href="https://unpkg.com/eva-icons@1.1.3/style/eva-icons.css" rel="stylesheet" />'
-    )
-    ui.button.default_props("round flat dense")
-    ui.input.default_props("dense")
-
-    Header()
-
-    with ui.column().classes("w-full h-full items-center justify-center mt-4"):
-        model_editor_card = ModelEditorCard().classes("no-shadow")
-
-    initial_project = None
-    initial_models = None
-    if path in {yaml_path, example_path}:
-        initial_project = ProjectLoader(
-            project_path=path, model_generator_func=generate_model_instances
-        ).load_project_input()
-        initial_models = initial_project.models
-
-    model_panel = ModelPanel(
-        initial_models=initial_models,
-        on_select_model=model_editor_card.update_selected_model,
-    )
-    project_config_panel = ProjectConfigPanel(
-        model_panel=model_panel,
-        initial_project=initial_project,
-    )
-
-    model_panel.project_config_panel = project_config_panel
-
-    ui.run(
-        reload=reload,
-        title="FastAPI Forge",
-        port=native.find_open_port(8777, 8999),
-    )
+    setup_ui()
+    initial_project, initial_models = load_initial_project(path)
+    create_ui_components(initial_project, initial_models)
+    run_ui(reload)
 
 
 if __name__ in {"__main__", "__mp_main__"}:
