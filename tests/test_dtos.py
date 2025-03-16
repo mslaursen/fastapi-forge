@@ -101,4 +101,4 @@ def test_field_name_not_endswith_id() -> None:
         ModelRelationship(
             field_name="restaurant",
         )
-    assert "Relationship field names must endwith '_id'." in str(exc_info.value)
+    assert "Relationship field names must end with '_id'." in str(exc_info.value)

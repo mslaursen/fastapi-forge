@@ -1,8 +1,17 @@
 import asyncio
 from nicegui import ui, native
 from typing import Callable, Any
+from pydantic import ValidationError
 from fastapi_forge.enums import FieldDataType
-from fastapi_forge.dtos import Model, ModelField, ModelRelationship, ProjectSpec
+from fastapi_forge.dtos import (
+    Model,
+    ModelField,
+    ModelRelationship,
+    ProjectSpec,
+    FieldInput,
+    ModelInput,
+    ProjectInput,
+)
 from fastapi_forge.forge import build_project
 from fastapi_forge.project_io import ProjectLoader, ProjectExporter
 from pathlib import Path
@@ -33,6 +42,50 @@ COLUMNS = [
     {"name": "unique", "label": "Unique", "field": "unique", "align": "center"},
     {"name": "index", "label": "Index", "field": "index", "align": "center"},
 ]
+
+
+def notify_validation_error(e: ValidationError) -> None:
+    msg = e.errors()[0].get("msg", "Something went wrong.")
+    ui.notify(msg, type="negative")
+
+
+def generate_model_instances(models: list[ModelInput]) -> list[Model]:
+    try:
+        model_objects = []
+
+        for model in models:
+            name = model.name
+            fields, relationships = [], []
+
+            for field in model.fields:
+                mr = None
+                if field.foreign_key:
+                    mr = ModelRelationship(
+                        field_name=field.name,
+                        back_populates=field.back_populates,
+                    )
+                    relationships.append(mr)
+
+                fields.append(
+                    ModelField(
+                        name=field.name,
+                        type=FieldDataType(field.type),
+                        primary_key=field.primary_key,
+                        nullable=field.nullable,
+                        unique=field.unique,
+                        index=field.index,
+                        foreign_key=mr.target_id if mr else None,
+                    )
+                )
+
+            model_objects.append(
+                Model(name=name, fields=fields, relationships=relationships)
+            )
+
+    except Exception as e:
+        raise e
+
+    return model_objects
 
 
 class Header(ui.header):
@@ -95,10 +148,10 @@ class ModelCreate(ui.row):
 class ModelRow(ui.row):
     def __init__(
         self,
-        model: dict[str, Any],
-        on_delete: Callable[[dict[str, Any]], None],
-        on_edit: Callable[[dict[str, Any], str], None],
-        on_select: Callable[[dict[str, Any]], None],
+        model: ModelInput,
+        on_delete: Callable[[ModelInput], None],
+        on_edit: Callable[[ModelInput, str], None],
+        on_select: Callable[[ModelInput], None],
         color: str | None = None,
     ):
         super().__init__(wrap=False)
@@ -112,11 +165,11 @@ class ModelRow(ui.row):
 
     def _build(self) -> None:
         with self.classes("w-full flex items-center justify-between cursor-pointer"):
-            self.name_label = ui.label(text=self.model["name"]).classes("self-center")
+            self.name_label = ui.label(text=self.model.name).classes("self-center")
             if self.color:
                 self.name_label.classes(add=self.color)
             self.name_input = (
-                ui.input(value=self.model["name"])
+                ui.input(value=self.model.name)
                 .classes("self-center")
                 .bind_visibility_from(self, "is_editing")
             )
@@ -146,56 +199,17 @@ class ModelRow(ui.row):
         self.on_delete(self.model)
 
 
-def generate_model_instances(models: list[dict[str, Any]]) -> list[Model]:
-    try:
-        model_objects = []
-
-        for model in models:
-            name = model["name"]
-            fields, relationships = [], []
-
-            for field in model["fields"]:
-                mr = None
-                if field.get("foreign_key"):
-                    mr = ModelRelationship(
-                        field_name=field["name"],
-                        back_populates=field.get("back_populates", None),
-                    )
-                    relationships.append(mr)
-
-                fields.append(
-                    ModelField(
-                        name=field["name"],
-                        type=FieldDataType(field["type"]),
-                        primary_key=field.get("primary_key", False),
-                        nullable=field.get("nullable", False),
-                        unique=field.get("unique", False),
-                        index=field.get("index", False),
-                        foreign_key=mr.target_id if mr else None,
-                    )
-                )
-
-            model_objects.append(
-                Model(name=name, fields=fields, relationships=relationships)
-            )
-
-    except Exception as e:
-        raise e
-
-    return model_objects
-
-
 class ModelPanel(ui.left_drawer):
     def __init__(
         self,
-        on_select_model: Callable[[dict[str, Any]], None],
+        on_select_model: Callable[[ModelInput | None], None],
         project_config_panel: "ProjectConfigPanel | None" = None,
-        initial_models: list[dict[str, Any]] | None = None,
+        initial_models: list[ModelInput] | None = None,
     ):
         super().__init__(value=True, elevated=False, bottom_corner=True)
         self.classes("border-right[1px]")
         self.models = initial_models or []
-        self.selected_model: dict[str, Any] | None = None
+        self.selected_model: ModelInput | None = None
         self.on_select_model = on_select_model
         self.project_config_panel = project_config_panel
         self._build()
@@ -223,32 +237,28 @@ class ModelPanel(ui.left_drawer):
             )
             return
 
-        project_details = {
-            "models": self.models,
-            "project_name": self.project_config_panel.project_name.value,
-            "use_postgres": self.project_config_panel.use_postgres.value,
-            "use_alembic": self.project_config_panel.use_alembic.value,
-            "use_builtin_auth": self.project_config_panel.use_builtin_auth.value,
-            "use_redis": self.project_config_panel.use_redis.value,
-            "use_rabbitmq": self.project_config_panel.use_rabbitmq.value,
-            "builtin_jwt_token_expire": 30,  # use default for now
-        }
-
-        if not project_details["project_name"]:
-            ui.notify("Project name is required.", type="negative")
-            return
-
-        if not project_details["models"]:
-            ui.notify("No models to export.", type="negative")
-            return
-
         try:
-            exporter = ProjectExporter(project_details)
+            project_input = ProjectInput(
+                project_name=self.project_config_panel.project_name.value,
+                use_postgres=self.project_config_panel.use_postgres.value,
+                use_alembic=self.project_config_panel.use_alembic.value,
+                use_builtin_auth=self.project_config_panel.use_builtin_auth.value,
+                use_redis=self.project_config_panel.use_redis.value,
+                use_rabbitmq=self.project_config_panel.use_rabbitmq.value,
+                builtin_jwt_token_expire=30,  # use default for now
+                models=self.models,
+            )
+
+            exporter = ProjectExporter(project_input)
             await exporter.export_project()
+
             ui.notify(
-                f"Project configuration exported to {project_details['project_name']}.yaml",
+                f"Project configuration exported to {project_input.project_name}.yaml",
                 type="positive",
             )
+
+        except ValidationError as e:
+            notify_validation_error(e)
         except FileNotFoundError as e:
             ui.notify(f"File not found: {e}", type="negative")
         except yaml.YAMLError as e:
@@ -259,7 +269,7 @@ class ModelPanel(ui.left_drawer):
             ui.notify(f"An unexpected error occurred: {e}", type="negative")
 
     def _add_model(self, model_name: str) -> None:
-        if any(model["name"] == model_name for model in self.models):
+        if any(model.name == model_name for model in self.models):
             ui.notify(f"Model '{model_name}' already exists.", type="negative")
             return
 
@@ -269,37 +279,41 @@ class ModelPanel(ui.left_drawer):
                 type="warning",
             )
 
-        default_id_field = {
-            "name": "id",
-            "type": FieldDataType.UUID,
-            "primary_key": True,
-            "nullable": False,
-            "unique": True,
-            "index": False,
-            "foreign_key": False,
-        }
+        try:
+            default_id_field = FieldInput(
+                name="id",
+                type=FieldDataType.UUID,
+                primary_key=True,
+                nullable=False,
+                unique=True,
+                index=False,
+                foreign_key=False,
+            )
 
-        self.models.append({"name": model_name, "fields": [default_id_field]})
-        self._render_model_list()
+            new_model = ModelInput(name=model_name, fields=[default_id_field])
+            self.models.append(new_model)
+            self._render_model_list()
+        except ValidationError as e:
+            notify_validation_error(e)
 
-    def _on_delete_model(self, model: dict[str, Any]) -> None:
+    def _on_delete_model(self, model: ModelInput) -> None:
         self.models.remove(model)
         if self.selected_model == model:
             self.selected_model = None
             self.on_select_model(None)
         self._render_model_list()
 
-    def _on_edit_model(self, model: dict[str, Any], new_name: str) -> None:
-        if any(m["name"] == new_name for m in self.models if m != model):
+    def _on_edit_model(self, model: ModelInput, new_name: str) -> None:
+        if any(m.name == new_name for m in self.models if m != model):
             ui.notify(f"Model '{new_name}' already exists.", type="negative")
             return
 
-        model["name"] = new_name
+        model.name = new_name
         if self.selected_model == model:
             self.on_select_model(model)
         self._render_model_list()
 
-    def _on_select_model(self, model: dict[str, Any]) -> None:
+    def _on_select_model(self, model: ModelInput) -> None:
         self.selected_model = model
         self.on_select_model(model)
 
@@ -311,7 +325,7 @@ class ModelPanel(ui.left_drawer):
 
         with self.model_list:
             for model in self.models:
-                is_auth_user = model["name"] == "auth_user"
+                is_auth_user = model.name == "auth_user"
                 color = "text-green-500" if is_auth_user else None
                 ModelRow(
                     model,
@@ -325,8 +339,8 @@ class ModelPanel(ui.left_drawer):
 class ModelEditorCard(ui.card):
     def __init__(self):
         super().__init__()
-        self.selected_model: dict[str, Any] | None = None
-        self.selected_field: dict[str, Any] | None = None
+        self.selected_model: ModelInput | None = None
+        self.selected_field: FieldInput | None = None
         self.visible = False
         self.foreign_key_enabled = False
         self._build()
@@ -349,7 +363,7 @@ class ModelEditorCard(ui.card):
 
             with ui.row().classes("w-full justify-end gap-2"):
                 ui.button(
-                    "Update Field", on_click=self._update_field
+                    "Update Field", on_click=self._update_field_modal
                 ).bind_visibility_from(self, "selected_field")
                 ui.button(
                     "Delete Field", on_click=self._delete_field
@@ -376,7 +390,7 @@ class ModelEditorCard(ui.card):
                 self.back_populates_input = (
                     ui.input(
                         label="Back Populates",
-                        placeholder="Enter the back_populates value",
+                        placeholder="(Not required)",
                     )
                     .classes("w-full")
                     .bind_visibility_from(self, "foreign_key_enabled")
@@ -394,7 +408,9 @@ class ModelEditorCard(ui.card):
                         unique.value,
                         index.value,
                         foreign_key.value,
-                        self.back_populates_input.value if foreign_key.value else None,
+                        self.back_populates_input.value
+                        if foreign_key.value and self.back_populates_input.value.strip()
+                        else None,
                     ),
                 )
 
@@ -406,7 +422,7 @@ class ModelEditorCard(ui.card):
         if enabled:
             self._warn_foreign_key()
         else:
-            self.back_populates_input.value = ""
+            self.back_populates_input.value = None
 
     def _warn_foreign_key(self) -> None:
         """Show a warning when foreign_key is enabled."""
@@ -418,58 +434,33 @@ class ModelEditorCard(ui.card):
 
     def _validate_field_input(
         self,
-        name: str,
-        type: str,
-        primary_key: bool,
-        nullable: bool,
-        unique: bool,
-        index: bool,
-        foreign_key: str,
-        back_populates: str | None = None,
+        field_input: FieldInput,
     ) -> bool:
-        missing = [
-            field for field, value in [("Name", name), ("Type", type)] if not value
-        ]
-        if missing:
-            ui.notify(
-                f"Field could not be created: Missing {', '.join(missing)}",
-                type="negative",
-            )
-            return False
-
-        if primary_key and foreign_key:
-            ui.notify(
-                "A field can't be both a primary and a foreign key.", type="negative"
-            )
-            return False
-
-        if primary_key and nullable:
-            ui.notify("Primary key can't be nullable.", type="negative")
-            return False
-
-        if foreign_key and type != FieldDataType.UUID.value:
-            ui.notify("Foreign Key fields must be UUID.", type="negative")
-            return False
-
         if self.selected_model:
-            for field in self.selected_model["fields"]:
-                if field["name"] == name and field != getattr(
+            for field in self.selected_model.fields:
+                if field.name == field_input.name and field != getattr(
                     self, "selected_field", None
                 ):
                     ui.notify(
-                        f"Field '{name}' already exists in this model.", type="negative"
+                        f"Field '{field_input.name}' already exists in this model.",
+                        type="negative",
                     )
                     return False
 
-                if field["primary_key"] and primary_key:
+                if field.primary_key and field_input.primary_key:
                     ui.notify(
                         "A model cannot have multiple primary keys. "
-                        f"Current primary key: '{field['name']}'",
+                        f"Current primary key: '{field.name}'",
                         type="negative",
                     )
                     return False
 
         return True
+
+    def _refresh_table(self, fields: list[FieldInput]) -> None:
+        if self.selected_model is None:
+            return
+        self.table.rows = [field.model_dump() for field in fields]
 
     def _add_field(
         self,
@@ -479,50 +470,43 @@ class ModelEditorCard(ui.card):
         nullable: bool,
         unique: bool,
         index: bool,
-        foreign_key: str,
-        back_populates: str | None = None,
+        foreign_key: bool,
+        back_populates: str | None,
     ) -> None:
-        if not self._validate_field_input(
-            name,
-            type,
-            primary_key,
-            nullable,
-            unique,
-            index,
-            foreign_key,
-            back_populates,
-        ):
-            return
+        try:
+            field_input = FieldInput(
+                name=name,
+                type=FieldDataType(type),
+                primary_key=primary_key,
+                nullable=nullable,
+                unique=unique,
+                index=index,
+                foreign_key=foreign_key,
+                back_populates=back_populates,
+            )
+            if not self._validate_field_input(field_input):
+                return
+            if self.selected_model is None:
+                return
 
-        new_field = {
-            "name": name,
-            "type": type,
-            "primary_key": primary_key,
-            "nullable": nullable,
-            "unique": unique,
-            "index": index,
-            "foreign_key": foreign_key,
-            "back_populates": back_populates if foreign_key else None,
-        }
-
-        if self.selected_model is None:
-            return
-        self.selected_model["fields"].append(new_field)
-        self.table.rows = self.selected_model["fields"]
-        self.modal.close()
+            self.selected_model.fields.append(field_input)
+            self._refresh_table(self.selected_model.fields)
+            self.modal.close()
+        except ValidationError as e:
+            notify_validation_error(e)
 
     def _on_select_field(self, selection: list[dict[str, Any]]) -> None:
-        if selection and selection[0]["name"] == "id":
+        if selection and selection[0].get("name") == "id":
             self.selected_field = None
             self.table.selected = []
         else:
-            self.selected_field = selection[0] if selection else None
+            self.selected_field = FieldInput(**selection[0]) if selection else None
 
-    def _update_field(self) -> None:
-        if not self.selected_field or self.selected_field["name"] == "id":
+    def _update_field_modal(self) -> None:
+        if not self.selected_field or self.selected_field.name == "id":
             return
 
-        self.foreign_key_enabled = self.selected_field.get("foreign_key", False)
+        self.foreign_key_enabled = self.selected_field.foreign_key
 
         with (
             ui.dialog() as self.update_modal,
@@ -531,33 +515,33 @@ class ModelEditorCard(ui.card):
             ui.label("Update Field").classes("text-lg font-bold")
             with ui.row().classes("w-full gap-2"):
                 field_name = ui.input(
-                    label="Field Name", value=self.selected_field["name"]
+                    label="Field Name", value=self.selected_field.name
                 ).classes("w-full")
                 field_type = ui.select(
                     list(FieldDataType),
                     label="Field Type",
-                    value=self.selected_field["type"],
+                    value=self.selected_field.type,
                 ).classes("w-full")
                 primary_key = ui.checkbox(
-                    "Primary Key", value=self.selected_field["primary_key"]
+                    "Primary Key", value=self.selected_field.primary_key
                 ).classes("w-full")
                 foreign_key = ui.checkbox(
-                    "Foreign Key", value=self.selected_field["foreign_key"]
+                    "Foreign Key", value=self.selected_field.foreign_key
                 ).classes("w-full")
                 nullable = ui.checkbox(
-                    "Nullable", value=self.selected_field["nullable"]
+                    "Nullable", value=self.selected_field.nullable
                 ).classes("w-full")
                 unique = ui.checkbox(
-                    "Unique", value=self.selected_field["unique"]
+                    "Unique", value=self.selected_field.unique
                 ).classes("w-full")
-                index = ui.checkbox(
-                    "Index", value=self.selected_field["index"]
-                ).classes("w-full")
+                index = ui.checkbox("Index", value=self.selected_field.index).classes(
+                    "w-full"
+                )
                 self.back_populates_input = (
                     ui.input(
                         label="Back Populates",
                         placeholder="Not required",
-                        value=self.selected_field.get("back_populates", ""),
+                        value=self.selected_field.back_populates,
                     )
                     .classes("w-full")
                     .bind_visibility_from(self, "foreign_key_enabled")
@@ -567,7 +551,7 @@ class ModelEditorCard(ui.card):
                 ui.button("Close", on_click=self.update_modal.close)
                 ui.button(
                     "Update Field",
-                    on_click=lambda: self._perform_update(
+                    on_click=lambda: self._update_field(
                         field_name.value,
                         field_type.value,
                         primary_key.value,
@@ -575,13 +559,15 @@ class ModelEditorCard(ui.card):
                         unique.value,
                         index.value,
                         foreign_key.value,
-                        self.back_populates_input.value if foreign_key.value else None,
+                        self.back_populates_input.value
+                        if foreign_key.value and self.back_populates_input.value.strip()
+                        else None,
                     ),
                 )
 
         self.update_modal.open()
 
-    def _perform_update(
+    def _update_field(
         self,
         name: str,
         type: str,
@@ -589,56 +575,51 @@ class ModelEditorCard(ui.card):
         nullable: bool,
         unique: bool,
         index: bool,
-        foreign_key: str,
-        back_populates: str | None = None,
+        foreign_key: bool,
+        back_populates: str | None,
     ) -> None:
-        if not self._validate_field_input(
-            name,
-            type,
-            primary_key,
-            nullable,
-            unique,
-            index,
-            foreign_key,
-            back_populates,
-        ):
+        if not self.selected_field or self.selected_field.name == "id":
             return
 
-        if not self.selected_model or not self.selected_field:
-            return
+        try:
+            field_input = FieldInput(
+                name=name,
+                type=FieldDataType(type),
+                primary_key=primary_key,
+                nullable=nullable,
+                unique=unique,
+                index=index,
+                foreign_key=foreign_key,
+                back_populates=back_populates,
+            )
+            if not self._validate_field_input(field_input):
+                return
+            if not self.selected_model or not self.selected_field:
+                return
 
-        updated_field = {
-            "name": name,
-            "type": type,
-            "primary_key": primary_key,
-            "nullable": nullable,
-            "unique": unique,
-            "index": index,
-            "foreign_key": foreign_key,
-            "back_populates": back_populates if foreign_key else None,
-        }
-
-        index = self.selected_model["fields"].index(self.selected_field)
-        self.selected_model["fields"][index] = updated_field
-        self.table.rows = self.selected_model["fields"]
-        self.update_modal.close()
-        self.selected_field = None
+            model_index = self.selected_model.fields.index(self.selected_field)
+            self.selected_model.fields[model_index] = field_input
+            self._refresh_table(self.selected_model.fields)
+            self.update_modal.close()
+            self.selected_field = None
+        except ValidationError as e:
+            notify_validation_error(e)
 
     def _delete_field(self) -> None:
         if (
             self.selected_model
             and self.selected_field
-            and self.selected_field["name"] != "id"
+            and self.selected_field.name != "id"
         ):
-            self.selected_model["fields"].remove(self.selected_field)
-            self.table.rows = self.selected_model["fields"]
+            self.selected_model.fields.remove(self.selected_field)
+            self._refresh_table(self.selected_model.fields)
             self.selected_field = None
 
-    def update_selected_model(self, model: dict[str, Any] | None) -> None:
+    def update_selected_model(self, model: ModelInput | None) -> None:
         self.selected_model = model
         if model:
-            self.model_name_display.text = model["name"]
-            self.table.rows = model["fields"]
+            self.model_name_display.text = model.name
+            self._refresh_table(model.fields)
             self.visible = True
         else:
             self.visible = False
@@ -648,11 +629,11 @@ class ProjectConfigPanel(ui.right_drawer):
     def __init__(
         self,
         model_panel: ModelPanel,
-        initial_project: dict[str, Any] | None = None,
+        initial_project: ProjectInput | None = None,
     ):
         super().__init__(value=True, elevated=False, bottom_corner=True)
         self.model_panel = model_panel
-        self.initial_project = initial_project or {}
+        self.initial_project = initial_project
         self._build()
 
     def _build(self) -> None:
@@ -664,14 +645,18 @@ class ProjectConfigPanel(ui.right_drawer):
                     ui.label("Project Name").classes("text-lg font-bold")
                     self.project_name = ui.input(
                         placeholder="Project Name",
-                        value=self.initial_project.get("project_name", ""),
+                        value=self.initial_project.project_name
+                        if self.initial_project
+                        else "",
                     ).classes("w-full")
 
                 with ui.column().classes("w-full gap-2"):
                     ui.label("Database").classes("text-lg font-bold")
                     self.use_postgres = ui.checkbox(
                         "Postgres",
-                        value=self.initial_project.get("use_postgres", False),
+                        value=self.initial_project.use_postgres
+                        if self.initial_project
+                        else False,
                     ).classes("w-full")
                     self.use_mysql = (
                         ui.checkbox("MySQL")
@@ -682,7 +667,9 @@ class ProjectConfigPanel(ui.right_drawer):
                     self.use_alembic = (
                         ui.checkbox(
                             "Alembic (Migrations)",
-                            value=self.initial_project.get("use_alembic", False),
+                            value=self.initial_project.use_alembic
+                            if self.initial_project
+                            else False,
                         )
                         .classes("w-full")
                         .bind_enabled_from(
@@ -696,7 +683,9 @@ class ProjectConfigPanel(ui.right_drawer):
                     self.use_builtin_auth = (
                         ui.checkbox(
                             "JWT Auth",
-                            value=self.initial_project.get("use_builtin_auth", False),
+                            value=self.initial_project.use_builtin_auth
+                            if self.initial_project
+                            else False,
                             on_change=lambda e: self._handle_builtin_auth_change(
                                 e.value
                             ),
@@ -718,7 +707,9 @@ class ProjectConfigPanel(ui.right_drawer):
                     )
                     self.use_rabbitmq = ui.checkbox(
                         "RabbitMQ",
-                        value=self.initial_project.get("use_rabbitmq", False),
+                        value=self.initial_project.use_rabbitmq
+                        if self.initial_project
+                        else False,
                     )
 
                 with ui.column().classes("w-full gap-2"):
@@ -757,7 +748,10 @@ class ProjectConfigPanel(ui.right_drawer):
                 with ui.column().classes("w-full gap-2"):
                     ui.label("Caching").classes("text-lg font-bold")
                     self.use_redis = ui.checkbox(
-                        "Redis", value=self.initial_project.get("use_redis", False)
+                        "Redis",
+                        value=self.initial_project.use_redis
+                        if self.initial_project
+                        else False,
                     ).classes("w-full")
 
                 with ui.column().classes("w-full gap-2"):
@@ -771,51 +765,52 @@ class ProjectConfigPanel(ui.right_drawer):
 
     def _handle_builtin_auth_change(self, enabled: bool) -> None:
         if enabled:
-            if any(model["name"] == "auth_user" for model in self.model_panel.models):
+            if any(model.name == "auth_user" for model in self.model_panel.models):
                 ui.notify("The 'auth_user' model already exists.", type="negative")
                 self.use_builtin_auth.value = False
                 return
 
-            auth_user_model = {
-                "name": "auth_user",
-                "fields": [
-                    {
-                        "name": "id",
-                        "type": FieldDataType.UUID,
-                        "primary_key": True,
-                        "nullable": False,
-                        "unique": True,
-                        "index": True,
-                        "foreign_key": False,
-                    },
-                    {
-                        "name": "email",
-                        "type": FieldDataType.STRING,
-                        "primary_key": False,
-                        "nullable": False,
-                        "unique": True,
-                        "index": True,
-                        "foreign_key": False,
-                    },
-                    {
-                        "name": "password",
-                        "type": FieldDataType.STRING,
-                        "primary_key": False,
-                        "nullable": False,
-                        "unique": False,
-                        "index": False,
-                        "foreign_key": False,
-                    },
-                ],
-            }
+            try:
+                auth_user_model = ModelInput(
+                    name="auth_user",
+                    fields=[
+                        FieldInput(
+                            name="id",
+                            type=FieldDataType.UUID,
+                            primary_key=True,
+                            nullable=False,
+                            unique=True,
+                            index=True,
+                            foreign_key=False,
+                        ),
+                        FieldInput(
+                            name="email",
+                            type=FieldDataType.STRING,
+                            primary_key=False,
+                            nullable=False,
+                            unique=True,
+                            index=True,
+                            foreign_key=False,
+                        ),
+                        FieldInput(
+                            name="password",
+                            type=FieldDataType.STRING,
+                            primary_key=False,
+                            nullable=False,
+                            unique=False,
+                            index=False,
+                            foreign_key=False,
+                        ),
+                    ],
+                )
+            except ValidationError as e:
+                notify_validation_error(e)
             self.model_panel.models.append(auth_user_model)
             self.model_panel._render_model_list()
             ui.notify("The 'auth_user' model has been created.", type="positive")
         else:
             self.model_panel.models = [
-                model
-                for model in self.model_panel.models
-                if model["name"] != "auth_user"
+                model for model in self.model_panel.models if model.name != "auth_user"
             ]
             self.model_panel._render_model_list()
             ui.notify("The 'auth_user' model has been deleted.", type="positive")
@@ -831,11 +826,6 @@ class ProjectConfigPanel(ui.right_drawer):
                 ui.notify("No models to generate!", type="negative")
                 return
 
-        except Exception as e:
-            ui.notify(f"Error generating Models: {e}", type="negative")
-            return
-
-        try:
             project_spec = ProjectSpec(
                 project_name=self.project_name.value,
                 use_postgres=self.use_postgres.value,
@@ -850,6 +840,8 @@ class ProjectConfigPanel(ui.right_drawer):
 
             ui.notify("Project created successfully!", type="positive")
 
+        except ValidationError as e:
+            notify_validation_error(e)
         except Exception as e:
             ui.notify(f"Error creating Project: {e}", type="negative")
         finally:
@@ -896,8 +888,8 @@ def init(
     if path in {yaml_path, example_path}:
         initial_project = ProjectLoader(
             project_path=path, model_generator_func=generate_model_instances
-        ).load_project_dict()
-        initial_models = initial_project.get("models", None)
+        ).load_project_input()
+        initial_models = initial_project.models
 
     model_panel = ModelPanel(
         initial_models=initial_models,
