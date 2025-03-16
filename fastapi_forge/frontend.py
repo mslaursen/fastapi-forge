@@ -41,6 +41,12 @@ COLUMNS = [
     {"name": "nullable", "label": "Nullable", "field": "nullable", "align": "center"},
     {"name": "unique", "label": "Unique", "field": "unique", "align": "center"},
     {"name": "index", "label": "Index", "field": "index", "align": "center"},
+    {
+        "name": "back_populates",
+        "label": "Back Populates",
+        "field": "back_populates",
+        "align": "left",
+    },
 ]
 
 
