@@ -9,6 +9,10 @@ readme = "README.md"
 requires-python = ">=3.12"
 dynamic = ["version"]
 dependencies = ["click", "nicegui", "cookiecutter", "pytest"]
+authors = [{ name = "mslaursen", email = "mslaursendk@gmail.com" }]
+
+[project.urls]
+Repository = "https://github.com/mslaursen/fastapi-forge.git"
 
 [tool.setuptools_scm]
 
