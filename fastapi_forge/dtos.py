@@ -100,13 +100,11 @@ class ModelRelationship(BaseModel):
     @computed_field
     @property
     def field_name_no_id(self) -> str:
-        """Remove '_id' suffix from the field name."""
         return self.field_name[:-3]
 
     @computed_field
     @property
     def target(self) -> str:
-        """Convert field name to camelCase."""
         return snake_to_camel(self.field_name)
 
     @computed_field
@@ -116,12 +114,22 @@ class ModelRelationship(BaseModel):
         return f"{self.target}.id"
 
 
+class ModelGenerationMetadata(BaseModel):
+    """Metadata used for code generation."""
+
+    create_endpoints: bool = True
+    create_tests: bool = True
+    create_daos: bool = True
+    create_dtos: bool = True
+
+
 class Model(BaseModel):
     """Represents a model with fields and relationships."""
 
     name: ModelName
     fields: list[ModelField]
     relationships: list[ModelRelationship] = []
+    metadata: ModelGenerationMetadata = ModelGenerationMetadata()
 
     @computed_field
     @property
@@ -155,6 +163,50 @@ class Model(BaseModel):
                 raise ValueError(
                     f"Model foreign key '{self.name}.{field.name}' is not a valid relationship."
                 )
+        return self
+
+    @model_validator(mode="after")
+    def _validate_metadata(self) -> Self:
+        create_endpoints = self.metadata.create_endpoints
+        create_tests = self.metadata.create_tests
+        create_daos = self.metadata.create_daos
+        create_dtos = self.metadata.create_dtos
+
+        validation_rules = [
+            {
+                "condition": create_endpoints,
+                "dependencies": {"DAOs": create_daos, "DTOs": create_dtos},
+                "error_message": f"Cannot create endpoints for model '{self.name}' because {{missing}} must be set.",
+            },
+            {
+                "condition": create_tests,
+                "dependencies": {
+                    "Endpoints": create_endpoints,
+                    "DAOs": create_daos,
+                    "DTOs": create_dtos,
+                },
+                "error_message": f"Cannot create tests for model '{self.name}' because {{missing}} must be set.",
+            },
+            {
+                "condition": create_daos,
+                "dependencies": {"DTOs": create_dtos},
+                "error_message": f"Cannot create DAOs for model '{self.name}' because DTOs must be set.",
+            },
+        ]
+
+        for rule in validation_rules:
+            if rule["condition"]:
+                missing = [
+                    name
+                    for name, condition in rule["dependencies"].items()
+                    if not condition
+                ]
+                if missing:
+                    error_message = rule["error_message"].format(
+                        missing=", ".join(missing)
+                    )
+                    raise ValueError(error_message)
+
         return self
 
 
@@ -215,6 +267,7 @@ class ModelInput(BaseModel):
 
     name: ModelName
     fields: list[FieldInput]
+    metadata: ModelGenerationMetadata = ModelGenerationMetadata()
 
     @model_validator(mode="after")
     def _validate(self) -> Self:

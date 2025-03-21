@@ -1,6 +1,6 @@
 services:
   
-  api: &api
+  api:
     build:
       context: .
     image: {{ cookiecutter.project_name }}:latest
