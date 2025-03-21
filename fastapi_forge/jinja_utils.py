@@ -15,7 +15,7 @@ def generate_relationship(relation: ModelRelationship) -> str:
     {relation.field_name_no_id}: Mapped[{relation.target}] = relationship(
         {",\n        ".join(args)}
     )
-    """
+    """.strip()
 
 
 def _gen_field(field: ModelField, sa_type: str, prefix_sa: bool = True) -> str:
@@ -36,7 +36,7 @@ def _gen_field(field: ModelField, sa_type: str, prefix_sa: bool = True) -> str:
     {field.name}: Mapped[{field.type.as_python_type()}{" | None" if field.nullable else ""}] = mapped_column(
         {",\n        ".join(args)}
     )
-    """
+    """.strip()
 
 
 def _gen_uuid_field(field: ModelField) -> str:

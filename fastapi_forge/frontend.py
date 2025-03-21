@@ -16,8 +16,9 @@ from fastapi_forge.forge import build_project
 from fastapi_forge.project_io import ProjectLoader, ProjectExporter
 from pathlib import Path
 import yaml
+import os
 
-COLUMNS = [
+COLUMNS: list[dict[str, Any]] = [
     {
         "name": "name",
         "label": "Name",
@@ -75,7 +76,7 @@ def generate_model_instances(models: list[ModelInput]) -> list[Model]:
                 fields.append(
                     ModelField(
                         name=field.name,
-                        type=FieldDataType(field.type),
+                        type=field.type,
                         primary_key=field.primary_key,
                         nullable=field.nullable,
                         unique=field.unique,
@@ -85,7 +86,12 @@ def generate_model_instances(models: list[ModelInput]) -> list[Model]:
                 )
 
             model_objects.append(
-                Model(name=name, fields=fields, relationships=relationships)
+                Model(
+                    name=name,
+                    fields=fields,
+                    relationships=relationships,
+                    metadata=model.metadata,
+                )
             )
 
     except Exception as e:
@@ -258,7 +264,8 @@ class ModelPanel(ui.left_drawer):
             await exporter.export_project()
 
             ui.notify(
-                f"Project configuration exported to {project_input.project_name}.yaml",
+                "Project configuration exported to "
+                f"{os.path.join(os.getcwd(), project_input.project_name)}.yaml",
                 type="positive",
             )
 
@@ -344,16 +351,17 @@ class ModelPanel(ui.left_drawer):
 class ModelEditorCard(ui.card):
     def __init__(self):
         super().__init__()
-        self.selected_model: ModelInput | None = None
-        self.selected_field: FieldInput | None = None
         self.visible = False
         self.foreign_key_enabled = False
+        self.selected_field = None
+        self.selected_model = None
         self._build()
 
     def _build(self) -> None:
         with self:
             with ui.row().classes("w-full justify-between items-center"):
                 self.model_name_display = ui.label().classes("text-lg font-bold")
+
                 ui.button(icon="add", on_click=self._open_modal).classes(
                     "self-end"
                 ).tooltip("Add Field")
@@ -366,13 +374,45 @@ class ModelEditorCard(ui.card):
                 on_select=lambda e: self._on_select_field(e.selection),
             ).classes("w-full no-shadow border-[1px]")
 
-            with ui.row().classes("w-full justify-end gap-2"):
-                ui.button(
-                    "Update Field", on_click=self._update_field_modal
-                ).bind_visibility_from(self, "selected_field")
-                ui.button(
-                    "Delete Field", on_click=self._delete_field
-                ).bind_visibility_from(self, "selected_field")
+            with ui.row().classes("w-full justify-between items-center"):
+                with ui.row().classes("justify-start gap-2"):
+                    ui.label("Generate:").classes("text-md font-semibold self-center")
+                    self.create_endpoints_checkbox = ui.checkbox(
+                        "Endpoints",
+                        value=True,
+                        on_change=lambda v: setattr(
+                            self.selected_model.metadata, "create_endpoints", v.value
+                        ),
+                    )
+                    self.create_tests_checkbox = ui.checkbox(
+                        "Tests",
+                        value=True,
+                        on_change=lambda v: setattr(
+                            self.selected_model.metadata, "create_tests", v.value
+                        ),
+                    )
+                    self.create_daos_checkbox = ui.checkbox(
+                        "DAOs",
+                        value=True,
+                        on_change=lambda v: setattr(
+                            self.selected_model.metadata, "create_daos", v.value
+                        ),
+                    )
+                    self.create_dtos_checkbox = ui.checkbox(
+                        "DTOs",
+                        value=True,
+                        on_change=lambda v: setattr(
+                            self.selected_model.metadata, "create_dtos", v.value
+                        ),
+                    )
+
+                with ui.row().classes("justify-end gap-2"):
+                    ui.button(
+                        "Update Field", on_click=self._update_field_modal
+                    ).bind_visibility_from(self, "selected_field")
+                    ui.button(
+                        "Delete Field", on_click=self._delete_field
+                    ).bind_visibility_from(self, "selected_field")
 
     def _open_modal(self) -> None:
         self.foreign_key_enabled = False
@@ -441,25 +481,26 @@ class ModelEditorCard(ui.card):
         self,
         field_input: FieldInput,
     ) -> bool:
-        if self.selected_model:
-            for field in self.selected_model.fields:
-                if field.name == field_input.name and field != getattr(
-                    self, "selected_field", None
-                ):
-                    ui.notify(
-                        f"Field '{field_input.name}' already exists in this model.",
-                        type="negative",
-                    )
-                    return False
+        if not self.selected_model:
+            return True
 
-                if field.primary_key and field_input.primary_key:
-                    ui.notify(
-                        "A model cannot have multiple primary keys. "
-                        f"Current primary key: '{field.name}'",
-                        type="negative",
-                    )
-                    return False
+        for field in self.selected_model.fields:
+            if field.name == field_input.name and field != getattr(
+                self, "selected_field", None
+            ):
+                ui.notify(
+                    f"Field '{field_input.name}' already exists in this model.",
+                    type="negative",
+                )
+                return False
 
+            if field.primary_key and field_input.primary_key:
+                ui.notify(
+                    "A model cannot have multiple primary keys. "
+                    f"Current primary key: '{field.name}'",
+                    type="negative",
+                )
+                return False
         return True
 
     def _refresh_table(self, fields: list[FieldInput]) -> None:
@@ -624,6 +665,11 @@ class ModelEditorCard(ui.card):
         self.selected_model = model
         if model:
             self.model_name_display.text = model.name
+            metadata = model.metadata
+            self.create_endpoints_checkbox.value = metadata.create_endpoints
+            self.create_tests_checkbox.value = metadata.create_tests
+            self.create_dtos_checkbox.value = metadata.create_dtos
+            self.create_daos_checkbox.value = metadata.create_daos
             self._refresh_table(model.fields)
             self.visible = True
         else:
@@ -824,6 +870,8 @@ class ProjectConfigPanel(ui.right_drawer):
         self.create_button.classes("hidden")
         self.loading_spinner.classes(remove="hidden")
 
+        ongoing_notification = ui.notification("Generating project...")
+
         try:
             models = generate_model_instances(self.model_panel.models)
 
@@ -842,7 +890,11 @@ class ProjectConfigPanel(ui.right_drawer):
             )
             await build_project(project_spec)
 
-            ui.notify("Project created successfully!", type="positive")
+            ui.notify(
+                "Project successfully generated at: "
+                f"{os.path.join(os.getcwd(), project_spec.project_name)}",
+                type="positive",
+            )
 
         except ValidationError as e:
             notify_validation_error(e)
@@ -851,6 +903,7 @@ class ProjectConfigPanel(ui.right_drawer):
         finally:
             self.create_button.classes(remove="hidden")
             self.loading_spinner.classes("hidden")
+            ongoing_notification.dismiss()
 
 
 async def _init_no_ui(project_path: Path) -> None:

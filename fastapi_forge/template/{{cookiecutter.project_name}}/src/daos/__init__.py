@@ -1,5 +1,5 @@
 from src.daos.base_daos import BaseDAO # noqa
-{% for model in cookiecutter.models.models -%}
+{% for model in cookiecutter.models.models if model.metadata.create_daos -%}
 from src.daos.{{ model.name }}_daos import {{ model.name_cc }}DAO
 {% endfor %}
 from src.db.db_dependencies import GetDBSession
@@ -29,7 +29,7 @@ class AllDAOs:
     def __init__(self, session: GetDBSession):
         self.session = session
 
-    {% for model in cookiecutter.models.models %}
+    {% for model in cookiecutter.models.models if model.metadata.create_daos %}
     @property
     def {{ model.name }}(self) -> {{ model.name_cc }}DAO:
         return {{ model.name_cc }}DAO(self.session)

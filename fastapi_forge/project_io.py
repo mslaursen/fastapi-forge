@@ -135,8 +135,14 @@ class ProjectBuilder:
     async def build_artifacts(self, models: list[Model]) -> None:
         await self._init_project_directories()
         for model in models:
-            await self._write_artifact("dtos", model, render_model_to_dto)
             await self._write_artifact("models", model, render_model_to_model)
-            await self._write_artifact("daos", model, render_model_to_dao)
-            await self._write_artifact("routes", model, render_model_to_routers)
-            await self._write_tests(model)
+
+            metadata = model.metadata
+            if metadata.create_dtos:
+                await self._write_artifact("dtos", model, render_model_to_dto)
+            if metadata.create_daos:
+                await self._write_artifact("daos", model, render_model_to_dao)
+            if metadata.create_endpoints:
+                await self._write_artifact("routes", model, render_model_to_routers)
+            if metadata.create_tests:
+                await self._write_tests(model)

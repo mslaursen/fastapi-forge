@@ -32,7 +32,7 @@ class {{ model.name_cc }}(Base):
     {{ field | generate_field }}
     {% endfor %}
 
-    {% for relation in model.relationships %}
+    {% for relation in model.relationships -%}
     {{ relation | generate_relationship }}
     {% endfor %}
 """
