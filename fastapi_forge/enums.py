@@ -16,7 +16,7 @@ class FieldDataType(StrEnum):
             FieldDataType.INTEGER: "int",
             FieldDataType.FLOAT: "float",
             FieldDataType.BOOLEAN: "bool",
-            FieldDataType.DATETIME: "str",
+            FieldDataType.DATETIME: "datetime",
             FieldDataType.UUID: "UUID",
             FieldDataType.JSONB: "dict[str, Any]",
         }[self]

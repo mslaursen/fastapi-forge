@@ -42,12 +42,6 @@ COLUMNS: list[dict[str, Any]] = [
     {"name": "nullable", "label": "Nullable", "field": "nullable", "align": "center"},
     {"name": "unique", "label": "Unique", "field": "unique", "align": "center"},
     {"name": "index", "label": "Index", "field": "index", "align": "center"},
-    {
-        "name": "back_populates",
-        "label": "Back Populates",
-        "field": "back_populates",
-        "align": "left",
-    },
 ]
 
 
@@ -355,6 +349,12 @@ class ModelEditorCard(ui.card):
         self.foreign_key_enabled = False
         self.selected_field = None
         self.selected_model = None
+
+        self.create_endpoints_checkbox = None
+        self.create_tests_checkbox = None
+        self.create_daos_checkbox = None
+        self.create_dtos_checkbox = None
+
         self._build()
 
     def _build(self) -> None:
@@ -375,36 +375,9 @@ class ModelEditorCard(ui.card):
             ).classes("w-full no-shadow border-[1px]")
 
             with ui.row().classes("w-full justify-between items-center"):
-                with ui.row().classes("justify-start gap-2"):
-                    ui.label("Generate:").classes("text-md font-semibold self-center")
-                    self.create_endpoints_checkbox = ui.checkbox(
-                        "Endpoints",
-                        value=True,
-                        on_change=lambda v: setattr(
-                            self.selected_model.metadata, "create_endpoints", v.value
-                        ),
-                    )
-                    self.create_tests_checkbox = ui.checkbox(
-                        "Tests",
-                        value=True,
-                        on_change=lambda v: setattr(
-                            self.selected_model.metadata, "create_tests", v.value
-                        ),
-                    )
-                    self.create_daos_checkbox = ui.checkbox(
-                        "DAOs",
-                        value=True,
-                        on_change=lambda v: setattr(
-                            self.selected_model.metadata, "create_daos", v.value
-                        ),
-                    )
-                    self.create_dtos_checkbox = ui.checkbox(
-                        "DTOs",
-                        value=True,
-                        on_change=lambda v: setattr(
-                            self.selected_model.metadata, "create_dtos", v.value
-                        ),
-                    )
+                ui.button(
+                    "Specifications", on_click=self._open_specifications_modal
+                ).classes("self-end").tooltip("Configure Model Specifications")
 
                 with ui.row().classes("justify-end gap-2"):
                     ui.button(
@@ -413,6 +386,62 @@ class ModelEditorCard(ui.card):
                     ui.button(
                         "Delete Field", on_click=self._delete_field
                     ).bind_visibility_from(self, "selected_field")
+
+    def _open_specifications_modal(self) -> None:
+        with (
+            ui.dialog() as self.specifications_modal,
+            ui.card().classes("no-shadow border-[1px]"),
+        ):
+            ui.label("Model Specifications").classes("text-lg font-bold")
+            metadata = self.selected_model.metadata
+
+            # Add "Generate:" label and checkboxes
+            with ui.column().classes("w-full gap-2"):
+                ui.label("Generate:").classes("text-md font-semibold")
+                self.create_endpoints_checkbox = ui.checkbox(
+                    "Endpoints",
+                    value=metadata.create_endpoints,
+                    on_change=lambda v: setattr(
+                        self.selected_model.metadata, "create_endpoints", v.value
+                    ),
+                )
+                self.create_tests_checkbox = ui.checkbox(
+                    "Tests",
+                    value=metadata.create_tests,
+                    on_change=lambda v: setattr(
+                        self.selected_model.metadata, "create_tests", v.value
+                    ),
+                )
+                self.create_daos_checkbox = ui.checkbox(
+                    "DAOs",
+                    value=metadata.create_daos,
+                    on_change=lambda v: setattr(
+                        self.selected_model.metadata, "create_daos", v.value
+                    ),
+                )
+                self.create_dtos_checkbox = ui.checkbox(
+                    "DTOs",
+                    value=metadata.create_dtos,
+                    on_change=lambda v: setattr(
+                        self.selected_model.metadata, "create_dtos", v.value
+                    ),
+                )
+
+            with ui.column().classes("w-full gap-2"):
+                ui.label("Extra Fields:").classes("text-md font-semibold")
+                self.created_timestamp_checkbox = ui.checkbox(
+                    "Created Timestamp",
+                    value=self.selected_field.is_created_at_timestamp,
+                )
+                self.updated_timestamp_checkbox = ui.checkbox(
+                    "Updated Timestamp",
+                    value=self.selected_field.is_updated_at_timestamp,
+                )
+
+            with ui.row().classes("w-full justify-end gap-2"):
+                ui.button("Close", on_click=self.specifications_modal.close)
+
+        self.specifications_modal.open()
 
     def _open_modal(self) -> None:
         self.foreign_key_enabled = False
@@ -661,15 +690,10 @@ class ModelEditorCard(ui.card):
             self._refresh_table(self.selected_model.fields)
             self.selected_field = None
 
-    def update_selected_model(self, model: ModelInput | None) -> None:
+    def set_selected_model(self, model: ModelInput | None) -> None:
         self.selected_model = model
         if model:
             self.model_name_display.text = model.name
-            metadata = model.metadata
-            self.create_endpoints_checkbox.value = metadata.create_endpoints
-            self.create_tests_checkbox.value = metadata.create_tests
-            self.create_dtos_checkbox.value = metadata.create_dtos
-            self.create_daos_checkbox.value = metadata.create_daos
             self._refresh_table(model.fields)
             self.visible = True
         else:
@@ -943,7 +967,7 @@ def create_ui_components(
 
     model_panel = ModelPanel(
         initial_models=initial_models,
-        on_select_model=model_editor_card.update_selected_model,
+        on_select_model=model_editor_card.set_selected_model,
     )
     project_config_panel = ProjectConfigPanel(
         model_panel=model_panel,
