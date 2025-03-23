@@ -19,18 +19,23 @@ def generate_relationship(relation: ModelRelationship) -> str:
 
 
 def _gen_field(field: ModelField, sa_type: str, prefix_sa: bool = True) -> str:
-    args = []
-    args.append(f"{'sa.' if prefix_sa else ''}{sa_type}")
-    if field.foreign_key:
-        args.append(
-            f'sa.ForeignKey("{camel_to_snake(field.foreign_key)}", ondelete="CASCADE")'
-        )
-    if field.primary_key:
-        args.append("primary_key=True")
-    if field.unique:
-        args.append("unique=True")
-    if field.index:
-        args.append("index=True")
+    args = [f"{'sa.' if prefix_sa else ''}{sa_type}"]
+
+    if field.is_created_at_timestamp or field.is_updated_at_timestamp:
+        args.append("default=datetime.now(timezone.utc)")
+        if field.is_updated_at_timestamp:
+            args.append("onupdate=datetime.now(timezone.utc)")
+    else:
+        if field.foreign_key:
+            args.append(
+                f'sa.ForeignKey("{camel_to_snake(field.foreign_key)}", ondelete="CASCADE")'
+            )
+        if field.primary_key:
+            args.append("primary_key=True")
+        if field.unique:
+            args.append("unique=True")
+        if field.index:
+            args.append("index=True")
 
     return f"""
     {field.name}: Mapped[{field.type.as_python_type()}{" | None" if field.nullable else ""}] = mapped_column(
@@ -127,7 +132,7 @@ if __name__ == "__main__":
             ModelField(
                 name="created_at",
                 type=FieldDataType.DATETIME,
-                nullable=False,
+                is_updated_at_timestamp=True,
             ),
             ModelField(
                 name="restaurant_id",

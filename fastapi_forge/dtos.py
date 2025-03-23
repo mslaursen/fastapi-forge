@@ -33,6 +33,9 @@ class ModelField(BaseModel):
     index: bool = False
     foreign_key: ForeignKey | None = None
 
+    is_created_at_timestamp: bool = False
+    is_updated_at_timestamp: bool = False
+
     @computed_field
     @property
     def name_cc(self) -> str:
@@ -55,6 +58,12 @@ class ModelField(BaseModel):
                 raise ValueError("Primary key cannot be nullable.")
             if not self.unique:
                 self.unique = True
+
+        if self.is_created_at_timestamp or self.is_updated_at_timestamp:
+            if self.type != FieldDataType.DATETIME:
+                raise ValueError(
+                    "Create/update timestamp fields must be of type DateTime."
+                )
         return self
 
     @computed_field
@@ -248,6 +257,9 @@ class FieldInput(BaseModel):
     foreign_key: bool = False
     back_populates: BackPopulates | None = None
 
+    is_created_at_timestamp: bool = False
+    is_updated_at_timestamp: bool = False
+
     @model_validator(mode="after")
     def _validate(self) -> Self:
         """Validate field input constraints."""
@@ -259,6 +271,11 @@ class FieldInput(BaseModel):
             raise ValueError("Primary Keys cannot be Foreign Keys.")
         if self.foreign_key and not self.name.endswith("_id"):
             raise ValueError("Foreign Key field names must end with '_id'.")
+        if self.is_created_at_timestamp or self.is_updated_at_timestamp:
+            if self.type != FieldDataType.DATETIME:
+                raise ValueError(
+                    "Create/update timestamp fields must be of type DateTime."
+                )
         return self
 
 
