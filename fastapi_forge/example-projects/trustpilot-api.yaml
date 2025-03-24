@@ -30,6 +30,22 @@ project:
           unique: false
           index: false
           foreign_key: false
+        - name: created_at
+          type: DateTime
+          primary_key: false
+          nullable: false
+          unique: false
+          index: false
+          foreign_key: false
+          is_created_at_timestamp: true
+        - name: updated_at
+          type: DateTime
+          primary_key: false
+          nullable: false
+          unique: false
+          index: false
+          foreign_key: false
+          is_updated_at_timestamp: true
 
     - name: company
       fields:
@@ -68,6 +84,22 @@ project:
           unique: false
           index: true
           foreign_key: true
+        - name: created_at
+          type: DateTime
+          primary_key: false
+          nullable: false
+          unique: false
+          index: false
+          foreign_key: false
+          is_created_at_timestamp: true
+        - name: updated_at
+          type: DateTime
+          primary_key: false
+          nullable: false
+          unique: false
+          index: false
+          foreign_key: false
+          is_updated_at_timestamp: true
 
     - name: category
       fields:
@@ -85,6 +117,23 @@ project:
           unique: true
           index: true
           foreign_key: false
+        - name: created_at
+          type: DateTime
+          primary_key: false
+          nullable: false
+          unique: false
+          index: false
+          foreign_key: false
+          is_created_at_timestamp: true
+        - name: updated_at
+          type: DateTime
+          primary_key: false
+          nullable: false
+          unique: false
+          index: false
+          foreign_key: false
+          is_updated_at_timestamp: true
+
     - name: review
       fields:
         - name: id
@@ -122,3 +171,19 @@ project:
           unique: false
           index: false
           foreign_key: false
+        - name: created_at
+          type: DateTime
+          primary_key: false
+          nullable: false
+          unique: false
+          index: false
+          foreign_key: false
+          is_created_at_timestamp: true
+        - name: updated_at
+          type: DateTime
+          primary_key: false
+          nullable: false
+          unique: false
+          index: false
+          foreign_key: false
+          is_updated_at_timestamp: true

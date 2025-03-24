@@ -1,6 +1,5 @@
 import sqlalchemy as sa
 import uuid
-from datetime import datetime, timezone
 
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -19,13 +18,4 @@ class Base(DeclarativeBase):
         sa.UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        sa.DateTime(timezone=True),
-        default=datetime.now(timezone.utc),
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        sa.DateTime(timezone=True),
-        default=datetime.now(timezone.utc),
-        onupdate=datetime.now(timezone.utc),
     )
