@@ -392,22 +392,6 @@ class ModelEditorCard(ui.card):
                 on_select=lambda e: self._on_select_field(e.selection),
             ).classes("w-full no-shadow border-[1px]")
 
-            # Add slot for conditional formatting
-            self.table.add_slot(
-                "body-cell",
-                """
-                <q-td :props="props">
-                    <q-badge v-if="props.col.is_updated_at_timestamp || props.col.is_created_at_timestamp" 
-                            color="amber" class="text-white">
-                        {{ props.value }}
-                    </q-badge>
-                    <template v-else>
-                        {{ props.value }}
-                    </template>
-                </q-td>
-            """,
-            )
-
             with ui.row().classes("w-full justify-between items-center"):
                 with ui.row().classes("justify-start gap-2"):
                     ui.label("Generate:").classes("text-md font-semibold self-center")
