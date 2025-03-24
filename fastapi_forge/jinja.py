@@ -15,7 +15,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import JSONB
 from uuid import UUID
 from typing import Any, Annotated
-from datetime import datetime
+from datetime import datetime, timezone
 {% for relation in model.relationships -%}
 from src.models.{{ relation.field_name_no_id }}_models import {{ relation.target }}
 {% endfor %}
@@ -55,27 +55,22 @@ class {{ model.name_cc }}DTO(BaseOrmModel):
     {{ field.name }}: {{ type_mapping[field.type] }}{% if field.nullable %} | None{% endif %}
     {%- endif %}
     {% endfor %}
-    created_at: datetime
-    updated_at: datetime
+
 
 
 class {{ model.name_cc }}InputDTO(BaseModel):
     \"\"\"{{ model.name_cc }} input DTO.\"\"\"
 
-    {% for field in model.fields -%}
-    {% if not field.primary_key -%}
+    {% for field in model.fields if not (field.is_created_at_timestamp or field.is_updated_at_timestamp or field.primary_key) -%}
     {{ field.name }}: {{ type_mapping[field.type] }}{% if field.nullable %} | None{% endif %}
-    {%- endif %}
     {% endfor %}
 
 
 class {{ model.name_cc }}UpdateDTO(BaseModel):
     \"\"\"{{ model.name_cc }} update DTO.\"\"\"
 
-    {% for field in model.fields -%}
-    {% if not field.primary_key -%}
+    {% for field in model.fields if not (field.is_created_at_timestamp or field.is_updated_at_timestamp or field.primary_key) -%}
     {{ field.name }}: {{ type_mapping[field.type] }} | None = None
-    {%- endif %}
     {% endfor %}
 """
 
@@ -189,9 +184,10 @@ async def test_post_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> Non
 
     {%- for relation in model.relationships %}
     {{ relation.field_name_no_id }} = await factories.{{ relation.target }}Factory.create()
-    {% endfor %}
+    {%- endfor %}
+    
     input_json = {
-        {%- for field in model.fields -%}
+        {%- for field in model.fields  if not (field.is_created_at_timestamp or field.is_updated_at_timestamp or field.primary_key) -%}
         {%- if not field.primary_key and field.name.endswith('_id') -%}
         "{{ field.name }}": str({{ field.name | replace('_id', '.id') }}),
         {%- elif not field.primary_key %}
@@ -211,7 +207,7 @@ async def test_post_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> Non
     db_{{ model.name }} = await daos.{{ model.name }}.filter_first(id=response_data["id"])
 
     assert db_{{ model.name }} is not None
-    {%- for field in model.fields %}
+    {%- for field in model.fields  if not (field.is_created_at_timestamp or field.is_updated_at_timestamp or field.primary_key) %}
     {%- if not field.primary_key and field.name.endswith('_id') %}
     assert db_{{ model.name }}.{{ field.name }} == UUID(input_json["{{ field.name }}"])
     {%- elif not field.primary_key %}
@@ -299,11 +295,11 @@ async def test_patch_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> No
 
     {%- for relation in model.relationships %}
     {{ relation.field_name_no_id }} = await factories.{{ relation.target }}Factory.create()
-    {% endfor %}
+    {%- endfor %}
     {{ model.name }} = await factories.{{ model.name_cc }}Factory.create()
 
     input_json = {
-        {%- for field in model.fields -%}
+        {%- for field in model.fields  if not (field.is_created_at_timestamp or field.is_updated_at_timestamp or field.primary_key) -%}
         {%- if not field.primary_key and field.name.endswith('_id') -%}
         "{{ field.name }}": str({{ field.name | replace('_id', '.id') }}),
         {% elif not field.primary_key %}
@@ -322,7 +318,7 @@ async def test_patch_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> No
     db_{{ model.name }} = await daos.{{ model.name }}.filter_first(id={{ model.name }}.id)
 
     assert db_{{ model.name }} is not None
-    {%- for field in model.fields %}
+    {%- for field in model.fields  if not (field.is_created_at_timestamp or field.is_updated_at_timestamp or field.primary_key) %}
     {%- if not field.primary_key and field.name.endswith('_id') %}
     assert db_{{ model.name }}.{{ field.name }} == UUID(input_json["{{ field.name }}"])
     {%- elif not field.primary_key %}

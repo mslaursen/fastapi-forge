@@ -42,12 +42,6 @@ COLUMNS: list[dict[str, Any]] = [
     {"name": "nullable", "label": "Nullable", "field": "nullable", "align": "center"},
     {"name": "unique", "label": "Unique", "field": "unique", "align": "center"},
     {"name": "index", "label": "Index", "field": "index", "align": "center"},
-    {
-        "name": "back_populates",
-        "label": "Back Populates",
-        "field": "back_populates",
-        "align": "left",
-    },
 ]
 
 
@@ -82,6 +76,8 @@ def generate_model_instances(models: list[ModelInput]) -> list[Model]:
                         unique=field.unique,
                         index=field.index,
                         foreign_key=mr.target_id if mr else None,
+                        is_created_at_timestamp=field.is_created_at_timestamp,
+                        is_updated_at_timestamp=field.is_updated_at_timestamp,
                     )
                 )
 
@@ -362,9 +358,31 @@ class ModelEditorCard(ui.card):
             with ui.row().classes("w-full justify-between items-center"):
                 self.model_name_display = ui.label().classes("text-lg font-bold")
 
-                ui.button(icon="add", on_click=self._open_modal).classes(
-                    "self-end"
-                ).tooltip("Add Field")
+                with ui.row().classes("gap-2"):
+                    with (
+                        ui.button(icon="bolt", color="amber")
+                        .classes("self-end")
+                        .tooltip("Quick-Add")
+                    ):
+                        with ui.menu():
+                            self.created_at_item = ui.menu_item(
+                                "Created At",
+                                on_click=lambda: self._toggle_quick_add(
+                                    "created_at",
+                                    is_created_at_timestamp=True,
+                                ),
+                            )
+                            self.updated_at_item = ui.menu_item(
+                                "Updated At",
+                                on_click=lambda: self._toggle_quick_add(
+                                    "updated_at",
+                                    is_updated_at_timestamp=True,
+                                ),
+                            )
+
+                    ui.button(icon="add", on_click=self._open_modal).classes(
+                        "self-end"
+                    ).tooltip("Add Field")
 
             self.table = ui.table(
                 columns=COLUMNS,
@@ -408,11 +426,53 @@ class ModelEditorCard(ui.card):
 
                 with ui.row().classes("justify-end gap-2"):
                     ui.button(
-                        "Update Field", on_click=self._update_field_modal
+                        "Update", on_click=self._update_field_modal
                     ).bind_visibility_from(self, "selected_field")
                     ui.button(
-                        "Delete Field", on_click=self._delete_field
+                        "Delete", on_click=self._delete_field
                     ).bind_visibility_from(self, "selected_field")
+
+    def _toggle_quick_add(
+        self,
+        name: str,
+        is_created_at_timestamp: bool = False,
+        is_updated_at_timestamp: bool = False,
+    ) -> None:
+
+        if not self.selected_model:
+            return
+
+        attr = (
+            "is_created_at_timestamp"
+            if is_created_at_timestamp
+            else "is_updated_at_timestamp"
+        )
+
+        existing_quick_add = next(
+            (
+                field
+                for field in self.selected_model.fields
+                if getattr(field, attr) is True
+            ),
+            None,
+        )
+
+        if existing_quick_add:
+            self._delete(existing_quick_add)
+            return
+
+        self._add_field(
+            name,
+            "DateTime",
+            False,
+            False,
+            False,
+            False,
+            False,
+            None,
+            is_created_at_timestamp,
+            is_updated_at_timestamp,
+        )
 
     def _open_modal(self) -> None:
         self.foreign_key_enabled = False
@@ -445,21 +505,31 @@ class ModelEditorCard(ui.card):
                 ui.button("Close", on_click=self.modal.close)
                 ui.button(
                     "Add Field",
-                    on_click=lambda: self._add_field(
-                        field_name.value,
-                        field_type.value,
-                        primary_key.value,
-                        nullable.value,
-                        unique.value,
-                        index.value,
-                        foreign_key.value,
-                        self.back_populates_input.value
-                        if foreign_key.value and self.back_populates_input.value.strip()
-                        else None,
+                    on_click=lambda: self._add_field_modal(
+                        name=field_name.value,
+                        type=field_type.value,
+                        primary_key=primary_key.value,
+                        nullable=nullable.value,
+                        unique=unique.value,
+                        index=index.value,
+                        foreign_key=foreign_key.value,
+                        back_populates=(
+                            self.back_populates_input.value
+                            if foreign_key.value
+                            and self.back_populates_input.value.strip()
+                            else None
+                        ),
                     ),
                 )
 
         self.modal.open()
+
+    def _add_field_modal(
+        self,
+        **kwargs,
+    ) -> None:
+        self._add_field(**kwargs)
+        self.modal.close()
 
     def _toggle_foreign_key(self, enabled: bool) -> None:
         """Enable/disable the back_populates input based on foreign_key."""
@@ -508,6 +578,16 @@ class ModelEditorCard(ui.card):
             return
         self.table.rows = [field.model_dump() for field in fields]
 
+        quick_add_created_at_enabled = any(
+            field.is_created_at_timestamp for field in fields
+        )
+        quick_add_updated_at_enabled = any(
+            field.is_updated_at_timestamp for field in fields
+        )
+
+        self.created_at_item.enabled = not quick_add_created_at_enabled
+        self.updated_at_item.enabled = not quick_add_updated_at_enabled
+
     def _add_field(
         self,
         name: str,
@@ -518,6 +598,8 @@ class ModelEditorCard(ui.card):
         index: bool,
         foreign_key: bool,
         back_populates: str | None,
+        is_created_at_timestamp: bool = False,
+        is_updated_at_timestamp: bool = False,
     ) -> None:
         try:
             field_input = FieldInput(
@@ -529,6 +611,8 @@ class ModelEditorCard(ui.card):
                 index=index,
                 foreign_key=foreign_key,
                 back_populates=back_populates,
+                is_created_at_timestamp=is_created_at_timestamp,
+                is_updated_at_timestamp=is_updated_at_timestamp,
             )
             if not self._validate_field_input(field_input):
                 return
@@ -537,7 +621,7 @@ class ModelEditorCard(ui.card):
 
             self.selected_model.fields.append(field_input)
             self._refresh_table(self.selected_model.fields)
-            self.modal.close()
+
         except ValidationError as e:
             notify_validation_error(e)
 
@@ -605,9 +689,12 @@ class ModelEditorCard(ui.card):
                         unique.value,
                         index.value,
                         foreign_key.value,
-                        self.back_populates_input.value
-                        if foreign_key.value and self.back_populates_input.value.strip()
-                        else None,
+                        (
+                            self.back_populates_input.value
+                            if foreign_key.value
+                            and self.back_populates_input.value.strip()
+                            else None
+                        ),
                     ),
                 )
 
@@ -651,17 +738,22 @@ class ModelEditorCard(ui.card):
         except ValidationError as e:
             notify_validation_error(e)
 
+    def _delete(self, field: FieldInput) -> None:
+        if not self.selected_model:
+            return
+        self.selected_model.fields.remove(field)
+        self.selected_field = None
+        self._refresh_table(self.selected_model.fields)
+
     def _delete_field(self) -> None:
         if (
             self.selected_model
             and self.selected_field
             and self.selected_field.name != "id"
         ):
-            self.selected_model.fields.remove(self.selected_field)
-            self._refresh_table(self.selected_model.fields)
-            self.selected_field = None
+            self._delete(self.selected_field)
 
-    def update_selected_model(self, model: ModelInput | None) -> None:
+    def set_selected_model(self, model: ModelInput | None) -> None:
         self.selected_model = model
         if model:
             self.model_name_display.text = model.name
@@ -696,18 +788,22 @@ class ProjectConfigPanel(ui.right_drawer):
                     ui.label("Project Name").classes("text-lg font-bold")
                     self.project_name = ui.input(
                         placeholder="Project Name",
-                        value=self.initial_project.project_name
-                        if self.initial_project
-                        else "",
+                        value=(
+                            self.initial_project.project_name
+                            if self.initial_project
+                            else ""
+                        ),
                     ).classes("w-full")
 
                 with ui.column().classes("w-full gap-2"):
                     ui.label("Database").classes("text-lg font-bold")
                     self.use_postgres = ui.checkbox(
                         "Postgres",
-                        value=self.initial_project.use_postgres
-                        if self.initial_project
-                        else False,
+                        value=(
+                            self.initial_project.use_postgres
+                            if self.initial_project
+                            else False
+                        ),
                     ).classes("w-full")
                     self.use_mysql = (
                         ui.checkbox("MySQL")
@@ -718,9 +814,11 @@ class ProjectConfigPanel(ui.right_drawer):
                     self.use_alembic = (
                         ui.checkbox(
                             "Alembic (Migrations)",
-                            value=self.initial_project.use_alembic
-                            if self.initial_project
-                            else False,
+                            value=(
+                                self.initial_project.use_alembic
+                                if self.initial_project
+                                else False
+                            ),
                         )
                         .classes("w-full")
                         .bind_enabled_from(
@@ -734,9 +832,11 @@ class ProjectConfigPanel(ui.right_drawer):
                     self.use_builtin_auth = (
                         ui.checkbox(
                             "JWT Auth",
-                            value=self.initial_project.use_builtin_auth
-                            if self.initial_project
-                            else False,
+                            value=(
+                                self.initial_project.use_builtin_auth
+                                if self.initial_project
+                                else False
+                            ),
                             on_change=lambda e: self._handle_builtin_auth_change(
                                 e.value
                             ),
@@ -758,9 +858,11 @@ class ProjectConfigPanel(ui.right_drawer):
                     )
                     self.use_rabbitmq = ui.checkbox(
                         "RabbitMQ",
-                        value=self.initial_project.use_rabbitmq
-                        if self.initial_project
-                        else False,
+                        value=(
+                            self.initial_project.use_rabbitmq
+                            if self.initial_project
+                            else False
+                        ),
                     )
 
                 with ui.column().classes("w-full gap-2"):
@@ -800,9 +902,11 @@ class ProjectConfigPanel(ui.right_drawer):
                     ui.label("Caching").classes("text-lg font-bold")
                     self.use_redis = ui.checkbox(
                         "Redis",
-                        value=self.initial_project.use_redis
-                        if self.initial_project
-                        else False,
+                        value=(
+                            self.initial_project.use_redis
+                            if self.initial_project
+                            else False
+                        ),
                     ).classes("w-full")
 
                 with ui.column().classes("w-full gap-2"):
@@ -943,7 +1047,7 @@ def create_ui_components(
 
     model_panel = ModelPanel(
         initial_models=initial_models,
-        on_select_model=model_editor_card.update_selected_model,
+        on_select_model=model_editor_card.set_selected_model,
     )
     project_config_panel = ProjectConfigPanel(
         model_panel=model_panel,
