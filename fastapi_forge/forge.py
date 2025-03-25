@@ -5,6 +5,7 @@ from cookiecutter.main import cookiecutter
 from fastapi_forge.dtos import ProjectSpec
 from fastapi_forge.logger import logger
 from fastapi_forge.project_io import ProjectBuilder
+from time import perf_counter
 
 
 def _get_template_path() -> str:
@@ -26,6 +27,9 @@ async def _teardown_project(project_name: str) -> None:
 async def build_project(spec: ProjectSpec) -> None:
     """Create a new project using the provided template and specifications."""
     try:
+        start = perf_counter()
+        logger.info(f"Building project '{spec.project_name}'...")
+
         builder = ProjectBuilder(spec.project_name, None)
         await builder.build_artifacts(spec.models)
 
@@ -43,6 +47,9 @@ async def build_project(spec: ProjectSpec) -> None:
             },
         )
         logger.info(f"Project '{spec.project_name}' created successfully.")
+
+        end = perf_counter()
+        logger.info(f"Project built in {end - start:.2f} seconds.")
     except Exception as e:
         logger.error(f"Failed to create project: {e}")
         await _teardown_project(spec.project_name)
