@@ -1,9 +1,14 @@
 # FastAPI-Forge  
-🚀 Build Production-Ready FastAPI Projects — Fast, Scalable, and Hassle-Free!  
+🚀 Build FastAPI Projects — Fast, Scalable, and Hassle-Free!  
 
-FastAPI-Forge lets you go from database schema to a fully functional FastAPI-based project in minutes — no boilerplate, no hassle. With its clean, intuitive UI, you can define your Postgres or MySQL models and easily add optional services like Redis, message brokers, task queues, Prometheus, authentication, Elasticsearch, and more! It automatically generates everything you need — routes, DAOs, DTOs, models, and tests — following best practices in a scalable, easy-to-maintain project architecture.  
+FastAPI-Forge lets you define your database models through a UI, letting you select additional optional services, and then generates a full working project for you.
+The generated project follows best practices, in an easy to work with and scalable architecture. It will contain SQLAlchemy models of the database models you've defined in the UI, along with implementations of your selected services.
+It makes use of the DAO and DTO pattern, in combination with Pydantic and SQLAlchemy.
+Optionally, you can choose to generate tests, endpoints, DAOs and DTOs for each model.
 
-Stop boilerplating. Start building.  
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/9f13de22-e272-44cf-8bc0-c7cfb4acba6e">
+</div>
 
 ---
 
@@ -31,7 +36,12 @@ fastapi-forge start
 
 - A web browser will open automatically.  
 - Define your database schema and service specifications.  
-- Once done, click `Generate` to build your API.  
+- Once done, click `Generate` to build your API.
+
+Example generated project:
+
+![image](https://github.com/user-attachments/assets/e52eecf1-cce9-4edb-988c-c9e3c14d5712)
+
 
 To start the generated project and its dependencies in Docker:
 
