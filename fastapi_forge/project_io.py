@@ -1,4 +1,4 @@
-from fastapi_forge.dtos import Model, ProjectInput, ModelInput, ProjectSpec
+from fastapi_forge.dtos import Model, ProjectSpec
 from fastapi_forge.enums import HTTPMethod
 from fastapi_forge.jinja import (
     render_model_to_dto,
@@ -36,10 +36,8 @@ class ProjectLoader:
     def __init__(
         self,
         project_path: Path,
-        model_generator_func: Callable[[list[ModelInput]], list[Model]],
     ) -> None:
         self.project_path = project_path
-        self.model_generator_func = model_generator_func
         print(f"Loading project from: {project_path}")
 
     def _load_project_to_dict(self) -> dict[str, Any]:
@@ -56,25 +54,26 @@ class ProjectLoader:
 
     def load_project_spec(self) -> ProjectSpec:
         project_dict = self._load_project_to_dict()
-        loaded_models = [
-            ModelInput(**model) for model in project_dict.get("models", []) or []
-        ]
-        models = self.model_generator_func(loaded_models)
+        models = [Model(**model) for model in project_dict.get("models", [])]
         project_dict.pop("models")
         return ProjectSpec(**project_dict, models=models)
 
-    def load_project_input(self) -> ProjectInput:
-        return ProjectInput(**self._load_project_to_dict())
+    def load_project_input(self) -> ProjectSpec:
+        return ProjectSpec(**self._load_project_to_dict())
 
 
 class ProjectExporter:
     """Export project to YAML file."""
 
-    def __init__(self, project_input: ProjectInput) -> None:
+    def __init__(self, project_input: ProjectSpec) -> None:
         self.project_input = project_input
 
     async def export_project(self) -> None:
-        yaml_structure = {"project": self.project_input.model_dump()}
+        yaml_structure = {
+            "project": self.project_input.model_dump(
+                round_trip=True,  # exclude computed fields
+            ),
+        }
         file_path = Path.cwd() / f"{self.project_input.project_name}.yaml"
         await _write_file(
             file_path,
