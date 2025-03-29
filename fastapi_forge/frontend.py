@@ -3,6 +3,7 @@ from nicegui import ui, native
 from typing import Callable, Any
 from pydantic import ValidationError
 from fastapi_forge.enums import FieldDataType
+from fastapi_forge.jinja import render_model_to_model
 from fastapi_forge.dtos import (
     Model,
     ModelField,
@@ -620,12 +621,29 @@ class ModelEditorCard(ui.card):
 
         self._build()
 
+    def _show_code_preview(self) -> None:
+        if self.selected_model:
+            self.selected_model.get_preview()
+            with (
+                ui.dialog() as modal,
+                ui.card().classes("no-shadow border-[1px]"),
+            ):
+                code = render_model_to_model(self.selected_model.get_preview())
+                code = code.split("class ")[1]
+                code = f"# ID is inherited from the `Base` class\nclass {code}"
+                ui.code(code).classes("w-full")
+                modal.open()
+
     def _build(self) -> None:
         with self:
             with ui.row().classes("w-full justify-between items-center"):
-                self.model_name_display = ui.label().classes("text-lg font-bold")
+                with ui.row().classes("gap-4 items-center"):
+                    self.model_name_display = ui.label().classes("text-lg font-bold")
+                    ui.button(
+                        icon="visibility", on_click=self._show_code_preview
+                    ).tooltip("Preview SQLAlchemy model code")
 
-                with ui.row().classes("gap-2"):
+                with ui.row().classes("gap-2 items-center"):
                     with ui.button(icon="menu").tooltip("Generate"):
                         with ui.menu(), ui.column().classes("gap-0 p-2"):
                             self.create_endpoints_switch = ui.switch(
@@ -1029,7 +1047,7 @@ class ModelEditorCard(ui.card):
             relationship = ModelRelationship(
                 field_name=field_name,
                 target_model=target_model_instance.name,
-                back_populates=back_populates,
+                back_populates=back_populates or None,
                 nullable=nullable,
                 index=index,
                 unique=unique,
