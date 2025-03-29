@@ -241,17 +241,6 @@ class Model(_Base):
     def get_preview(self) -> "Model":
         preview_model: Model = self.__deepcopy__()
 
-        preview_model.fields.append(
-            ModelField(
-                name="id",
-                type=FieldDataType.UUID,
-                primary_key=True,
-                nullable=False,
-                unique=True,
-                index=True,
-            )
-        )
-
         for relation in preview_model.relationships:
             preview_model.fields.append(
                 ModelField(
