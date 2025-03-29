@@ -19,10 +19,21 @@ BackPopulates = Annotated[str, Field(..., pattern=r"^[a-z][a-z0-9_]*$")]
 ProjectName = Annotated[
     BoundedStr, Field(..., pattern=r"^[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9])?$")
 ]
-ForeignKey = Annotated[BoundedStr, Field(..., pattern=r"^[A-Z][a-zA-Z]*\.id$")]
 
 
-class ModelField(BaseModel):
+class _Base(BaseModel):
+    model_config = ConfigDict(use_enum_values=True)
+
+
+class ModelFieldMetadata(_Base):
+    """Metadata for a model field."""
+
+    is_created_at_timestamp: bool = False
+    is_updated_at_timestamp: bool = False
+    is_foreign_key: bool = False
+
+
+class ModelField(_Base):
     """Represents a field in a model with validation and computed properties."""
 
     name: FieldName
@@ -31,10 +42,7 @@ class ModelField(BaseModel):
     nullable: bool = False
     unique: bool = False
     index: bool = False
-    foreign_key: ForeignKey | None = None
-
-    is_created_at_timestamp: bool = False
-    is_updated_at_timestamp: bool = False
+    metadata: ModelFieldMetadata = ModelFieldMetadata()
 
     @computed_field
     @property
@@ -42,28 +50,24 @@ class ModelField(BaseModel):
         """Convert field name to camelCase."""
         return snake_to_camel(self.name)
 
-    @computed_field
-    @property
-    def foreign_key_model(self) -> str | None:
-        """Convert foreign key to camelCase if it exists."""
-        return snake_to_camel(self.foreign_key) if self.foreign_key else None
-
     @model_validator(mode="after")
     def _validate(self) -> Self:
         """Validate field constraints."""
         if self.primary_key:
-            if self.foreign_key:
-                raise ValueError("Primary key fields cannot be foreign keys.")
             if self.nullable:
                 raise ValueError("Primary key cannot be nullable.")
             if not self.unique:
                 self.unique = True
 
-        if self.is_created_at_timestamp or self.is_updated_at_timestamp:
+        metadata = self.metadata
+        if metadata.is_created_at_timestamp or metadata.is_updated_at_timestamp:
             if self.type != FieldDataType.DATETIME:
                 raise ValueError(
                     "Create/update timestamp fields must be of type DateTime."
                 )
+
+        if metadata.is_foreign_key and self.type != FieldDataType.UUID:
+            raise ValueError("Foreign Keys must be of type UUID.")
         return self
 
     @computed_field
@@ -72,16 +76,16 @@ class ModelField(BaseModel):
         """Return the appropriate factory default for the model field."""
         faker_placeholder = "factory.Faker({placeholder})"
 
-        if "email" in self.name:
+        if "email" in self.name and self.type == FieldDataType.STRING:
             return faker_placeholder.format(placeholder='"email"')
 
         type_to_faker = {
-            FieldDataType.STRING: "text",
-            FieldDataType.INTEGER: "random_int",
-            FieldDataType.FLOAT: "random_float",
-            FieldDataType.BOOLEAN: "boolean",
-            FieldDataType.DATETIME: "date_time",
-            FieldDataType.JSONB: "{}",
+            FieldDataType.STRING: '"text"',
+            FieldDataType.INTEGER: '"random_int"',
+            FieldDataType.FLOAT: '"pyfloat", positive=True, min_value=0.1, max_value=100',
+            FieldDataType.BOOLEAN: '"boolean"',
+            FieldDataType.DATETIME: '"date_time"',
+            FieldDataType.JSONB: {},
         }
 
         if self.type not in type_to_faker:
@@ -90,14 +94,19 @@ class ModelField(BaseModel):
         if self.type == FieldDataType.JSONB:
             return type_to_faker[FieldDataType.JSONB]
 
-        return faker_placeholder.format(placeholder=f'"{type_to_faker[self.type]}"')
+        return faker_placeholder.format(placeholder=type_to_faker[self.type])
 
 
-class ModelRelationship(BaseModel):
+class ModelRelationship(_Base):
     """Represents a relationship between models."""
 
     field_name: FieldName
+    target_model: ModelName
     back_populates: BackPopulates | None = None
+
+    nullable: bool = False
+    unique: bool = False
+    index: bool = False
 
     @field_validator("field_name")
     def _validate_field_name(cls, value: str) -> str:
@@ -114,16 +123,10 @@ class ModelRelationship(BaseModel):
     @computed_field
     @property
     def target(self) -> str:
-        return snake_to_camel(self.field_name)
-
-    @computed_field
-    @property
-    def target_id(self) -> str:
-        """Return the target ID in the format 'Target.id'."""
-        return f"{self.target}.id"
+        return snake_to_camel(self.target_model)
 
 
-class ModelGenerationMetadata(BaseModel):
+class ModelGenerationMetadata(_Base):
     """Metadata used for code generation."""
 
     create_endpoints: bool = True
@@ -132,7 +135,7 @@ class ModelGenerationMetadata(BaseModel):
     create_dtos: bool = True
 
 
-class Model(BaseModel):
+class Model(_Base):
     """Represents a model with fields and relationships."""
 
     name: ModelName
@@ -150,28 +153,61 @@ class Model(BaseModel):
     def name_hyphen(self) -> str:
         return camel_to_snake_hyphen(self.name)
 
+    @property
+    def fields_sorted(self) -> list[ModelField]:
+        primary_keys = []
+        other_fields = []
+        created_at = []
+        updated_at = []
+        foreign_keys = []
+
+        for field in self.fields:
+            if field.primary_key:
+                primary_keys.append(field)
+            elif field.metadata.is_created_at_timestamp:
+                created_at.append(field)
+            elif field.metadata.is_updated_at_timestamp:
+                updated_at.append(field)
+            elif field.metadata.is_foreign_key:
+                foreign_keys.append(field)
+            else:
+                other_fields.append(field)
+
+        return primary_keys + other_fields + created_at + updated_at + foreign_keys
+
     @model_validator(mode="after")
     def _validate(self) -> Self:
-        """Validate model constraints."""
         field_names = [field.name for field in self.fields]
-        if len(field_names) != len(set(field_names)):
+        field_names_set = set(field_names)
+        if len(field_names) != len(field_names_set):
             raise ValueError(f"Model '{self.name}' contains duplicate fields.")
-
-        relationship_targets = [relation.target for relation in self.relationships]
-        if len(relationship_targets) != len(set(relationship_targets)):
-            raise ValueError(f"Model '{self.name}' contains duplicate relationships.")
 
         if sum(field.primary_key for field in self.fields) != 1:
             raise ValueError(f"Model '{self.name}' must have exactly one primary key.")
 
-        relationship_target_field_names = {
-            relation.field_name for relation in self.relationships
-        }
-        for field in self.fields:
-            if field.foreign_key and field.name not in relationship_target_field_names:
-                raise ValueError(
-                    f"Model foreign key '{self.name}.{field.name}' is not a valid relationship."
-                )
+        unque_relationships = [
+            relationship.field_name for relationship in self.relationships
+        ]
+        if len(unque_relationships) != len(set(unque_relationships)):
+            raise ValueError(
+                f"Model '{self.name}' contains duplicate relationship field names."
+            )
+
+        # add fields for relationships
+        for relationship in self.relationships:
+            if relationship.field_name in field_names_set:
+                continue
+            field = ModelField(
+                name=relationship.field_name,
+                type=FieldDataType.UUID,
+                primary_key=False,
+                nullable=relationship.nullable,
+                unique=relationship.unique,
+                index=relationship.index,
+                metadata=ModelFieldMetadata(is_foreign_key=True),
+            )
+            self.fields.append(field)
+
         return self
 
     @model_validator(mode="after")
@@ -219,86 +255,8 @@ class Model(BaseModel):
         return self
 
 
-class ProjectSpec(BaseModel):
+class ProjectSpec(_Base):
     """Represents a project specification with models and configurations."""
-
-    project_name: ProjectName
-    use_postgres: bool
-    use_alembic: bool
-    use_builtin_auth: bool
-    use_redis: bool
-    use_rabbitmq: bool
-    models: list[Model]
-
-    @model_validator(mode="after")
-    def validate_models(self) -> Self:
-        """Validate project-level constraints."""
-        model_names = [model.name for model in self.models]
-        if len(model_names) != len(set(model_names)):
-            raise ValueError("Model names must be unique.")
-
-        if self.use_alembic and not self.use_postgres:
-            raise ValueError("Cannot use Alembic if PostgreSQL is not enabled.")
-
-        return self
-
-
-class FieldInput(BaseModel):
-    """Input model for creating or updating a field."""
-
-    model_config = ConfigDict(use_enum_values=True)
-
-    name: FieldName
-    type: FieldDataType
-    primary_key: bool = False
-    nullable: bool = False
-    unique: bool = False
-    index: bool = False
-    foreign_key: bool = False
-    back_populates: BackPopulates | None = None
-
-    is_created_at_timestamp: bool = False
-    is_updated_at_timestamp: bool = False
-
-    @model_validator(mode="after")
-    def _validate(self) -> Self:
-        """Validate field input constraints."""
-        if self.foreign_key and self.type != FieldDataType.UUID:
-            raise ValueError("Foreign Key fields must be UUID.")
-        if not self.foreign_key and self.back_populates:
-            raise ValueError("Back Populates can only be set on Foreign Keys.")
-        if self.primary_key and self.foreign_key:
-            raise ValueError("Primary Keys cannot be Foreign Keys.")
-        if self.foreign_key and not self.name.endswith("_id"):
-            raise ValueError("Foreign Key field names must end with '_id'.")
-        if self.is_created_at_timestamp or self.is_updated_at_timestamp:
-            if self.type != FieldDataType.DATETIME:
-                raise ValueError(
-                    "Create/update timestamp fields must be of type DateTime."
-                )
-        return self
-
-
-class ModelInput(BaseModel):
-    """Input model for creating or updating a model."""
-
-    name: ModelName
-    fields: list[FieldInput]
-    metadata: ModelGenerationMetadata = ModelGenerationMetadata()
-
-    @model_validator(mode="after")
-    def _validate(self) -> Self:
-        """Validate model input constraints."""
-        field_names = [field.name for field in self.fields]
-        if len(set(field_names)) != len(field_names):
-            raise ValueError("Duplicate field names are not allowed.")
-        if sum(field.primary_key for field in self.fields) != 1:
-            raise ValueError(f"Model '{self.name}' must have exactly one primary key.")
-        return self
-
-
-class ProjectInput(BaseModel):
-    """Input model for creating or updating a project."""
 
     project_name: ProjectName
     use_postgres: bool = False
@@ -306,15 +264,65 @@ class ProjectInput(BaseModel):
     use_builtin_auth: bool = False
     use_redis: bool = False
     use_rabbitmq: bool = False
-    models: list[ModelInput] = []
+    models: list[Model] = []
 
     @model_validator(mode="after")
-    def _validate(self) -> Self:
+    def _validate_models(self) -> Self:
+        model_names = [model.name for model in self.models]
+        model_names_set = set(model_names)
+        if len(model_names) != len(model_names_set):
+            raise ValueError("Model names must be unique.")
+
         if self.use_alembic and not self.use_postgres:
             raise ValueError("Cannot use Alembic if PostgreSQL is not enabled.")
 
-        model_names = [model.name for model in self.models]
-        if len(model_names) != len(set(model_names)):
-            raise ValueError("Model names must be unique.")
+        if self.use_builtin_auth and not self.use_postgres:
+            raise ValueError("Cannot use built-in auth if PostgreSQL is not enabled.")
+
+        for model in self.models:
+            for relationship in model.relationships:
+                if relationship.target_model not in model_names_set:
+                    raise ValueError(
+                        f"Model '{model.name}' has a relationship to "
+                        f"'{relationship.target_model}', which does not exist."
+                    )
+
+        return self
+
+    @model_validator(mode="after")
+    def _validate_circular_references(self) -> Self:
+        relationship_graph = {}
+
+        model_names = {model.name for model in self.models}
+
+        for model in self.models:
+            relationship_graph[model.name] = [
+                rel.target_model
+                for rel in model.relationships
+                if rel.target_model in model_names
+            ]
+
+        visited = set()
+        path = set()
+
+        def has_cycle(node):
+            if node in visited:
+                return False
+            visited.add(node)
+            path.add(node)
+
+            for neighbor in relationship_graph.get(node, []):
+                if neighbor in path or has_cycle(neighbor):
+                    return True
+
+            path.remove(node)
+            return False
+
+        for model_name in relationship_graph:
+            if has_cycle(model_name):
+                raise ValueError(
+                    f"Circular reference detected involving model '{model_name}'. "
+                    "Remove bidirectional relationships between models."
+                )
 
         return self

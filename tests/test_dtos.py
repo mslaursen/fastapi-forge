@@ -1,5 +1,5 @@
 import pytest
-from fastapi_forge.dtos import ModelField, ModelRelationship
+from fastapi_forge.dtos import ModelField, ModelRelationship, ProjectSpec, Model
 from fastapi_forge.enums import FieldDataType
 from pydantic import ValidationError
 
@@ -28,17 +28,6 @@ def test_primary_key_cannot_be_nullable() -> None:
             nullable=True,
         )
     assert "Primary key cannot be nullable." in str(exc_info.value)
-
-
-def test_primary_key_cannot_be_foreign_key() -> None:
-    with pytest.raises(ValidationError) as exc_info:
-        ModelField(
-            name="id",
-            type=FieldDataType.UUID,
-            primary_key=True,
-            foreign_key="User.id",
-        )
-    assert "Primary key fields cannot be foreign keys." in str(exc_info.value)
 
 
 @pytest.mark.parametrize(
@@ -89,10 +78,9 @@ def test_factory_field_value(
 def test_fields() -> None:
     model_relationship = ModelRelationship(
         field_name="restaurant_id",
+        target_model="restaurant",
     )
     assert model_relationship.target == "Restaurant"
-    assert model_relationship.target_id == "Restaurant.id"
-    assert model_relationship.field_name == "restaurant_id"
     assert model_relationship.field_name_no_id == "restaurant"
 
 
@@ -100,5 +88,35 @@ def test_field_name_not_endswith_id() -> None:
     with pytest.raises(ValidationError) as exc_info:
         ModelRelationship(
             field_name="restaurant",
+            target_model="restaurant",
         )
     assert "Relationship field names must end with '_id'." in str(exc_info.value)
+
+
+#########################
+# ProjectSpec DTO tests #
+#########################
+
+
+def test_project_spec_non_existing_target_model() -> None:
+    model = Model(
+        name="restaurant",
+        fields=[
+            ModelField(name="id", type=FieldDataType.UUID, primary_key=True),
+        ],
+        relationships=[
+            ModelRelationship(
+                field_name="test_id",
+                target_model="non_existing",
+            ),
+        ],
+    )
+    with pytest.raises(ValidationError) as exc_info:
+        ProjectSpec(
+            project_name="test_project",
+            models=[model],
+        )
+    assert (
+        "'restaurant' has a relationship to 'non_existing', which does not exist."
+        in str(exc_info.value)
+    )

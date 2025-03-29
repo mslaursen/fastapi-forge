@@ -1,6 +1,6 @@
 from typing import Any
 from jinja2 import Environment
-from fastapi_forge.dtos import Model, ModelField, ModelRelationship
+from fastapi_forge.dtos import Model, ModelField, ModelRelationship, ModelFieldMetadata
 from fastapi_forge.enums import FieldDataType
 from fastapi_forge.jinja_utils import generate_relationship, generate_field
 
@@ -16,8 +16,9 @@ from sqlalchemy.dialects.postgresql import JSONB
 from uuid import UUID
 from typing import Any, Annotated
 from datetime import datetime, timezone
-{% for relation in model.relationships -%}
-from src.models.{{ relation.field_name_no_id }}_models import {{ relation.target }}
+{% set unique_relationships = model.relationships | unique(attribute='target') %}
+{% for relation in unique_relationships -%}
+from src.models.{{ relation.target_model }}_models import {{ relation.target }}
 {% endfor %}
 
 
@@ -28,8 +29,8 @@ class {{ model.name_cc }}(Base):
 
     __tablename__ = "{{ model.name }}"
     
-    {% for field in model.fields -%}
-    {{ field | generate_field }}
+    {% for field in model.fields_sorted -%}
+    {{ field | generate_field(model.relationships if field.metadata.is_foreign_key else None) }}
     {% endfor %}
 
     {% for relation in model.relationships -%}
@@ -50,10 +51,8 @@ class {{ model.name_cc }}DTO(BaseOrmModel):
     \"\"\"{{ model.name_cc }} DTO.\"\"\"
 
     id: UUID
-    {%- for field in model.fields -%}
-    {% if not field.primary_key -%}
+    {% for field in model.fields_sorted if not field.primary_key -%}
     {{ field.name }}: {{ type_mapping[field.type] }}{% if field.nullable %} | None{% endif %}
-    {%- endif %}
     {% endfor %}
 
 
@@ -61,7 +60,7 @@ class {{ model.name_cc }}DTO(BaseOrmModel):
 class {{ model.name_cc }}InputDTO(BaseModel):
     \"\"\"{{ model.name_cc }} input DTO.\"\"\"
 
-    {% for field in model.fields if not (field.is_created_at_timestamp or field.is_updated_at_timestamp or field.primary_key) -%}
+    {% for field in model.fields_sorted if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or field.primary_key) -%}
     {{ field.name }}: {{ type_mapping[field.type] }}{% if field.nullable %} | None{% endif %}
     {% endfor %}
 
@@ -69,7 +68,7 @@ class {{ model.name_cc }}InputDTO(BaseModel):
 class {{ model.name_cc }}UpdateDTO(BaseModel):
     \"\"\"{{ model.name_cc }} update DTO.\"\"\"
 
-    {% for field in model.fields if not (field.is_created_at_timestamp or field.is_updated_at_timestamp or field.primary_key) -%}
+    {% for field in model.fields_sorted if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or field.primary_key) -%}
     {{ field.name }}: {{ type_mapping[field.type] }} | None = None
     {% endfor %}
 """
@@ -187,7 +186,7 @@ async def test_post_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> Non
     {%- endfor %}
     
     input_json = {
-        {%- for field in model.fields  if not (field.is_created_at_timestamp or field.is_updated_at_timestamp or field.primary_key) -%}
+        {%- for field in model.fields  if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or field.primary_key) -%}
         {%- if not field.primary_key and field.name.endswith('_id') -%}
         "{{ field.name }}": str({{ field.name | replace('_id', '.id') }}),
         {%- elif not field.primary_key %}
@@ -207,7 +206,7 @@ async def test_post_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> Non
     db_{{ model.name }} = await daos.{{ model.name }}.filter_first(id=response_data["id"])
 
     assert db_{{ model.name }} is not None
-    {%- for field in model.fields  if not (field.is_created_at_timestamp or field.is_updated_at_timestamp or field.primary_key) %}
+    {%- for field in model.fields  if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or field.primary_key) %}
     {%- if not field.primary_key and field.name.endswith('_id') %}
     assert db_{{ model.name }}.{{ field.name }} == UUID(input_json["{{ field.name }}"])
     {%- elif not field.primary_key %}
@@ -299,7 +298,7 @@ async def test_patch_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> No
     {{ model.name }} = await factories.{{ model.name_cc }}Factory.create()
 
     input_json = {
-        {%- for field in model.fields  if not (field.is_created_at_timestamp or field.is_updated_at_timestamp or field.primary_key) -%}
+        {%- for field in model.fields  if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or field.primary_key) -%}
         {%- if not field.primary_key and field.name.endswith('_id') -%}
         "{{ field.name }}": str({{ field.name | replace('_id', '.id') }}),
         {% elif not field.primary_key %}
@@ -318,7 +317,7 @@ async def test_patch_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> No
     db_{{ model.name }} = await daos.{{ model.name }}.filter_first(id={{ model.name }}.id)
 
     assert db_{{ model.name }} is not None
-    {%- for field in model.fields  if not (field.is_created_at_timestamp or field.is_updated_at_timestamp or field.primary_key) %}
+    {%- for field in model.fields  if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or field.primary_key) %}
     {%- if not field.primary_key and field.name.endswith('_id') %}
     assert db_{{ model.name }}.{{ field.name }} == UUID(input_json["{{ field.name }}"])
     {%- elif not field.primary_key %}
@@ -357,18 +356,22 @@ async def test_delete_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> N
 
 TYPE_MAPPING = {
     "Integer": "int",
+    "Float": "float",
     "String": "str",
     "UUID": "UUID",
     "DateTime": "datetime",
     "JSONB": "dict[str, Any]",
+    "Boolean": "bool",
 }
 
 TYPE_TO_INPUT_VALUE_MAPPING = {
     "Integer": "1",
+    "Float": "1.0",
     "String": "'string'",
     "UUID": "UUID('00000000-0000-0000-0000-000000000000')",
     "DateTime": "datetime.now(timezone.utc)",
     "JSONB": '{"json": "value"}',
+    "Boolean": "True",
 }
 
 
@@ -445,23 +448,41 @@ if __name__ == "__main__":
                     name="id",
                     type=FieldDataType.UUID,
                     primary_key=True,
+                    nullable=False,
                     unique=True,
+                    index=True,
                 ),
                 ModelField(
                     name="email",
                     type=FieldDataType.STRING,
-                    unique=True,
+                    primary_key=False,
                     nullable=False,
+                    unique=True,
+                    index=True,
                 ),
                 ModelField(
                     name="password",
                     type=FieldDataType.STRING,
+                    primary_key=False,
                     nullable=False,
+                    unique=False,
+                    index=False,
                 ),
             ],
         ),
         Model(
-            name="reservation",
+            name="model_a",
+            fields=[
+                ModelField(
+                    name="id",
+                    type=FieldDataType.UUID,
+                    primary_key=True,
+                    unique=True,
+                ),
+            ],
+        ),
+        Model(
+            name="model_b",
             fields=[
                 ModelField(
                     name="id",
@@ -470,45 +491,51 @@ if __name__ == "__main__":
                     unique=True,
                 ),
                 ModelField(
-                    name="reservation_date",
+                    name="updated_at",
                     type=FieldDataType.DATETIME,
-                    nullable=False,
+                    metadata=ModelFieldMetadata(
+                        is_updated_at_timestamp=True,
+                    ),
                 ),
                 ModelField(
-                    name="party_size",
-                    type=FieldDataType.INTEGER,
-                    nullable=False,
+                    name="created_at",
+                    type=FieldDataType.DATETIME,
+                    metadata=ModelFieldMetadata(
+                        is_created_at_timestamp=True,
+                    ),
                 ),
                 ModelField(
-                    name="notes",
-                    type=FieldDataType.STRING,
-                    nullable=True,
-                ),
-                ModelField(
-                    name="auth_user_id",
-                    type=FieldDataType.UUID,
-                    foreign_key="AuthUser.id",
-                    nullable=False,
+                    name="is_mohammad",
+                    type=FieldDataType.BOOLEAN,
                 ),
             ],
             relationships=[
                 ModelRelationship(
-                    field_name="auth_user_id",
-                )
+                    field_name="model_a0_id",
+                    target_model="model_a",
+                ),
+                ModelRelationship(
+                    field_name="model_a1_id",
+                    target_model="model_a",
+                ),
+                ModelRelationship(
+                    field_name="user_id",
+                    target_model="auth_user",
+                ),
             ],
         ),
     ]
 
     render_funcs = [
         render_model_to_model,
-        render_model_to_dto,
-        render_model_to_dao,
-        render_model_to_routers,
-        render_model_to_post_test,
-        render_model_to_get_test,
-        render_model_to_get_id_test,
-        render_model_to_patch_test,
-        render_model_to_delete_test,
+        # render_model_to_dto,
+        # render_model_to_dao,
+        # render_model_to_routers,
+        # render_model_to_post_test,
+        # render_model_to_get_test,
+        # render_model_to_get_id_test,
+        # render_model_to_patch_test,
+        # render_model_to_delete_test,
     ]
 
     for fn in render_funcs:
@@ -518,4 +545,4 @@ if __name__ == "__main__":
         print("=" * 80)
         print()
 
-        print(fn(models[1]))
+        print(fn(models[2]))
