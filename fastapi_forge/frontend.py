@@ -604,6 +604,7 @@ class ModelEditorCard(ui.card):
         self.selected_relation: ModelRelationship | None = None
         self.selected_model: Model | None = None
         self.model_panel: ModelPanel | None = None
+
         self.add_field_modal: AddFieldModal = AddFieldModal(
             on_add_field=self._handle_modal_add_field
         )
@@ -702,7 +703,7 @@ class ModelEditorCard(ui.card):
                                 ),
                             )
 
-            with ui.expansion("Fields").classes("w-full"):
+            with ui.expansion("Fields", value=True).classes("w-full"):
                 self.table = ui.table(
                     columns=COLUMNS,
                     rows=[],
@@ -711,7 +712,7 @@ class ModelEditorCard(ui.card):
                     on_select=lambda e: self._on_select_field(e.selection),
                 ).classes("w-full no-shadow border-[1px]")
 
-                with ui.row().classes("w-full justify-end gap-2"):  # Modified this line
+                with ui.row().classes("w-full justify-end gap-2"):
                     ui.button(
                         icon="edit",
                         on_click=lambda: self.update_field_modal.open(
@@ -722,7 +723,7 @@ class ModelEditorCard(ui.card):
                         icon="delete", on_click=self._delete_field
                     ).bind_visibility_from(self, "selected_field")
 
-            with ui.expansion("Relationships").classes("w-full"):
+            with ui.expansion("Relationships", value=True).classes("w-full"):
                 self.relationship_table = ui.table(
                     columns=RELATIONSHIP_COLUMNS,
                     rows=[],
@@ -731,7 +732,7 @@ class ModelEditorCard(ui.card):
                     on_select=lambda e: self._on_select_relation(e.selection),
                 ).classes("w-full no-shadow border-[1px]")
 
-                with ui.row().classes("w-full justify-end gap-2"):  # Modified this line
+                with ui.row().classes("w-full justify-end gap-2"):
                     ui.button(
                         icon="edit",
                         on_click=lambda: self.update_relation_modal.open(
