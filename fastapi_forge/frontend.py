@@ -266,7 +266,7 @@ class ModelPanel(ui.left_drawer):
                 primary_key=True,
                 nullable=False,
                 unique=True,
-                index=False,
+                index=True,
             )
 
             new_model = Model(name=model_name, fields=[default_id_field])

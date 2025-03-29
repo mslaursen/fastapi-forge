@@ -39,12 +39,23 @@ services:
       {{ cookiecutter.project_name|upper|replace('-', '_') }}_RABBITMQ_CONNECTION_POOL_SIZE: 2
       {{ cookiecutter.project_name|upper|replace('-', '_') }}_RABBITMQ_CHANNEL_POOL_SIZE: 10
       {% endif %}
-    volumes:
-    - ./src:/app/src
-    - ./tests:/app/tests
-    {% if cookiecutter.use_alembic %}
-    - ./migrations:/app/migrations
-    {% endif %}
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app/src
+        - action: sync
+          path: ./tests
+          target: /app/tests
+        {% if cookiecutter.use_alembic %}
+        - action: sync
+          path: ./migrations
+          target: /app/migrations
+        {% endif %}
+        - action: rebuild
+          path: pyproject.toml
+        - action: rebuild
+          path: uv.lock
   {% if cookiecutter.use_postgres %}
   postgres:
     image: postgres:13.8-bullseye
