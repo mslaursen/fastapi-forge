@@ -19,7 +19,6 @@ BackPopulates = Annotated[str, Field(..., pattern=r"^[a-z][a-z0-9_]*$")]
 ProjectName = Annotated[
     BoundedStr, Field(..., pattern=r"^[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9])?$")
 ]
-ForeignKey = Annotated[BoundedStr, Field(..., pattern=r"^[A-Z][a-zA-Z]*\.id$")]
 
 
 class _Base(BaseModel):
@@ -31,6 +30,7 @@ class ModelFieldMetadata(_Base):
 
     is_created_at_timestamp: bool = False
     is_updated_at_timestamp: bool = False
+    is_foreign_key: bool = False
 
 
 class ModelField(_Base):
@@ -65,6 +65,9 @@ class ModelField(_Base):
                 raise ValueError(
                     "Create/update timestamp fields must be of type DateTime."
                 )
+
+        if metadata.is_foreign_key and self.type != FieldDataType.UUID:
+            raise ValueError("Foreign Keys must be of type UUID.")
         return self
 
     @computed_field
@@ -120,13 +123,11 @@ class ModelRelationship(_Base):
     @computed_field
     @property
     def target(self) -> str:
-        """Re"""
         return snake_to_camel(self.target_model)
 
     @computed_field
     @property
     def target_id(self) -> str:
-        """Return the target ID in the format 'Target.id'."""
         return f"{self.target}.id"
 
 
@@ -157,15 +158,60 @@ class Model(_Base):
     def name_hyphen(self) -> str:
         return camel_to_snake_hyphen(self.name)
 
+    @property
+    def fields_sorted(self) -> list[ModelField]:
+        primary_keys = []
+        other_fields = []
+        created_at = []
+        updated_at = []
+        foreign_keys = []
+
+        for field in self.fields:
+            if field.primary_key:
+                primary_keys.append(field)
+            elif field.metadata.is_created_at_timestamp:
+                created_at.append(field)
+            elif field.metadata.is_updated_at_timestamp:
+                updated_at.append(field)
+            elif field.metadata.is_foreign_key:
+                foreign_keys.append(field)
+            else:
+                other_fields.append(field)
+
+        return primary_keys + other_fields + created_at + updated_at + foreign_keys
+
     @model_validator(mode="after")
     def _validate(self) -> Self:
-        """Validate model constraints."""
         field_names = [field.name for field in self.fields]
-        if len(field_names) != len(set(field_names)):
+        field_names_set = set(field_names)
+        if len(field_names) != len(field_names_set):
             raise ValueError(f"Model '{self.name}' contains duplicate fields.")
 
         if sum(field.primary_key for field in self.fields) != 1:
             raise ValueError(f"Model '{self.name}' must have exactly one primary key.")
+
+        unque_relationships = [
+            relationship.field_name for relationship in self.relationships
+        ]
+        if len(unque_relationships) != len(set(unque_relationships)):
+            raise ValueError(
+                f"Model '{self.name}' contains duplicate relationship field names."
+            )
+
+        # add fields for relationships
+        for relationship in self.relationships:
+            if relationship.field_name in field_names_set:
+                continue
+            field = ModelField(
+                name=relationship.field_name,
+                type=FieldDataType.UUID,
+                primary_key=False,
+                nullable=relationship.nullable,
+                unique=relationship.unique,
+                index=relationship.index,
+                metadata=ModelFieldMetadata(is_foreign_key=True),
+            )
+            self.fields.append(field)
 
         return self
 
