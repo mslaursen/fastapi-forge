@@ -17,7 +17,28 @@ def generate_relationship(relation: ModelRelationship) -> str:
     """.strip()
 
 
-def _gen_field(field: ModelField, sa_type: str, prefix_sa: bool = True) -> str:
+def _map_field_type_to_sa_type(field: ModelField) -> str:
+    field_type_mapping = {
+        FieldDataType.UUID: "UUID(as_uuid=True)",
+        FieldDataType.STRING: "String",
+        FieldDataType.INTEGER: "Integer",
+        FieldDataType.FLOAT: "Float",
+        FieldDataType.BOOLEAN: "Boolean",
+        FieldDataType.DATETIME: "DateTime(timezone=True)",
+        FieldDataType.JSONB: "JSONB",
+    }
+
+    sa_type = field_type_mapping.get(field.type)
+
+    if sa_type is None:
+        raise ValueError(f"Unsupported field type: {field.type}")
+
+    return sa_type
+
+
+def _gen_field(
+    field: ModelField, sa_type: str, prefix_sa: bool = True, target: str | None = None
+) -> str:
     args = [f"{'sa.' if prefix_sa else ''}{sa_type}"]
 
     if field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp:
@@ -25,6 +46,8 @@ def _gen_field(field: ModelField, sa_type: str, prefix_sa: bool = True) -> str:
         if field.metadata.is_updated_at_timestamp:
             args.append("onupdate=datetime.now(timezone.utc)")
     else:
+        if field.metadata.is_foreign_key and target:
+            args.append(f'sa.ForeignKey("{target + ".id"}", ondelete="CASCADE")')
         if field.primary_key:
             args.append("primary_key=True")
         if field.unique:
@@ -42,39 +65,53 @@ def _gen_field(field: ModelField, sa_type: str, prefix_sa: bool = True) -> str:
     """.strip()
 
 
-def _gen_uuid_field(field: ModelField) -> str:
-    return _gen_field(field, "UUID(as_uuid=True)")
+def _gen_uuid_field(field: ModelField, target: str | None = None) -> str:
+    return _gen_field(field, _map_field_type_to_sa_type(field), target=target)
 
 
-def _gen_string_field(field: ModelField) -> str:
-    return _gen_field(field, "String")
+def _gen_string_field(field: ModelField, target: str | None = None) -> str:
+    return _gen_field(field, _map_field_type_to_sa_type(field), target=target)
 
 
-def _gen_integer_field(field: ModelField) -> str:
-    return _gen_field(field, "Integer")
+def _gen_integer_field(field: ModelField, target: str | None = None) -> str:
+    return _gen_field(field, _map_field_type_to_sa_type(field), target=target)
 
 
-def _gen_float_field(field: ModelField) -> str:
-    return _gen_field(field, "Float")
+def _gen_float_field(field: ModelField, target: str | None = None) -> str:
+    return _gen_field(field, _map_field_type_to_sa_type(field), target=target)
 
 
-def _gen_boolean_field(field: ModelField) -> str:
-    return _gen_field(field, "Boolean")
+def _gen_boolean_field(field: ModelField, target: str | None = None) -> str:
+    return _gen_field(field, _map_field_type_to_sa_type(field), target=target)
 
 
-def _gen_datetime_field(field: ModelField) -> str:
-    return _gen_field(field, "DateTime(timezone=True)")
+def _gen_datetime_field(field: ModelField, target: str | None = None) -> str:
+    return _gen_field(field, _map_field_type_to_sa_type(field), target=target)
 
 
-def _gen_jsonb_field(field: ModelField) -> str:
-    return _gen_field(field, "JSONB", prefix_sa=False)
+def _gen_jsonb_field(field: ModelField, target: str | None = None) -> str:
+    return _gen_field(
+        field, _map_field_type_to_sa_type(field), prefix_sa=False, target=target
+    )
 
 
-def generate_field(field: ModelField) -> str:
-    # currently, primary keys fields are applied by the base class
-    # of the model, so we don't need to generate them here
+def generate_field(
+    field: ModelField,
+    relationships: list[ModelRelationship] | None = None,
+) -> str:
     if field.primary_key:
         return ""
+
+    target = None
+    if field.metadata.is_foreign_key and relationships is not None:
+        target = next(
+            (
+                relation.target_model
+                for relation in relationships
+                if relation.field_name == field.name
+            ),
+            None,
+        )
 
     type_to_fn = {
         FieldDataType.UUID: _gen_uuid_field,
@@ -89,59 +126,4 @@ def generate_field(field: ModelField) -> str:
     if field.type not in type_to_fn:
         raise ValueError(f"Unsupported field type: {field.type}")
 
-    return type_to_fn[field.type](field)
-
-
-if __name__ == "__main__":
-    relation = ModelRelationship(
-        field_name="restaurant_id",
-        back_populates="restaurants",
-    )
-
-    model = Model(
-        name="reservation",
-        fields=[
-            ModelField(
-                name="id",
-                type=FieldDataType.UUID,
-                primary_key=True,
-                unique=True,
-            ),
-            ModelField(
-                name="name",
-                type=FieldDataType.STRING,
-                nullable=True,
-            ),
-            ModelField(
-                name="age",
-                type=FieldDataType.INTEGER,
-                nullable=False,
-            ),
-            ModelField(
-                name="price",
-                type=FieldDataType.FLOAT,
-                nullable=False,
-            ),
-            ModelField(
-                name="is_active",
-                type=FieldDataType.BOOLEAN,
-                nullable=False,
-            ),
-            ModelField(
-                name="created_at",
-                type=FieldDataType.DATETIME,
-                is_updated_at_timestamp=True,
-            ),
-            ModelField(
-                name="restaurant_id",
-                type=FieldDataType.UUID,
-                nullable=True,
-                foreign_key="Restaurant.id",
-            ),
-        ],
-        relationships=[relation],
-    )
-
-    for field in model.fields:
-        s = generate_field(field)
-        print(s)
+    return type_to_fn[field.type](field, target=target)

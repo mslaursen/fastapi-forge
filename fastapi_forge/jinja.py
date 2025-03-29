@@ -30,7 +30,7 @@ class {{ model.name_cc }}(Base):
     __tablename__ = "{{ model.name }}"
     
     {% for field in model.fields_sorted -%}
-    {{ field | generate_field }}
+    {{ field | generate_field(model.relationships if field.metadata.is_foreign_key else None) }}
     {% endfor %}
 
     {% for relation in model.relationships -%}
@@ -526,14 +526,14 @@ if __name__ == "__main__":
 
     render_funcs = [
         render_model_to_model,
-        render_model_to_dto,
-        render_model_to_dao,
-        render_model_to_routers,
-        render_model_to_post_test,
-        render_model_to_get_test,
-        render_model_to_get_id_test,
-        render_model_to_patch_test,
-        render_model_to_delete_test,
+        # render_model_to_dto,
+        # render_model_to_dao,
+        # render_model_to_routers,
+        # render_model_to_post_test,
+        # render_model_to_get_test,
+        # render_model_to_get_id_test,
+        # render_model_to_patch_test,
+        # render_model_to_delete_test,
     ]
 
     for fn in render_funcs:

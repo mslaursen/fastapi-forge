@@ -81,7 +81,6 @@ def test_fields() -> None:
         target_model="restaurant",
     )
     assert model_relationship.target == "Restaurant"
-    assert model_relationship.target_id == "Restaurant.id"
     assert model_relationship.field_name_no_id == "restaurant"
 
 

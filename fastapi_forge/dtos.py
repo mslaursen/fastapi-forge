@@ -125,11 +125,6 @@ class ModelRelationship(_Base):
     def target(self) -> str:
         return snake_to_camel(self.target_model)
 
-    @computed_field
-    @property
-    def target_id(self) -> str:
-        return f"{self.target}.id"
-
 
 class ModelGenerationMetadata(_Base):
     """Metadata used for code generation."""
