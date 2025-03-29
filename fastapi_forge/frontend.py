@@ -1244,25 +1244,28 @@ class ProjectConfigPanel(ui.right_drawer):
                             name="id",
                             type=FieldDataType.UUID,
                             primary_key=True,
-                            nullable=False,
                             unique=True,
                             index=True,
                         ),
                         ModelField(
                             name="email",
                             type=FieldDataType.STRING,
-                            primary_key=False,
-                            nullable=False,
                             unique=True,
                             index=True,
                         ),
                         ModelField(
                             name="password",
                             type=FieldDataType.STRING,
-                            primary_key=False,
-                            nullable=False,
-                            unique=False,
-                            index=False,
+                        ),
+                        ModelField(
+                            name="created_at",
+                            type=FieldDataType.DATETIME,
+                            metadata=ModelFieldMetadata(is_created_at_timestamp=True),
+                        ),
+                        ModelField(
+                            name="updated_at",
+                            type=FieldDataType.DATETIME,
+                            metadata=ModelFieldMetadata(is_updated_at_timestamp=True),
                         ),
                     ],
                 )
@@ -1377,8 +1380,8 @@ def init(
     yaml_path: Path | None = None,
 ) -> None:
     base_path = Path(__file__).parent / "example-projects"
-    default_path = base_path / "dry-service.yaml"
-    example_path = base_path / "trustpilot-api.yaml"
+    default_path = base_path / "empty-service.yaml"
+    example_path = base_path / "game_zone.yaml"
 
     path = example_path if use_example else yaml_path if yaml_path else default_path
 

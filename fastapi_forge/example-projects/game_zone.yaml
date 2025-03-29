@@ -1,0 +1,185 @@
+project:
+  project_name: game_zone
+  use_postgres: true
+  use_alembic: true
+  use_builtin_auth: true
+  use_redis: true
+  use_rabbitmq: true
+
+  models:
+    - name: auth_user
+      fields:
+        - name: id
+          type: UUID
+          primary_key: true
+        - name: email
+          type: String
+          unique: true
+          index: true
+        - name: password
+          type: String
+        - name: created_at
+          type: DateTime
+          metadata:
+            is_created_at_timestamp: true
+        - name: updated_at
+          type: DateTime
+          metadata:
+            is_updated_at_timestamp: true
+      relationships: []
+      metadata:
+        create_endpoints: false
+        create_tests: false
+
+    - name: user_profile
+      fields:
+        - name: id
+          type: UUID
+          primary_key: true
+        - name: auth_user_id
+          type: UUID
+          metadata:
+            is_foreign_key: true
+        - name: username
+          type: String
+          unique: true
+          index: true
+        - name: avatar_url
+          type: String
+          nullable: true
+        - name: created_at
+          type: DateTime
+          metadata:
+            is_created_at_timestamp: true
+        - name: updated_at
+          type: DateTime
+          metadata:
+            is_updated_at_timestamp: true
+      relationships:
+        - field_name: auth_user_id
+          target_model: auth_user
+          unique: true
+
+    - name: game
+      fields:
+        - name: id
+          type: UUID
+          primary_key: true
+        - name: title
+          type: String
+          index: true
+        - name: genre
+          type: String
+        - name: release_date
+          type: DateTime
+        - name: developer
+          type: String
+        - name: avg_rating
+          type: Float
+          nullable: true
+        - name: created_at
+          type: DateTime
+          metadata:
+            is_created_at_timestamp: true
+        - name: updated_at
+          type: DateTime
+          metadata:
+            is_updated_at_timestamp: true
+      relationships: []
+
+    - name: game_collection
+      fields:
+        - name: id
+          type: UUID
+          primary_key: true
+        - name: user_profile_id
+          type: UUID
+          metadata:
+            is_foreign_key: true
+        - name: game_id
+          type: UUID
+          metadata:
+            is_foreign_key: true
+        - name: purchase_date
+          type: DateTime
+          metadata:
+            is_created_at_timestamp: true
+        - name: playtime_hours
+          type: Integer
+        - name: achievements_unlocked
+          type: Integer
+          default: 0
+        - name: created_at
+          type: DateTime
+          metadata:
+            is_created_at_timestamp: true
+        - name: updated_at
+          type: DateTime
+          metadata:
+            is_updated_at_timestamp: true
+      relationships:
+        - field_name: user_profile_id
+          target_model: user_profile
+        - field_name: game_id
+          target_model: game
+
+    - name: tournament
+      fields:
+        - name: id
+          type: UUID
+          primary_key: true
+        - name: game_id
+          type: UUID
+          metadata:
+            is_foreign_key: true
+        - name: name
+          type: String
+        - name: start_time
+          type: DateTime
+        - name: prize_pool
+          type: Float
+        - name: max_participants
+          type: Integer
+        - name: created_at
+          type: DateTime
+          metadata:
+            is_created_at_timestamp: true
+        - name: updated_at
+          type: DateTime
+          metadata:
+            is_updated_at_timestamp: true
+      relationships:
+        - field_name: game_id
+          target_model: game
+
+    - name: hardware_setup
+      fields:
+        - name: id
+          type: UUID
+          primary_key: true
+        - name: user_profile_id
+          type: UUID
+          metadata:
+            is_foreign_key: true
+        - name: pc_model
+          type: String
+        - name: gpu
+          type: String
+        - name: cpu
+          type: String
+        - name: ram_gb
+          type: Integer
+        - name: peripherals
+          type: JSONB
+          nullable: true
+        - name: created_at
+          type: DateTime
+          metadata:
+            is_created_at_timestamp: true
+        - name: updated_at
+          type: DateTime
+          metadata:
+            is_updated_at_timestamp: true
+      relationships:
+        - field_name: user_profile_id
+          target_model: user_profile

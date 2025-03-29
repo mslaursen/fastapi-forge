@@ -76,16 +76,16 @@ class ModelField(_Base):
         """Return the appropriate factory default for the model field."""
         faker_placeholder = "factory.Faker({placeholder})"
 
-        if "email" in self.name:
+        if "email" in self.name and self.type == FieldDataType.STRING:
             return faker_placeholder.format(placeholder='"email"')
 
         type_to_faker = {
-            FieldDataType.STRING: "text",
-            FieldDataType.INTEGER: "random_int",
-            FieldDataType.FLOAT: "random_float",
-            FieldDataType.BOOLEAN: "boolean",
-            FieldDataType.DATETIME: "date_time",
-            FieldDataType.JSONB: "{}",
+            FieldDataType.STRING: '"text"',
+            FieldDataType.INTEGER: '"random_int"',
+            FieldDataType.FLOAT: '"pyfloat", positive=True, min_value=0.1, max_value=100',
+            FieldDataType.BOOLEAN: '"boolean"',
+            FieldDataType.DATETIME: '"date_time"',
+            FieldDataType.JSONB: {},
         }
 
         if self.type not in type_to_faker:
@@ -94,7 +94,7 @@ class ModelField(_Base):
         if self.type == FieldDataType.JSONB:
             return type_to_faker[FieldDataType.JSONB]
 
-        return faker_placeholder.format(placeholder=f'"{type_to_faker[self.type]}"')
+        return faker_placeholder.format(placeholder=type_to_faker[self.type])
 
 
 class ModelRelationship(_Base):
@@ -267,8 +267,7 @@ class ProjectSpec(_Base):
     models: list[Model] = []
 
     @model_validator(mode="after")
-    def validate_models(self) -> Self:
-        """Validate project-level constraints."""
+    def _validate_models(self) -> Self:
         model_names = [model.name for model in self.models]
         model_names_set = set(model_names)
         if len(model_names) != len(model_names_set):
@@ -287,5 +286,43 @@ class ProjectSpec(_Base):
                         f"Model '{model.name}' has a relationship to "
                         f"'{relationship.target_model}', which does not exist."
                     )
+
+        return self
+
+    @model_validator(mode="after")
+    def _validate_circular_references(self) -> Self:
+        relationship_graph = {}
+
+        model_names = {model.name for model in self.models}
+
+        for model in self.models:
+            relationship_graph[model.name] = [
+                rel.target_model
+                for rel in model.relationships
+                if rel.target_model in model_names
+            ]
+
+        visited = set()
+        path = set()
+
+        def has_cycle(node):
+            if node in visited:
+                return False
+            visited.add(node)
+            path.add(node)
+
+            for neighbor in relationship_graph.get(node, []):
+                if neighbor in path or has_cycle(neighbor):
+                    return True
+
+            path.remove(node)
+            return False
+
+        for model_name in relationship_graph:
+            if has_cycle(model_name):
+                raise ValueError(
+                    f"Circular reference detected involving model '{model_name}'. "
+                    "Remove bidirectional relationships between models."
+                )
 
         return self

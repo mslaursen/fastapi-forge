@@ -1,5 +1,5 @@
 project:
-  project_name: dry_service
+  project_name: empty-service
   use_postgres: false
   use_alembic: false
   use_builtin_auth: false
