@@ -6,10 +6,6 @@ The generated project follows best practices, in an easy to work with and scalab
 It makes use of the DAO and DTO pattern, in combination with Pydantic and SQLAlchemy.
 Optionally, you can choose to generate tests, endpoints, DAOs and DTOs for each model.
 
-<div align="center">
-  <img src="https://github.com/user-attachments/assets/9f13de22-e272-44cf-8bc0-c7cfb4acba6e">
-</div>
-
 ---
 
 ## ✅ Requirements
