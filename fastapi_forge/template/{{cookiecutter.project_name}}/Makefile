@@ -5,7 +5,7 @@ run:
 	uv run -m src
 
 up:
-	docker-compose up
+	docker-compose up --watch
 
 test:
 	$(DOCKER_CMD) pytest ./tests -v -s
