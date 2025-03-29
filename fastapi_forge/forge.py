@@ -30,8 +30,8 @@ async def build_project(spec: ProjectSpec) -> None:
         start = perf_counter()
         logger.info(f"Building project '{spec.project_name}'...")
 
-        builder = ProjectBuilder(spec.project_name, None)
-        await builder.build_artifacts(spec.models)
+        builder = ProjectBuilder(spec)
+        await builder.build_artifacts()
 
         template_path = _get_template_path()
         cookiecutter(

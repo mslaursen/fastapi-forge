@@ -178,8 +178,7 @@ class Model(_Base):
     @model_validator(mode="after")
     def _validate(self) -> Self:
         field_names = [field.name for field in self.fields]
-        field_names_set = set(field_names)
-        if len(field_names) != len(field_names_set):
+        if len(field_names) != len(set(field_names)):
             raise ValueError(f"Model '{self.name}' contains duplicate fields.")
 
         if sum(field.primary_key for field in self.fields) != 1:
@@ -192,21 +191,6 @@ class Model(_Base):
             raise ValueError(
                 f"Model '{self.name}' contains duplicate relationship field names."
             )
-
-        # add fields for relationships
-        for relationship in self.relationships:
-            if relationship.field_name in field_names_set:
-                continue
-            field = ModelField(
-                name=relationship.field_name,
-                type=FieldDataType.UUID,
-                primary_key=False,
-                nullable=relationship.nullable,
-                unique=relationship.unique,
-                index=relationship.index,
-                metadata=ModelFieldMetadata(is_foreign_key=True),
-            )
-            self.fields.append(field)
 
         return self
 

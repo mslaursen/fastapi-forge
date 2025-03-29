@@ -1,5 +1,5 @@
-from fastapi_forge.dtos import Model, ProjectSpec
-from fastapi_forge.enums import HTTPMethod
+from fastapi_forge.dtos import Model, ProjectSpec, ModelField, ModelFieldMetadata
+from fastapi_forge.enums import HTTPMethod, FieldDataType
 from fastapi_forge.jinja import (
     render_model_to_dto,
     render_model_to_model,
@@ -91,11 +91,33 @@ TEST_RENDERERS: dict[HTTPMethod, Callable[[Model], str]] = {
 
 
 class ProjectBuilder:
-    def __init__(self, project_name: str, base_path: Path | None = None) -> None:
-        self.project_name = project_name
+    def __init__(
+        self, project_spec: ProjectSpec, base_path: Path | None = None
+    ) -> None:
+        self.project_spec = project_spec
+        self.project_name = project_spec.project_name
         self.base_path = base_path or Path.cwd()
         self.project_dir = self.base_path / self.project_name
         self.src_dir = self.project_dir / "src"
+        self._insert_relation_fields()
+
+    def _insert_relation_fields(self) -> None:
+        for model in self.project_spec.models:
+            field_names_set = {field.name for field in model.fields}
+            for relation in model.relationships:
+                if relation.field_name in field_names_set:
+                    continue
+                model.fields.append(
+                    ModelField(
+                        name=relation.field_name,
+                        type=FieldDataType.UUID,
+                        primary_key=False,
+                        nullable=relation.nullable,
+                        unique=relation.unique,
+                        index=relation.index,
+                        metadata=ModelFieldMetadata(is_foreign_key=True),
+                    )
+                )
 
     async def _create_directory(self, path: Path) -> None:
         if not path.exists():
@@ -135,11 +157,11 @@ class ProjectBuilder:
 
         await asyncio.gather(*tasks)
 
-    async def build_artifacts(self, models: list[Model]) -> None:
+    async def build_artifacts(self) -> None:
         await self._init_project_directories()
 
         tasks = []
-        for model in models:
+        for model in self.project_spec.models:
             tasks.append(self._write_artifact("models", model, render_model_to_model))
 
             metadata = model.metadata
