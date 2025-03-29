@@ -36,10 +36,6 @@ project:
         - name: id
           type: UUID
           primary_key: true
-        - name: auth_user_id
-          type: UUID
-          metadata:
-            is_foreign_key: true
         - name: username
           type: String
           unique: true
@@ -92,14 +88,6 @@ project:
         - name: id
           type: UUID
           primary_key: true
-        - name: user_profile_id
-          type: UUID
-          metadata:
-            is_foreign_key: true
-        - name: game_id
-          type: UUID
-          metadata:
-            is_foreign_key: true
         - name: purchase_date
           type: DateTime
           metadata:
@@ -128,10 +116,6 @@ project:
         - name: id
           type: UUID
           primary_key: true
-        - name: game_id
-          type: UUID
-          metadata:
-            is_foreign_key: true
         - name: name
           type: String
         - name: start_time
@@ -157,10 +141,6 @@ project:
         - name: id
           type: UUID
           primary_key: true
-        - name: user_profile_id
-          type: UUID
-          metadata:
-            is_foreign_key: true
         - name: pc_model
           type: String
         - name: gpu
