@@ -1,4 +1,4 @@
-from fastapi_forge.dtos import ModelField, ModelRelationship, Model
+from fastapi_forge.dtos import ModelField, ModelRelationship
 from fastapi_forge.enums import FieldDataType
 
 
