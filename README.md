@@ -1,10 +1,8 @@
 # FastAPI-Forge  
 🚀 Build FastAPI Projects — Fast, Scalable, and Hassle-Free!  
 
-FastAPI-Forge lets you define your database models through a UI, letting you select additional optional services, and then generates a full working project for you.
-The generated project follows best practices, in an easy to work with and scalable architecture. It will contain SQLAlchemy models of the database models you've defined in the UI, along with implementations of your selected services.
-It makes use of the DAO and DTO pattern, in combination with Pydantic and SQLAlchemy.
-Optionally, you can choose to generate tests, endpoints, DAOs and DTOs for each model.
+FastAPI-Forge lets you define your database models through a UI, letting you select additional optional services, and then generates a full working project for you, with tests and endpoints.
+The generated project follows best practices, in an easy-to-work with and scalable architecture. It will contain SQLAlchemy models of the database models you've defined in the UI, along with implementations of your selected services.
 
 ---
 
@@ -34,11 +32,6 @@ fastapi-forge start
 - Define your database schema and service specifications.  
 - Once done, click `Generate` to build your API.
 
-Example generated project:
-
-![image](https://github.com/user-attachments/assets/e52eecf1-cce9-4edb-988c-c9e3c14d5712)
-
-
 To start the generated project and its dependencies in Docker:
 
 ```bash
@@ -61,36 +54,17 @@ fastapi-forge start --use-example
 ```
 
 ### `--no-ui`
-Skip the web UI and generate your project directly from the terminal — perfect for headless environments or CLI-first workflows:
+Skip the web UI and generate your project directly from the terminal:
 
 ```bash
 fastapi-forge start --no-ui
 ```
 
 ### `--from-yaml`
-Load a custom YAML configuration and either generate the project immediately (with `--no-ui`) or review and adjust it in the UI:
+Load a custom YAML configuration (can be generated through the UI):
 
 ```bash
 fastapi-forge start --from-yaml=~/path/to/config.yaml
-```
-
----
-
-## 🧑‍💻 Examples
-
-### Use an Example Template
-```bash
-fastapi-forge start --use-example
-```
-
-### Generate a Project Without the UI
-```bash
-fastapi-forge start --no-ui
-```
-
-### Generate a Project from a YAML Configuration
-```bash
-fastapi-forge start --from-yaml=~/Documents/project-config.yaml
 ```
 
 ### Combine Options
@@ -110,7 +84,7 @@ make up
 ```
 
 ### Run Tests
-Tests are automatically generated based on your schema — no need to write them from scratch. Once the app is running (`make up`):
+Tests are automatically generated based on your schema. Once the app is running (`make up`):
 
 ```bash
 make test
