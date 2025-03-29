@@ -274,19 +274,38 @@ class ModelPanel(ui.left_drawer):
         except ValidationError as e:
             notify_validation_error(e)
 
+    def _cleanup_relationships_for_deleted_model(self, deleted_model_name: str) -> None:
+        for model in self.models:
+            model.relationships = [
+                rel
+                for rel in model.relationships
+                if rel.target_model != deleted_model_name
+            ]
+
     def _on_delete_model(self, model: Model) -> None:
+        self._cleanup_relationships_for_deleted_model(model.name)
         self.models.remove(model)
         if self.selected_model == model:
             self.selected_model = None
             self.on_select_model(None)
         self._render_model_list()
 
+    def _update_relationships_for_rename(self, old_name: str, new_name: str) -> None:
+        """Update all relationships that reference the renamed model."""
+        for model in self.models:
+            for relationship in model.relationships:
+                if relationship.target_model == old_name:
+                    relationship.target_model = new_name
+
     def _on_edit_model(self, model: Model, new_name: str) -> None:
         if any(m.name == new_name for m in self.models if m != model):
             ui.notify(f"Model '{new_name}' already exists.", type="negative")
             return
 
+        old_name = model.name
         model.name = new_name
+        self._update_relationships_for_rename(old_name, new_name)
+
         if self.selected_model == model:
             self.on_select_model(model)
         self._render_model_list()
@@ -396,7 +415,7 @@ class AddRelationModal(ui.dialog):
         self.on_add_relation(
             field_name=self.field_name.value,
             target_model=self.target_model.value,
-            back_populates=self.back_populates.value,
+            back_populates=self.back_populates.value or None,
             nullable=self.nullable.value,
             index=self.index.value,
             unique=self.unique.value,
@@ -558,9 +577,22 @@ class UpdateRelationModal(ui.dialog):
         self.index.value = False
         self.unique.value = False
 
-    def open(self, relation: ModelRelationship | None = None) -> None:
-        if relation:
+    def open(
+        self,
+        relation: ModelRelationship | None = None,
+        models: list[Model] | None = None,
+    ) -> None:
+        if relation and models:
             self._set_relation(relation)
+            self.target_model.options = [model.name for model in models]
+            default_target_model = next(
+                (model for model in models if model.name == relation.target_model),
+                None,
+            )
+            if default_target_model:
+                self.target_model.value = default_target_model.name
+            self.target_model.options = [model.name for model in models]
+
         super().open()
 
 
@@ -569,6 +601,7 @@ class ModelEditorCard(ui.card):
         super().__init__()
         self.visible = False
         self.selected_field: ModelField | None = None
+        self.selected_relation: ModelRelationship | None = None
         self.selected_model: Model | None = None
         self.model_panel: ModelPanel | None = None
         self.add_field_modal: AddFieldModal = AddFieldModal(
@@ -580,6 +613,9 @@ class ModelEditorCard(ui.card):
         self.update_field_modal: UpdateFieldModal = UpdateFieldModal(
             on_update_field=self._handle_update_field
         )
+        self.update_relation_modal: UpdateRelationModal = UpdateRelationModal(
+            on_update_relation=self._handle_update_relation
+        )
 
         self._build()
 
@@ -589,7 +625,6 @@ class ModelEditorCard(ui.card):
                 self.model_name_display = ui.label().classes("text-lg font-bold")
 
                 with ui.row().classes("gap-2"):
-
                     with ui.button(icon="menu").tooltip("Generate"):
                         with ui.menu(), ui.column().classes("gap-0 p-2"):
                             self.create_endpoints_switch = ui.switch(
@@ -666,6 +701,7 @@ class ModelEditorCard(ui.card):
                                     ),
                                 ),
                             )
+
             with ui.expansion("Fields").classes("w-full"):
                 self.table = ui.table(
                     columns=COLUMNS,
@@ -675,16 +711,7 @@ class ModelEditorCard(ui.card):
                     on_select=lambda e: self._on_select_field(e.selection),
                 ).classes("w-full no-shadow border-[1px]")
 
-            with ui.expansion("Relationships").classes("w-full"):
-                self.relationship_table = ui.table(
-                    columns=RELATIONSHIP_COLUMNS,
-                    rows=[],
-                    row_key="field_name",
-                    selection="single",
-                    on_select=lambda e: self._on_select_field(e.selection),
-                ).classes("w-full no-shadow border-[1px]")
-
-                with ui.row().classes("justify-end gap-2"):
+                with ui.row().classes("w-full justify-end gap-2"):  # Modified this line
                     ui.button(
                         icon="edit",
                         on_click=lambda: self.update_field_modal.open(
@@ -694,6 +721,27 @@ class ModelEditorCard(ui.card):
                     ui.button(
                         icon="delete", on_click=self._delete_field
                     ).bind_visibility_from(self, "selected_field")
+
+            with ui.expansion("Relationships").classes("w-full"):
+                self.relationship_table = ui.table(
+                    columns=RELATIONSHIP_COLUMNS,
+                    rows=[],
+                    row_key="field_name",
+                    selection="single",
+                    on_select=lambda e: self._on_select_relation(e.selection),
+                ).classes("w-full no-shadow border-[1px]")
+
+                with ui.row().classes("w-full justify-end gap-2"):  # Modified this line
+                    ui.button(
+                        icon="edit",
+                        on_click=lambda: self.update_relation_modal.open(
+                            self.selected_relation,
+                            self.model_panel.models if self.model_panel else [],
+                        ),
+                    ).bind_visibility_from(self, "selected_relation")
+                    ui.button(
+                        icon="delete", on_click=self._delete_relation
+                    ).bind_visibility_from(self, "selected_relation")
 
     def _toggle_quick_add(
         self,
@@ -748,10 +796,10 @@ class ModelEditorCard(ui.card):
         self,
         field_name: str,
         target_model: str,
-        back_populates: str,
         nullable: bool,
         index: bool,
         unique: bool,
+        back_populates: str | None = None,
     ) -> None:
         if not self.selected_model:
             return
@@ -768,29 +816,18 @@ class ModelEditorCard(ui.card):
             ui.notify(f"Field '{field_name}' already exists.", type="negative")
             return
 
-        if field_name == "id":
-            ui.notify("Field name 'id' is reserved.", type="negative")
-            return
-
-        if back_populates and back_populates == field_name:
-            ui.notify(
-                "Back populates name cannot be the same as the field name.",
-                type="negative",
+        try:
+            relationship = ModelRelationship(
+                field_name=field_name,
+                target_model=target_model_instance.name,
+                back_populates=back_populates,
+                nullable=nullable,
+                index=index,
+                unique=unique,
             )
+        except ValidationError as e:
+            notify_validation_error(e)
             return
-
-        if back_populates and back_populates == "id":
-            ui.notify("Back populates name cannot be 'id'.", type="negative")
-            return
-
-        relationship = ModelRelationship(
-            field_name=field_name,
-            target_model=target_model_instance.name,
-            back_populates=back_populates,
-            nullable=nullable,
-            index=index,
-            unique=unique,
-        )
 
         self.selected_model.relationships.append(relationship)
 
@@ -837,8 +874,7 @@ class ModelEditorCard(ui.card):
         self.created_at_item.enabled = not quick_add_created_at_enabled
         self.updated_at_item.enabled = not quick_add_updated_at_enabled
 
-        if self.selected_field:
-            self._deselect_field()
+        self._deselect_field()
 
     def _refresh_relationship_table(
         self, relationships: list[ModelRelationship]
@@ -848,8 +884,7 @@ class ModelEditorCard(ui.card):
         self.relationship_table.rows = [
             relationship.model_dump() for relationship in relationships
         ]
-        if self.selected_field:
-            self._deselect_field()
+        self._deselect_relation()
 
     def _add_field(
         self,
@@ -890,14 +925,19 @@ class ModelEditorCard(ui.card):
         self.selected_field = None
         self.table.selected = []
 
+    def _deselect_relation(self) -> None:
+        self.selected_relation = None
+        self.relationship_table.selected = []
+
     def _on_select_field(self, selection: list[dict[str, Any]]) -> None:
-        print(selection)
-        if selection and selection[0].get("name") == "id":
+        if not self.selected_model:
+            return
+        if not selection:
+            self._deselect_field()
+            return
+        if selection[0].get("name") == "id":
             self._deselect_field()
         else:
-            if self.selected_model is None:
-                return
-
             self.selected_field = next(
                 (
                     field
@@ -906,6 +946,21 @@ class ModelEditorCard(ui.card):
                 ),
                 None,
             )
+
+    def _on_select_relation(self, selection: list[dict[str, Any]]) -> None:
+        if not self.selected_model:
+            return
+        if not selection:
+            self._deselect_relation()
+            return
+        self.selected_relation = next(
+            (
+                relation
+                for relation in self.selected_model.relationships
+                if relation.field_name == selection[0]["field_name"]
+            ),
+            None,
+        )
 
     def _handle_update_field(
         self,
@@ -939,17 +994,64 @@ class ModelEditorCard(ui.card):
             model_index = self.selected_model.fields.index(self.selected_field)
             self.selected_model.fields[model_index] = field_input
             self._refresh_table(self.selected_model.fields)
-            # self.update_modal.close()
 
         except ValidationError as e:
             notify_validation_error(e)
 
+    def _handle_update_relation(
+        self,
+        field_name: str,
+        target_model: str,
+        nullable: bool = False,
+        index: bool = False,
+        unique: bool = False,
+        back_populates: str | None = None,
+    ) -> None:
+        if not self.selected_model or not self.selected_relation:
+            return
+
+        target_model_instance = next(
+            (model for model in self.model_panel.models if model.name == target_model),
+            None,
+        )
+        if not target_model_instance:
+            ui.notify(f"Model '{target_model}' not found.", type="negative")
+            return
+
+        if (
+            field_name in [field.name for field in self.selected_model.fields]
+            and field_name != self.selected_relation.field_name
+        ):
+            ui.notify(f"Field '{field_name}' already exists.", type="negative")
+            return
+        try:
+            relationship = ModelRelationship(
+                field_name=field_name,
+                target_model=target_model_instance.name,
+                back_populates=back_populates,
+                nullable=nullable,
+                index=index,
+                unique=unique,
+            )
+        except ValidationError as e:
+            notify_validation_error(e)
+            return
+
+        model_index = self.selected_model.relationships.index(self.selected_relation)
+        self.selected_model.relationships[model_index] = relationship
+        self._refresh_relationship_table(self.selected_model.relationships)
+
     def _delete(self, field: ModelField) -> None:
         if not self.selected_model:
+            ui.notify("No model selected.", type="negative")
             return
         self.selected_model.fields.remove(field)
-        self.selected_field = None
         self._refresh_table(self.selected_model.fields)
+
+    def _delete_relation(self) -> None:
+        if self.selected_model and self.selected_relation:
+            self.selected_model.relationships.remove(self.selected_relation)
+            self._refresh_relationship_table(self.selected_model.relationships)
 
     def _delete_field(self) -> None:
         if (
