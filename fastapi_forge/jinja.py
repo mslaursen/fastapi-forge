@@ -356,6 +356,7 @@ async def test_delete_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> N
 
 TYPE_MAPPING = {
     "Integer": "int",
+    "Float": "float",
     "String": "str",
     "UUID": "UUID",
     "DateTime": "datetime",
@@ -365,6 +366,7 @@ TYPE_MAPPING = {
 
 TYPE_TO_INPUT_VALUE_MAPPING = {
     "Integer": "1",
+    "Float": "1.0",
     "String": "'string'",
     "UUID": "UUID('00000000-0000-0000-0000-000000000000')",
     "DateTime": "datetime.now(timezone.utc)",

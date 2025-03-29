@@ -113,6 +113,9 @@ def generate_field(
             None,
         )
 
+    if relationships is not None and target is None:
+        raise ValueError(f"Target was not found for Foreign Key {field.name}")
+
     type_to_fn = {
         FieldDataType.UUID: _gen_uuid_field,
         FieldDataType.STRING: _gen_string_field,
