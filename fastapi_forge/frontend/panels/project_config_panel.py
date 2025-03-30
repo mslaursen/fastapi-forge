@@ -1,0 +1,228 @@
+from nicegui import ui
+from pydantic import ValidationError
+from fastapi_forge.enums import FieldDataType
+from fastapi_forge.dtos import (
+    Model,
+    ModelField,
+    ModelFieldMetadata,
+)
+from fastapi_forge.forge import build_project
+from fastapi_forge.frontend.notifications import notify_validation_error
+import os
+from fastapi_forge.frontend.state import state
+
+
+class ProjectConfigPanel(ui.right_drawer):
+    def __init__(self):
+        super().__init__(value=True, elevated=False, bottom_corner=True)
+        self._build()
+        self._bind_state_to_ui()
+
+    def _build(self) -> None:
+        with self:
+            with ui.column().classes(
+                "items-align content-start w-full gap-4"
+            ) as self.column:
+                with ui.column().classes("w-full gap-2"):
+                    ui.label("Project Name").classes("text-lg font-bold")
+                    self.project_name = ui.input(
+                        placeholder="Project Name", value=state.project_name
+                    ).classes("w-full")
+
+                with ui.column().classes("w-full gap-2"):
+                    ui.label("Database").classes("text-lg font-bold")
+                    self.use_postgres = ui.checkbox(
+                        "Postgres", value=state.use_postgres
+                    ).classes("w-full")
+
+                    self.use_mysql = (
+                        ui.checkbox("MySQL")
+                        .classes("w-full")
+                        .tooltip("Coming soon!")
+                        .set_enabled(False)
+                    )
+
+                    self.use_alembic = (
+                        ui.checkbox("Alembic (Migrations)", value=state.use_alembic)
+                        .classes("w-full")
+                        .bind_enabled_from(self.use_postgres, "value")
+                    )
+
+                with ui.column().classes("w-full gap-2"):
+                    ui.label("Authentication").classes("text-lg font-bold")
+                    self.use_builtin_auth = (
+                        ui.checkbox(
+                            "JWT Auth",
+                            value=state.use_builtin_auth,
+                            on_change=self._handle_builtin_auth_change,
+                        )
+                        .tooltip(
+                            "Authentication is built in the API itself, using JWT."
+                        )
+                        .classes("w-full")
+                        .bind_enabled_from(self.use_postgres, "value")
+                    )
+
+                with ui.column().classes("w-full gap-2"):
+                    ui.label("Messaging").classes("text-lg font-bold")
+                    self.use_kafka = (
+                        ui.checkbox("Kafka")
+                        .classes("w-full")
+                        .tooltip("Coming soon!")
+                        .set_enabled(False)
+                    )
+                    self.use_rabbitmq = ui.checkbox(
+                        "RabbitMQ", value=state.use_rabbitmq
+                    ).classes("w-full")
+
+                with ui.column().classes("w-full gap-2"):
+                    ui.label("Task Queues").classes("text-lg font-bold")
+                    self.use_taskiq = (
+                        ui.checkbox("Taskiq")
+                        .classes("w-full")
+                        .tooltip("Coming soon!")
+                        .set_enabled(False)
+                    )
+                    self.use_celery = (
+                        ui.checkbox("Celery")
+                        .classes("w-full")
+                        .tooltip("Coming soon!")
+                        .set_enabled(False)
+                    )
+
+                with ui.column().classes("w-full gap-2"):
+                    ui.label("Metrics").classes("text-lg font-bold")
+                    self.use_prometheus = (
+                        ui.checkbox("Prometheus")
+                        .classes("w-full")
+                        .tooltip("Coming soon!")
+                        .set_enabled(False)
+                    )
+
+                with ui.column().classes("w-full gap-2"):
+                    ui.label("Search").classes("text-lg font-bold")
+                    self.use_elasticsearch = (
+                        ui.checkbox("ElasticSearch")
+                        .classes("w-full")
+                        .tooltip("Coming soon!")
+                        .set_enabled(False)
+                    )
+
+                with ui.column().classes("w-full gap-2"):
+                    ui.label("Caching").classes("text-lg font-bold")
+                    self.use_redis = ui.checkbox(
+                        "Redis", value=state.use_redis
+                    ).classes("w-full")
+
+                with ui.column().classes("w-full gap-2"):
+                    self.loading_spinner = ui.spinner(size="lg").classes(
+                        "hidden mt-4 self-center"
+                    )
+                    self.create_button = ui.button(
+                        "Generate", icon="rocket", on_click=self._create_project
+                    ).classes("w-full py-3 text-lg font-bold mt-4")
+
+    def _bind_state_to_ui(self) -> None:
+        """Bind UI elements to state variables"""
+        self.project_name.bind_value_to(state, "project_name")
+        self.use_postgres.bind_value_to(state, "use_postgres")
+        self.use_alembic.bind_value_to(state, "use_alembic")
+        self.use_builtin_auth.bind_value_to(state, "use_builtin_auth")
+        self.use_rabbitmq.bind_value_to(state, "use_rabbitmq")
+
+    def _handle_builtin_auth_change(self, e) -> None:
+        """Handle JWT Auth checkbox changes"""
+        enabled = e.value
+        state.use_builtin_auth = enabled
+
+        if enabled:
+            if any(model.name == "auth_user" for model in state.models):
+                ui.notify("The 'auth_user' model already exists.", type="negative")
+                self.use_builtin_auth.value = False
+                state.use_builtin_auth = False
+                return
+
+            try:
+                auth_user_model = Model(
+                    name="auth_user",
+                    fields=[
+                        ModelField(
+                            name="id",
+                            type=FieldDataType.UUID,
+                            primary_key=True,
+                            unique=True,
+                            index=True,
+                        ),
+                        ModelField(
+                            name="email",
+                            type=FieldDataType.STRING,
+                            unique=True,
+                            index=True,
+                        ),
+                        ModelField(
+                            name="password",
+                            type=FieldDataType.STRING,
+                        ),
+                        ModelField(
+                            name="created_at",
+                            type=FieldDataType.DATETIME,
+                            metadata=ModelFieldMetadata(is_created_at_timestamp=True),
+                        ),
+                        ModelField(
+                            name="updated_at",
+                            type=FieldDataType.DATETIME,
+                            metadata=ModelFieldMetadata(is_updated_at_timestamp=True),
+                        ),
+                    ],
+                )
+                state.models.append(auth_user_model)
+                if state.render_models_fn:
+                    state.render_models_fn()
+                ui.notify("The 'auth_user' model has been created.", type="positive")
+            except ValidationError as e:
+                notify_validation_error(e)
+        else:
+            state.models = [
+                model for model in state.models if model.name != "auth_user"
+            ]
+            if state.render_models_fn:
+                state.render_models_fn()
+            ui.notify("The 'auth_user' model has been deleted.", type="positive")
+
+    async def _create_project(self) -> None:
+        """Generate the project based on current state"""
+        self.create_button.classes("hidden")
+        self.loading_spinner.classes(remove="hidden")
+
+        ongoing_notification = ui.notification("Generating project...")
+
+        try:
+            if not state.models:
+                ui.notify("No models to generate!", type="negative")
+                return
+
+            # Update state from UI (in case bindings aren't two-way)
+            state.project_name = self.project_name.value
+            state.use_postgres = self.use_postgres.value
+            state.use_alembic = self.use_alembic.value
+            state.use_builtin_auth = self.use_builtin_auth.value
+            state.use_redis = self.use_redis.value
+            state.use_rabbitmq = self.use_rabbitmq.value
+
+            project_spec = state.get_project_spec()
+            await build_project(project_spec)
+
+            ui.notify(
+                "Project successfully generated at: "
+                f"{os.path.join(os.getcwd(), project_spec.project_name)}",
+                type="positive",
+            )
+
+        except ValidationError as e:
+            notify_validation_error(e)
+        except Exception as e:
+            ui.notify(f"Error creating Project: {e}", type="negative")
+        finally:
+            self.create_button.classes(remove="hidden")
+            self.loading_spinner.classes("hidden")
+            ongoing_notification.dismiss()
