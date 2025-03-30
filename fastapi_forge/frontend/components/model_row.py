@@ -1,14 +1,12 @@
 from nicegui import ui
-from fastapi_forge import dtos as m
-from fastapi_forge.gui.state import state
-import typing as t
-from fastapi_forge.gui import ModelCreate
+from fastapi_forge.dtos import Model
+from fastapi_forge.frontend.state import state
 
 
 class ModelRow(ui.row):
     def __init__(
         self,
-        model: m.Model,
+        model: Model,
         color: str | None = None,
     ):
         super().__init__(wrap=False)
@@ -51,5 +49,3 @@ class ModelRow(ui.row):
 
     def _delete_model(self) -> None:
         state.delete_model(self.model)
-
-    # self.on_delete(self.model)

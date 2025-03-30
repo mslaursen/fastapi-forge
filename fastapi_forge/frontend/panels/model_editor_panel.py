@@ -1,15 +1,19 @@
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 from fastapi_forge.dtos import ModelField, ModelRelationship, Model
-from fastapi_forge.gui import ModelPanel  # , AddFieldModal, AddRelationModal
-from fastapi_forge.gui import notifications as n
-from fastapi_forge.gui.notifications import notify_validation_error
-from fastapi_forge.gui.state import state
+from fastapi_forge.frontend.modals import (
+    AddFieldModal,
+    AddRelationModal,
+    UpdateFieldModal,
+    UpdateRelationModal,
+)
+from fastapi_forge.frontend.notifications import notify_validation_error
+from fastapi_forge.frontend.state import state
 from typing import Any
-from fastapi_forge.gui.constants import FIELD_COLUMNS, RELATIONSHIP_COLUMNS
+from fastapi_forge.frontend.constants import FIELD_COLUMNS, RELATIONSHIP_COLUMNS
 from fastapi_forge.jinja import render_model_to_model
 from nicegui import ui
-
-import typing as t
+from fastapi_forge.dtos import ModelFieldMetadata
+from fastapi_forge.enums import FieldDataType
 
 
 class ModelEditorPanel(ui.card):
@@ -19,14 +23,18 @@ class ModelEditorPanel(ui.card):
 
         state.select_model_fn = self.set_selected_model
 
-        # self.add_field_modal: AddFieldModal = AddFieldModal()
-        # self.add_relation_modal: AddRelationModal = AddRelationModal()
-        # self.update_field_modal: UpdateFieldModal = UpdateFieldModal(
-        #    on_update_field=self._handle_update_field
-        # )
-        # self.update_relation_modal: UpdateRelationModal = UpdateRelationModal(
-        #    on_update_relation=self._handle_update_relation
-        # )
+        self.add_field_modal: AddFieldModal = AddFieldModal(
+            on_add_field=self._handle_modal_add_field
+        )
+        self.add_relation_modal: AddRelationModal = AddRelationModal(
+            on_add_relation=self._handle_modal_add_relation
+        )
+        self.update_field_modal: UpdateFieldModal = UpdateFieldModal(
+            on_update_field=self._handle_update_field
+        )
+        self.update_relation_modal: UpdateRelationModal = UpdateRelationModal(
+            on_update_relation=self._handle_update_relation
+        )
 
         self._build()
 
@@ -121,9 +129,7 @@ class ModelEditorPanel(ui.card):
                             ui.menu_item(
                                 "Relationship",
                                 on_click=lambda: self.add_relation_modal.open(
-                                    models=(
-                                        state.modelsmodels if self.model_panel else []
-                                    ),
+                                    models=state.models,
                                 ),
                             )
 
@@ -140,12 +146,12 @@ class ModelEditorPanel(ui.card):
                     ui.button(
                         icon="edit",
                         on_click=lambda: self.update_field_modal.open(
-                            self.selected_field
+                            state.selected_field
                         ),
-                    ).bind_visibility_from(self, "selected_field")
+                    ).bind_visibility_from(state, "selected_field")
                     ui.button(
                         icon="delete", on_click=self._delete_field
-                    ).bind_visibility_from(self, "selected_field")
+                    ).bind_visibility_from(state, "selected_field")
 
             with ui.expansion("Relationships", value=True).classes("w-full"):
                 self.relationship_table = ui.table(
@@ -250,7 +256,7 @@ class ModelEditorPanel(ui.card):
                 unique=unique,
             )
         except ValidationError as e:
-            n.notify_validation_error(e)
+            notify_validation_error(e)
             return
 
         state.selected_model.relationships.append(relationship)
@@ -346,7 +352,7 @@ class ModelEditorPanel(ui.card):
             notify_validation_error(e)
 
     def _deselect_field(self) -> None:
-        self.selected_field = None
+        state.selected_field = None
         self.table.selected = []
 
     def _deselect_relation(self) -> None:
@@ -362,7 +368,7 @@ class ModelEditorPanel(ui.card):
         if selection[0].get("name") == "id":
             self._deselect_field()
         else:
-            self.selected_field = next(
+            state.selected_field = next(
                 (
                     field
                     for field in state.selected_model.fields
@@ -397,8 +403,8 @@ class ModelEditorPanel(ui.card):
     ) -> None:
         if (
             not state.selected_model
-            or not self.selected_field
-            or self.selected_field.name == "id"
+            or not state.selected_field
+            or state.selected_field.name == "id"
         ):
             return
 
@@ -410,12 +416,12 @@ class ModelEditorPanel(ui.card):
                 nullable=nullable,
                 unique=unique,
                 index=index,
-                metadata=self.selected_field.metadata,
+                metadata=state.selected_field.metadata,
             )
             if not self._validate_field_input(field_input):
                 return
 
-            model_index = state.selected_model.fields.index(self.selected_field)
+            model_index = state.selected_model.fields.index(state.selected_field)
             state.selected_model.fields[model_index] = field_input
             self._refresh_table(state.selected_model.fields)
 
@@ -480,10 +486,10 @@ class ModelEditorPanel(ui.card):
     def _delete_field(self) -> None:
         if (
             state.selected_model
-            and self.selected_field
-            and self.selected_field.name != "id"
+            and state.selected_field
+            and state.selected_field.name != "id"
         ):
-            self._delete(self.selected_field)
+            self._delete(state.selected_field)
 
     def set_selected_model(self, model: Model) -> None:
         self.model_name_display.text = model.name

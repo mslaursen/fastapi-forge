@@ -1,24 +1,25 @@
 from fastapi_forge.forge import build_project
 from fastapi_forge import project_io as p
-from fastapi_forge import dtos as m
-from fastapi_forge.gui import (
+from fastapi_forge.frontend import (
     Header,
-    ModelCreate,
-    ModelRow,
     ModelPanel,
     ModelEditorPanel,
+    ProjectConfigPanel,
 )
 from pathlib import Path
 from nicegui import ui, native
+from fastapi_forge.frontend.state import state
 import asyncio
 
 
 async def _init_no_ui(project_path: Path) -> None:
+    """Initialize project without UI"""
     project_spec = p.ProjectLoader(project_path).load_project_spec()
     await build_project(project_spec)
 
 
 def setup_ui() -> None:
+    """Setup basic UI configuration"""
     ui.add_head_html(
         '<link href="https://unpkg.com/eva-icons@1.1.3/style/eva-icons.css" rel="stylesheet" />'
     )
@@ -27,41 +28,22 @@ def setup_ui() -> None:
     Header()
 
 
-def load_initial_project(
-    path: Path,
-) -> tuple[m.ProjectSpec | None, list[m.Model] | None]:
-    initial_project = None
-    initial_models = None
-    if path:
-        initial_project = p.ProjectLoader(project_path=path).load_project_input()
-        initial_models = initial_project.models
-    return initial_project, initial_models
+def load_initial_project(path: Path) -> p.ProjectSpec:
+    """Load project specification from file"""
+    return p.ProjectLoader(project_path=path).load_project_input()
 
 
-def create_ui_components(
-    initial_project: p.ProjectSpec | None,
-    initial_models: list[p.Model] | None,
-) -> None:
-
+def create_ui_components() -> None:
+    """Create all UI components"""
     with ui.column().classes("w-full h-full items-center justify-center mt-4"):
         ModelEditorPanel().classes("no-shadow min-w-[600px]")
 
-    ModelPanel(
-        initial_models=initial_models,
-        # on_select_model=model_editor_card.set_selected_model,
-    )
-    # project_config_panel = ProjectConfigPanel(
-    #    model_panel=model_panel,
-    #    initial_project=initial_project,
-    # )
-
-
-#
-# model_panel.project_config_panel = project_config_panel
-# model_editor_card.model_panel = model_panel
+    ModelPanel()
+    ProjectConfigPanel()
 
 
 def run_ui(reload: bool) -> None:
+    """Run the NiceGUI application"""
     ui.run(
         reload=reload,
         title="FastAPI Forge",
@@ -75,7 +57,8 @@ def init(
     no_ui: bool = False,
     yaml_path: Path | None = None,
 ) -> None:
-    base_path = Path(__file__).parent / "example-projects"
+    """Main initialization function"""
+    base_path = Path(__file__).parent.parent / "example-projects"
     default_path = base_path / "empty-service.yaml"
     example_path = base_path / "game_zone.yaml"
 
@@ -87,12 +70,11 @@ def init(
 
     setup_ui()
 
-    initial_project = None
-    initial_models = None
     if use_example or yaml_path:
-        initial_project, initial_models = load_initial_project(path)
+        initial_project = load_initial_project(path)
+        state.initialize_from_project(initial_project)
 
-    create_ui_components(initial_project, initial_models)
+    create_ui_components()
     run_ui(reload)
 
 

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ValidationError
 from fastapi_forge import dtos as m
-from fastapi_forge.gui import notifications as n
+from fastapi_forge.frontend import notifications as n
 from nicegui import ui
 import typing as t
 
@@ -20,6 +20,19 @@ class ProjectState(BaseModel):
     use_builtin_auth: bool = False
     use_redis: bool = False
     use_rabbitmq: bool = False
+
+    def initialize_from_project(self, project: m.ProjectSpec) -> None:
+        """Initialize the state from an existing project specification"""
+        self.project_name = project.project_name
+        self.use_postgres = project.use_postgres
+        self.use_alembic = project.use_alembic
+        self.use_builtin_auth = project.use_builtin_auth
+        self.use_redis = project.use_redis
+        self.use_rabbitmq = project.use_rabbitmq
+        self.models = project.models.copy()
+
+        if self.render_models_fn:
+            self.render_models_fn()
 
     def add_model(self, model_name: str) -> None:
         if self.render_models_fn is None:
@@ -77,6 +90,7 @@ class ProjectState(BaseModel):
 
         try:
             field = m.ModelField(**kwargs)
+            print(field)
             self.selected_model.fields.append(field)
         except ValidationError as e:
             n.notify_validation_error(e)

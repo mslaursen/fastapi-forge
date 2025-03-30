@@ -1,5 +1,5 @@
 from nicegui import ui
-from fastapi_forge.gui.state import state
+from fastapi_forge.frontend.state import state
 
 
 class ModelCreate(ui.row):

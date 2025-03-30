@@ -1,20 +1,14 @@
 from nicegui import ui
-from fastapi_forge import dtos as m
-from fastapi_forge.gui.state import state
-import typing as t
-from fastapi_forge.gui import ModelCreate, ModelRow
-from fastapi_forge import project_io as p
+from fastapi_forge.frontend.state import state
+from fastapi_forge.frontend import ModelCreate, ModelRow
+from fastapi_forge.project_io import ProjectExporter
 import os
 from pydantic import ValidationError
-from fastapi_forge.gui.notifications import notify_validation_error
+from fastapi_forge.frontend.notifications import notify_validation_error
 
 
 class ModelPanel(ui.left_drawer):
-
-    def __init__(
-        self,
-        initial_models: list[m.Model] | None = None,
-    ):
+    def __init__(self):
         super().__init__(value=True, elevated=False, bottom_corner=True)
         self.classes("border-right[1px]")
 
@@ -41,7 +35,7 @@ class ModelPanel(ui.left_drawer):
         """Export the project configuration to a YAML file."""
         try:
             project_input = state.get_project_spec()
-            exporter = p.ProjectExporter(project_input)
+            exporter = ProjectExporter(project_input)
             await exporter.export_project()
             ui.notify(
                 "Project configuration exported to "
