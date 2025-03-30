@@ -1,6 +1,5 @@
 from typing import Any
 
-
 FIELD_COLUMNS: list[dict[str, Any]] = [
     {
         "name": "name",

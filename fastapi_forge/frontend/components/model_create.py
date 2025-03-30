@@ -1,4 +1,5 @@
 from nicegui import ui
+
 from fastapi_forge.frontend.state import state
 
 
@@ -13,7 +14,7 @@ class ModelCreate(ui.row):
                 ui.input(placeholder="Model name")
                 .classes("self-center")
                 .tooltip(
-                    "Model names should be singular (e.g., 'user' instead of 'users')."
+                    "Model names should be singular (e.g., 'user' instead of 'users').",
                 )
             )
             self.add_button = (

@@ -1,25 +1,27 @@
-import os
-import shutil
 import asyncio
+import shutil
+from pathlib import Path
+from time import perf_counter
+
 from cookiecutter.main import cookiecutter
+
 from fastapi_forge.dtos import ProjectSpec
 from fastapi_forge.logger import logger
 from fastapi_forge.project_io import ProjectBuilder
-from time import perf_counter
 
 
-def _get_template_path() -> str:
+def _get_template_path() -> Path:
     """Return the absolute path to the project template directory."""
-    template_path = os.path.join(os.path.dirname(__file__), "template")
-    if not os.path.exists(template_path):
+    template_path = Path(__file__).parent / "template"
+    if not template_path.exists():
         raise RuntimeError(f"Template directory not found: {template_path}")
     return template_path
 
 
 async def _teardown_project(project_name: str) -> None:
     """Forcefully remove the project directory and all its contents."""
-    project_dir = os.path.join(os.getcwd(), project_name)
-    if os.path.exists(project_dir):
+    project_dir = Path.cwd() / project_name
+    if project_dir.exists():
         await asyncio.to_thread(shutil.rmtree, project_dir)
         logger.info(f"Removed project directory: {project_dir}")
 
@@ -33,10 +35,11 @@ async def build_project(spec: ProjectSpec) -> None:
         builder = ProjectBuilder(spec)
         await builder.build_artifacts()
 
-        template_path = _get_template_path()
+        template_path = str(_get_template_path())
+
         cookiecutter(
             template_path,
-            output_dir=os.getcwd(),
+            output_dir=str(Path.cwd()),
             no_input=True,
             overwrite_if_exists=True,
             extra_context={
@@ -50,7 +53,7 @@ async def build_project(spec: ProjectSpec) -> None:
 
         end = perf_counter()
         logger.info(f"Project built in {end - start:.2f} seconds.")
-    except Exception as e:
-        logger.error(f"Failed to create project: {e}")
+    except Exception as exc:
+        logger.error(f"Failed to create project: {exc}")
         await _teardown_project(spec.project_name)
         raise

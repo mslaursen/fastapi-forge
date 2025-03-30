@@ -1,14 +1,17 @@
+from pathlib import Path
+
 from nicegui import ui
+from nicegui.events import ValueChangeEventArguments
 from pydantic import ValidationError
-from fastapi_forge.enums import FieldDataType
+
 from fastapi_forge.dtos import (
     Model,
     ModelField,
     ModelFieldMetadata,
 )
+from fastapi_forge.enums import FieldDataType
 from fastapi_forge.forge import build_project
 from fastapi_forge.frontend.notifications import notify_validation_error
-import os
 from fastapi_forge.frontend.state import state
 
 
@@ -19,108 +22,116 @@ class ProjectConfigPanel(ui.right_drawer):
         self._bind_state_to_ui()
 
     def _build(self) -> None:
-        with self:
-            with ui.column().classes(
-                "items-align content-start w-full gap-4"
-            ) as self.column:
-                with ui.column().classes("w-full gap-2"):
-                    ui.label("Project Name").classes("text-lg font-bold")
-                    self.project_name = ui.input(
-                        placeholder="Project Name", value=state.project_name
-                    ).classes("w-full")
+        with (
+            self,
+            ui.column().classes(
+                "items-align content-start w-full gap-4",
+            ) as self.column,
+        ):
+            with ui.column().classes("w-full gap-2"):
+                ui.label("Project Name").classes("text-lg font-bold")
+                self.project_name = ui.input(
+                    placeholder="Project Name",
+                    value=state.project_name,
+                ).classes("w-full")
 
-                with ui.column().classes("w-full gap-2"):
-                    ui.label("Database").classes("text-lg font-bold")
-                    self.use_postgres = ui.checkbox(
-                        "Postgres", value=state.use_postgres
-                    ).classes("w-full")
+            with ui.column().classes("w-full gap-2"):
+                ui.label("Database").classes("text-lg font-bold")
+                self.use_postgres = ui.checkbox(
+                    "Postgres",
+                    value=state.use_postgres,
+                ).classes("w-full")
 
-                    self.use_mysql = (
-                        ui.checkbox("MySQL")
-                        .classes("w-full")
-                        .tooltip("Coming soon!")
-                        .set_enabled(False)
+                self.use_mysql = (
+                    ui.checkbox("MySQL")
+                    .classes("w-full")
+                    .tooltip("Coming soon!")
+                    .set_enabled(False)
+                )
+
+                self.use_alembic = (
+                    ui.checkbox("Alembic (Migrations)", value=state.use_alembic)
+                    .classes("w-full")
+                    .bind_enabled_from(self.use_postgres, "value")
+                )
+
+            with ui.column().classes("w-full gap-2"):
+                ui.label("Authentication").classes("text-lg font-bold")
+                self.use_builtin_auth = (
+                    ui.checkbox(
+                        "JWT Auth",
+                        value=state.use_builtin_auth,
+                        on_change=self._handle_builtin_auth_change,
                     )
-
-                    self.use_alembic = (
-                        ui.checkbox("Alembic (Migrations)", value=state.use_alembic)
-                        .classes("w-full")
-                        .bind_enabled_from(self.use_postgres, "value")
+                    .tooltip(
+                        "Authentication is built in the API itself, using JWT.",
                     )
+                    .classes("w-full")
+                    .bind_enabled_from(self.use_postgres, "value")
+                )
 
-                with ui.column().classes("w-full gap-2"):
-                    ui.label("Authentication").classes("text-lg font-bold")
-                    self.use_builtin_auth = (
-                        ui.checkbox(
-                            "JWT Auth",
-                            value=state.use_builtin_auth,
-                            on_change=self._handle_builtin_auth_change,
-                        )
-                        .tooltip(
-                            "Authentication is built in the API itself, using JWT."
-                        )
-                        .classes("w-full")
-                        .bind_enabled_from(self.use_postgres, "value")
-                    )
+            with ui.column().classes("w-full gap-2"):
+                ui.label("Messaging").classes("text-lg font-bold")
+                self.use_kafka = (
+                    ui.checkbox("Kafka")
+                    .classes("w-full")
+                    .tooltip("Coming soon!")
+                    .set_enabled(False)
+                )
+                self.use_rabbitmq = ui.checkbox(
+                    "RabbitMQ",
+                    value=state.use_rabbitmq,
+                ).classes("w-full")
 
-                with ui.column().classes("w-full gap-2"):
-                    ui.label("Messaging").classes("text-lg font-bold")
-                    self.use_kafka = (
-                        ui.checkbox("Kafka")
-                        .classes("w-full")
-                        .tooltip("Coming soon!")
-                        .set_enabled(False)
-                    )
-                    self.use_rabbitmq = ui.checkbox(
-                        "RabbitMQ", value=state.use_rabbitmq
-                    ).classes("w-full")
+            with ui.column().classes("w-full gap-2"):
+                ui.label("Task Queues").classes("text-lg font-bold")
+                self.use_taskiq = (
+                    ui.checkbox("Taskiq")
+                    .classes("w-full")
+                    .tooltip("Coming soon!")
+                    .set_enabled(False)
+                )
+                self.use_celery = (
+                    ui.checkbox("Celery")
+                    .classes("w-full")
+                    .tooltip("Coming soon!")
+                    .set_enabled(False)
+                )
 
-                with ui.column().classes("w-full gap-2"):
-                    ui.label("Task Queues").classes("text-lg font-bold")
-                    self.use_taskiq = (
-                        ui.checkbox("Taskiq")
-                        .classes("w-full")
-                        .tooltip("Coming soon!")
-                        .set_enabled(False)
-                    )
-                    self.use_celery = (
-                        ui.checkbox("Celery")
-                        .classes("w-full")
-                        .tooltip("Coming soon!")
-                        .set_enabled(False)
-                    )
+            with ui.column().classes("w-full gap-2"):
+                ui.label("Metrics").classes("text-lg font-bold")
+                self.use_prometheus = (
+                    ui.checkbox("Prometheus")
+                    .classes("w-full")
+                    .tooltip("Coming soon!")
+                    .set_enabled(False)
+                )
 
-                with ui.column().classes("w-full gap-2"):
-                    ui.label("Metrics").classes("text-lg font-bold")
-                    self.use_prometheus = (
-                        ui.checkbox("Prometheus")
-                        .classes("w-full")
-                        .tooltip("Coming soon!")
-                        .set_enabled(False)
-                    )
+            with ui.column().classes("w-full gap-2"):
+                ui.label("Search").classes("text-lg font-bold")
+                self.use_elasticsearch = (
+                    ui.checkbox("ElasticSearch")
+                    .classes("w-full")
+                    .tooltip("Coming soon!")
+                    .set_enabled(False)
+                )
 
-                with ui.column().classes("w-full gap-2"):
-                    ui.label("Search").classes("text-lg font-bold")
-                    self.use_elasticsearch = (
-                        ui.checkbox("ElasticSearch")
-                        .classes("w-full")
-                        .tooltip("Coming soon!")
-                        .set_enabled(False)
-                    )
+            with ui.column().classes("w-full gap-2"):
+                ui.label("Caching").classes("text-lg font-bold")
+                self.use_redis = ui.checkbox(
+                    "Redis",
+                    value=state.use_redis,
+                ).classes("w-full")
 
-                with ui.column().classes("w-full gap-2"):
-                    ui.label("Caching").classes("text-lg font-bold")
-                    self.use_redis = ui.checkbox(
-                        "Redis", value=state.use_redis
-                    ).classes("w-full")
-
-                with ui.column().classes("w-full gap-2"):
-                    self.loading_spinner = ui.spinner(size="lg").classes(
-                        "hidden mt-4 self-center"
-                    )
-                    self.create_button = ui.button(
-                        "Generate", icon="rocket", on_click=self._create_project
-                    ).classes("w-full py-3 text-lg font-bold mt-4")
+            with ui.column().classes("w-full gap-2"):
+                self.loading_spinner = ui.spinner(size="lg").classes(
+                    "hidden mt-4 self-center",
+                )
+                self.create_button = ui.button(
+                    "Generate",
+                    icon="rocket",
+                    on_click=self._create_project,
+                ).classes("w-full py-3 text-lg font-bold mt-4")
 
     def _bind_state_to_ui(self) -> None:
         """Bind UI elements to state variables"""
@@ -130,9 +141,9 @@ class ProjectConfigPanel(ui.right_drawer):
         self.use_builtin_auth.bind_value_to(state, "use_builtin_auth")
         self.use_rabbitmq.bind_value_to(state, "use_rabbitmq")
 
-    def _handle_builtin_auth_change(self, e) -> None:
+    def _handle_builtin_auth_change(self, event: ValueChangeEventArguments) -> None:
         """Handle JWT Auth checkbox changes"""
-        enabled = e.value
+        enabled = event.value
         state.use_builtin_auth = enabled
 
         if enabled:
@@ -179,8 +190,8 @@ class ProjectConfigPanel(ui.right_drawer):
                 if state.render_models_fn:
                     state.render_models_fn()
                 ui.notify("The 'auth_user' model has been created.", type="positive")
-            except ValidationError as e:
-                notify_validation_error(e)
+            except ValidationError as exc:
+                notify_validation_error(exc)
         else:
             state.models = [
                 model for model in state.models if model.name != "auth_user"
@@ -201,7 +212,6 @@ class ProjectConfigPanel(ui.right_drawer):
                 ui.notify("No models to generate!", type="negative")
                 return
 
-            # Update state from UI (in case bindings aren't two-way)
             state.project_name = self.project_name.value
             state.use_postgres = self.use_postgres.value
             state.use_alembic = self.use_alembic.value
@@ -214,14 +224,14 @@ class ProjectConfigPanel(ui.right_drawer):
 
             ui.notify(
                 "Project successfully generated at: "
-                f"{os.path.join(os.getcwd(), project_spec.project_name)}",
+                f"{Path.cwd() / project_spec.project_name}",
                 type="positive",
             )
 
-        except ValidationError as e:
-            notify_validation_error(e)
-        except Exception as e:
-            ui.notify(f"Error creating Project: {e}", type="negative")
+        except ValidationError as exc:
+            notify_validation_error(exc)
+        except Exception as exc:
+            ui.notify(f"Error creating Project: {exc}", type="negative")
         finally:
             self.create_button.classes(remove="hidden")
             self.loading_spinner.classes("hidden")

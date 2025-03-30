@@ -1,6 +1,8 @@
+from collections.abc import Callable
+
 from nicegui import ui
+
 from fastapi_forge.dtos import Model, ModelRelationship
-from typing import Callable
 
 
 class AddRelationModal(ui.dialog):

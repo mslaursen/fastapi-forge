@@ -1,15 +1,16 @@
+from typing import Annotated, Self
+
 from pydantic import (
     BaseModel,
-    computed_field,
-    Field,
-    model_validator,
-    field_validator,
     ConfigDict,
+    Field,
+    computed_field,
+    field_validator,
+    model_validator,
 )
-from typing import Annotated
+
 from fastapi_forge.enums import FieldDataType
-from typing_extensions import Self
-from fastapi_forge.string_utils import snake_to_camel, camel_to_snake_hyphen
+from fastapi_forge.string_utils import camel_to_snake_hyphen, snake_to_camel
 
 BoundedStr = Annotated[str, Field(..., min_length=1, max_length=100)]
 SnakeCaseStr = Annotated[BoundedStr, Field(..., pattern=r"^[a-z][a-z0-9_]*$")]
@@ -17,7 +18,8 @@ ModelName = SnakeCaseStr
 FieldName = SnakeCaseStr
 BackPopulates = Annotated[str, Field(..., pattern=r"^[a-z][a-z0-9_]*$")]
 ProjectName = Annotated[
-    BoundedStr, Field(..., pattern=r"^[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9])?$")
+    BoundedStr,
+    Field(..., pattern=r"^[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9])?$"),
 ]
 
 
@@ -55,19 +57,23 @@ class ModelField(_Base):
         """Validate field constraints."""
         if self.primary_key:
             if self.nullable:
-                raise ValueError("Primary key cannot be nullable.")
+                msg = "Primary key cannot be nullable."
+                raise ValueError(msg)
             if not self.unique:
                 self.unique = True
 
         metadata = self.metadata
-        if metadata.is_created_at_timestamp or metadata.is_updated_at_timestamp:
-            if self.type != FieldDataType.DATETIME:
-                raise ValueError(
-                    "Create/update timestamp fields must be of type DateTime."
-                )
+        if (
+            metadata.is_created_at_timestamp or metadata.is_updated_at_timestamp
+        ) and self.type != FieldDataType.DATETIME:
+            msg = "Create/update timestamp fields must be of type DateTime."
+            raise ValueError(
+                msg,
+            )
 
         if metadata.is_foreign_key and self.type != FieldDataType.UUID:
-            raise ValueError("Foreign Keys must be of type UUID.")
+            msg = "Foreign Keys must be of type UUID."
+            raise ValueError(msg)
         return self
 
     @computed_field
@@ -112,7 +118,8 @@ class ModelRelationship(_Base):
     def _validate_field_name(cls, value: str) -> str:
         """Ensure relationship field names end with '_id'."""
         if not value.endswith("_id"):
-            raise ValueError("Relationship field names must end with '_id'.")
+            msg = "Relationship field names must end with '_id'."
+            raise ValueError(msg)
         return value
 
     @computed_field
@@ -189,7 +196,7 @@ class Model(_Base):
         ]
         if len(unque_relationships) != len(set(unque_relationships)):
             raise ValueError(
-                f"Model '{self.name}' contains duplicate relationship field names."
+                f"Model '{self.name}' contains duplicate relationship field names.",
             )
 
         return self
@@ -232,7 +239,7 @@ class Model(_Base):
                 ]
                 if missing:
                     error_message = rule["error_message"].format(
-                        missing=", ".join(missing)
+                        missing=", ".join(missing),
                     )
                     raise ValueError(error_message)
 
@@ -251,7 +258,7 @@ class Model(_Base):
                     unique=relation.unique,
                     index=relation.index,
                     metadata=ModelFieldMetadata(is_foreign_key=True),
-                )
+                ),
             )
 
         return preview_model
@@ -273,20 +280,23 @@ class ProjectSpec(_Base):
         model_names = [model.name for model in self.models]
         model_names_set = set(model_names)
         if len(model_names) != len(model_names_set):
-            raise ValueError("Model names must be unique.")
+            msg = "Model names must be unique."
+            raise ValueError(msg)
 
         if self.use_alembic and not self.use_postgres:
-            raise ValueError("Cannot use Alembic if PostgreSQL is not enabled.")
+            msg = "Cannot use Alembic if PostgreSQL is not enabled."
+            raise ValueError(msg)
 
         if self.use_builtin_auth and not self.use_postgres:
-            raise ValueError("Cannot use built-in auth if PostgreSQL is not enabled.")
+            msg = "Cannot use built-in auth if PostgreSQL is not enabled."
+            raise ValueError(msg)
 
         for model in self.models:
             for relationship in model.relationships:
                 if relationship.target_model not in model_names_set:
                     raise ValueError(
                         f"Model '{model.name}' has a relationship to "
-                        f"'{relationship.target_model}', which does not exist."
+                        f"'{relationship.target_model}', which does not exist.",
                     )
 
         return self
@@ -324,7 +334,7 @@ class ProjectSpec(_Base):
             if has_cycle(model_name):
                 raise ValueError(
                     f"Circular reference detected involving model '{model_name}'. "
-                    "Remove bidirectional relationships between models."
+                    "Remove bidirectional relationships between models.",
                 )
 
         return self

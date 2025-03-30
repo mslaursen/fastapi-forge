@@ -1,6 +1,6 @@
 def _convert(value: str, separator: str) -> str:
     return "".join([separator + c.lower() if c.isupper() else c for c in value]).lstrip(
-        separator
+        separator,
     )
 
 
@@ -13,6 +13,6 @@ def camel_to_snake_hyphen(value: str) -> str:
 
 
 def snake_to_camel(s: str) -> str:
-    s = s[:-3] if s.endswith("_id") else s
+    s = s.removesuffix("_id")
     words = s.split("_")
     return "".join(word.capitalize() for word in words)

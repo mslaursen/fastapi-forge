@@ -1,7 +1,9 @@
+from collections.abc import Callable
+
 from nicegui import ui
-from fastapi_forge.enums import FieldDataType
+
 from fastapi_forge.dtos import ModelField
-from typing import Callable
+from fastapi_forge.enums import FieldDataType
 from fastapi_forge.frontend.state import state
 
 
@@ -18,7 +20,8 @@ class AddFieldModal(ui.dialog):
             with ui.row().classes("w-full gap-2"):
                 self.field_name = ui.input(label="Field Name").classes("w-full")
                 self.field_type = ui.select(
-                    list(FieldDataType), label="Field Type"
+                    list(FieldDataType),
+                    label="Field Type",
                 ).classes("w-full")
                 self.primary_key = ui.checkbox("Primary Key").classes("w-full")
                 self.nullable = ui.checkbox("Nullable").classes("w-full")
@@ -64,7 +67,7 @@ class UpdateFieldModal(ui.dialog):
             ui.label("Update Field").classes("text-lg font-bold")
             with ui.row().classes("w-full gap-2"):
                 self.field_name = ui.input(label="Field Name", value="").classes(
-                    "w-full"
+                    "w-full",
                 )
                 self.field_type = ui.select(
                     list(FieldDataType),
@@ -72,7 +75,7 @@ class UpdateFieldModal(ui.dialog):
                     value=None,
                 ).classes("w-full")
                 self.primary_key = ui.checkbox("Primary Key", value=False).classes(
-                    "w-full"
+                    "w-full",
                 )
                 self.nullable = ui.checkbox("Nullable", value=False).classes("w-full")
                 self.unique = ui.checkbox("Unique", value=False).classes("w-full")

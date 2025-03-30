@@ -9,7 +9,7 @@ version:
 
 lint:
 	uv run ruff format
-	uv run ruff check . --fix
+	uv run ruff check . --fix --unsafe-fixes
 
 test:
 	uv run pytest tests -s

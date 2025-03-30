@@ -1,10 +1,10 @@
-from src.daos.base_daos import BaseDAO # noqa
 {% for model in cookiecutter.models.models if model.metadata.create_daos -%}
 from src.daos.{{ model.name }}_daos import {{ model.name_cc }}DAO
 {% endfor %}
 from src.db.db_dependencies import GetDBSession
 from fastapi import Depends
 from typing import Annotated
+
 
 class AllDAOs:
     """

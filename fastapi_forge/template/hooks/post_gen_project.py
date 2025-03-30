@@ -3,6 +3,8 @@ import yaml
 import os
 import shutil
 from typing import Any
+from fastapi_forge.logger import logger
+
 
 def git_init() -> None:
     subprocess.run(
@@ -58,7 +60,6 @@ def _get_delete_flagged() -> tuple[list[str], list[str]]:
         folders = []
         config: dict[str, Any] = y["config"]
 
-        
         for _, v in config.items():
             item_type = v["type"]
             if item_type != "bool":
@@ -78,24 +79,23 @@ def _get_delete_flagged() -> tuple[list[str], list[str]]:
 
     return files, folders
 
+
 def cleanup():
     files, folders = _get_delete_flagged()
-    
+
     for file_path in files:
         try:
             os.remove(file_path)
-            print(f"Deleted file: {file_path}")
-        except OSError as e:
-            print(f"Error deleting file {file_path}: {e}")
-    
+            logger.info(f"Deleted file: {file_path}")
+        except OSError as exc:
+            logger.info(f"Error deleting file {file_path}: {exc}")
+
     for folder_path in folders:
         try:
             shutil.rmtree(folder_path)
-            print(f"Deleted folder: {folder_path}")
-        except OSError as e:
-            print(f"Error deleting folder {folder_path}: {e}")
-
-
+            logger.info(f"Deleted folder: {folder_path}")
+        except OSError as exc:
+            logger.info(f"Error deleting folder {folder_path}: {exc}")
 
 
 if __name__ == "__main__":
@@ -104,5 +104,3 @@ if __name__ == "__main__":
     make_env()
     lint()
     git_init()
-
-
