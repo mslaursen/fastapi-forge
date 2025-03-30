@@ -1,7 +1,8 @@
 import pytest
-from fastapi_forge.dtos import ModelField, ModelRelationship, ProjectSpec, Model
-from fastapi_forge.enums import FieldDataType
 from pydantic import ValidationError
+
+from fastapi_forge.dtos import Model, ModelField, ModelRelationship, ProjectSpec
+from fastapi_forge.enums import FieldDataType
 
 ########################
 # ModelField DTO tests #
@@ -64,7 +65,8 @@ def test_invalid_field_name(invalid_name: str) -> None:
     ],
 )
 def test_factory_field_value(
-    data_type: FieldDataType, expected_factory_value: str | None
+    data_type: FieldDataType,
+    expected_factory_value: str | None,
 ) -> None:
     model_field = ModelField(name="name", type=data_type)
     assert model_field.factory_field_value == expected_factory_value

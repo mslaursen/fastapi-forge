@@ -2,21 +2,6 @@ from fastapi_forge.dtos import ModelField, ModelRelationship
 from fastapi_forge.enums import FieldDataType
 
 
-def generate_relationship(relation: ModelRelationship) -> str:
-    args = []
-    args.append(f'"{relation.target}"')
-    args.append(f"foreign_keys=[{relation.field_name}]")
-    if relation.back_populates:
-        args.append(f'back_populates="{relation.back_populates}"')
-    args.append("uselist=False")
-
-    return f"""
-    {relation.field_name_no_id}: Mapped[{relation.target}] = relationship(
-        {",\n        ".join(args)}
-    )
-    """.strip()
-
-
 def _map_field_type_to_sa_type(field: ModelField) -> str:
     field_type_mapping = {
         FieldDataType.UUID: "UUID(as_uuid=True)",
@@ -37,7 +22,10 @@ def _map_field_type_to_sa_type(field: ModelField) -> str:
 
 
 def _gen_field(
-    field: ModelField, sa_type: str, prefix_sa: bool = True, target: str | None = None
+    field: ModelField,
+    sa_type: str,
+    prefix_sa: bool = True,
+    target: str | None = None,
 ) -> str:
     args = [f"{'sa.' if prefix_sa else ''}{sa_type}"]
 
@@ -91,7 +79,10 @@ def _gen_datetime_field(field: ModelField, target: str | None = None) -> str:
 
 def _gen_jsonb_field(field: ModelField, target: str | None = None) -> str:
     return _gen_field(
-        field, _map_field_type_to_sa_type(field), prefix_sa=False, target=target
+        field,
+        _map_field_type_to_sa_type(field),
+        prefix_sa=False,
+        target=target,
     )
 
 
@@ -130,3 +121,18 @@ def generate_field(
         raise ValueError(f"Unsupported field type: {field.type}")
 
     return type_to_fn[field.type](field, target=target)
+
+
+def generate_relationship(relation: ModelRelationship) -> str:
+    args = []
+    args.append(f'"{relation.target}"')
+    args.append(f"foreign_keys=[{relation.field_name}]")
+    if relation.back_populates:
+        args.append(f'back_populates="{relation.back_populates}"')
+    args.append("uselist=False")
+
+    return f"""
+    {relation.field_name_no_id}: Mapped[{relation.target}] = relationship(
+        {",\n        ".join(args)}
+    )
+    """.strip()

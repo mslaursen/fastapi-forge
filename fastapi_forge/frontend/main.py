@@ -1,15 +1,17 @@
-from fastapi_forge.forge import build_project
+import asyncio
+from pathlib import Path
+
+from nicegui import native, ui
+
 from fastapi_forge import project_io as p
+from fastapi_forge.forge import build_project
 from fastapi_forge.frontend import (
     Header,
-    ModelPanel,
     ModelEditorPanel,
+    ModelPanel,
     ProjectConfigPanel,
 )
-from pathlib import Path
-from nicegui import ui, native
 from fastapi_forge.frontend.state import state
-import asyncio
 
 
 async def _init_no_ui(project_path: Path) -> None:
@@ -21,7 +23,7 @@ async def _init_no_ui(project_path: Path) -> None:
 def setup_ui() -> None:
     """Setup basic UI configuration"""
     ui.add_head_html(
-        '<link href="https://unpkg.com/eva-icons@1.1.3/style/eva-icons.css" rel="stylesheet" />'
+        '<link href="https://unpkg.com/eva-icons@1.1.3/style/eva-icons.css" rel="stylesheet" />',
     )
     ui.button.default_props("round flat dense")
     ui.input.default_props("dense")

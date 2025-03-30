@@ -1,7 +1,8 @@
-import click
-from fastapi_forge.frontend import init
 from pathlib import Path
-import os
+
+import click
+
+from fastapi_forge.frontend import init
 
 
 @click.group()
@@ -32,14 +33,14 @@ def main() -> None:
 def start(use_example: bool, no_ui: bool, from_yaml: str | None = None) -> None:
     """Start the FastAPI Forge server and generate a new project."""
     if use_example and from_yaml:
+        msg = "Cannot use '--use-example' and '--from-yaml' together."
         raise click.UsageError(
-            "Cannot use '--use-example' and '--from-yaml' together.",
+            msg,
         )
 
     yaml_path = None
     if from_yaml:
-        expanded_yaml_path = os.path.expanduser(from_yaml)
-        yaml_path = Path(expanded_yaml_path).resolve()
+        yaml_path = Path.expanduser(Path(from_yaml)).resolve()
 
         if not yaml_path.exists():
             raise click.FileError(f"YAML file not found: {yaml_path}")

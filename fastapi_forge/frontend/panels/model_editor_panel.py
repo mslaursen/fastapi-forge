@@ -1,5 +1,11 @@
+from typing import Any
+
+from nicegui import ui
 from pydantic import ValidationError
-from fastapi_forge.dtos import ModelField, ModelRelationship, Model
+
+from fastapi_forge.dtos import Model, ModelField, ModelFieldMetadata, ModelRelationship
+from fastapi_forge.enums import FieldDataType
+from fastapi_forge.frontend.constants import FIELD_COLUMNS, RELATIONSHIP_COLUMNS
 from fastapi_forge.frontend.modals import (
     AddFieldModal,
     AddRelationModal,
@@ -8,12 +14,7 @@ from fastapi_forge.frontend.modals import (
 )
 from fastapi_forge.frontend.notifications import notify_validation_error
 from fastapi_forge.frontend.state import state
-from typing import Any
-from fastapi_forge.frontend.constants import FIELD_COLUMNS, RELATIONSHIP_COLUMNS
 from fastapi_forge.jinja import render_model_to_model
-from nicegui import ui
-from fastapi_forge.dtos import ModelFieldMetadata
-from fastapi_forge.enums import FieldDataType
 
 
 class ModelEditorPanel(ui.card):
@@ -24,16 +25,16 @@ class ModelEditorPanel(ui.card):
         state.select_model_fn = self.set_selected_model
 
         self.add_field_modal: AddFieldModal = AddFieldModal(
-            on_add_field=self._handle_modal_add_field
+            on_add_field=self._handle_modal_add_field,
         )
         self.add_relation_modal: AddRelationModal = AddRelationModal(
-            on_add_relation=self._handle_modal_add_relation
+            on_add_relation=self._handle_modal_add_relation,
         )
         self.update_field_modal: UpdateFieldModal = UpdateFieldModal(
-            on_update_field=self._handle_update_field
+            on_update_field=self._handle_update_field,
         )
         self.update_relation_modal: UpdateRelationModal = UpdateRelationModal(
-            on_update_relation=self._handle_update_relation
+            on_update_relation=self._handle_update_relation,
         )
 
         self._build()
@@ -56,82 +57,85 @@ class ModelEditorPanel(ui.card):
                 with ui.row().classes("gap-4 items-center"):
                     self.model_name_display = ui.label().classes("text-lg font-bold")
                     ui.button(
-                        icon="visibility", on_click=self._show_code_preview
+                        icon="visibility",
+                        on_click=self._show_code_preview,
                     ).tooltip("Preview SQLAlchemy model code")
 
                 with ui.row().classes("gap-2 items-center"):
-                    with ui.button(icon="menu").tooltip("Generate"):
-                        with ui.menu(), ui.column().classes("gap-0 p-2"):
-                            self.create_endpoints_switch = ui.switch(
-                                "Endpoints",
-                                value=True,
-                                on_change=lambda v: setattr(
-                                    state.selected_model.metadata,
-                                    "create_endpoints",
-                                    v.value,
-                                ),
-                            )
-                            self.create_tests_switch = ui.switch(
-                                "Tests",
-                                value=True,
-                                on_change=lambda v: setattr(
-                                    state.selected_model.metadata,
-                                    "create_tests",
-                                    v.value,
-                                ),
-                            )
-                            self.create_daos_switch = ui.switch(
-                                "DAOs",
-                                value=True,
-                                on_change=lambda v: setattr(
-                                    state.selected_model.metadata,
-                                    "create_daos",
-                                    v.value,
-                                ),
-                            )
-                            self.create_dtos_switch = ui.switch(
-                                "DTOs",
-                                value=True,
-                                on_change=lambda v: setattr(
-                                    state.selected_model.metadata,
-                                    "create_dtos",
-                                    v.value,
-                                ),
-                            )
+                    with (
+                        ui.button(icon="menu").tooltip("Generate"),
+                        ui.menu(),
+                        ui.column().classes("gap-0 p-2"),
+                    ):
+                        self.create_endpoints_switch = ui.switch(
+                            "Endpoints",
+                            value=True,
+                            on_change=lambda v: setattr(
+                                state.selected_model.metadata,
+                                "create_endpoints",
+                                v.value,
+                            ),
+                        )
+                        self.create_tests_switch = ui.switch(
+                            "Tests",
+                            value=True,
+                            on_change=lambda v: setattr(
+                                state.selected_model.metadata,
+                                "create_tests",
+                                v.value,
+                            ),
+                        )
+                        self.create_daos_switch = ui.switch(
+                            "DAOs",
+                            value=True,
+                            on_change=lambda v: setattr(
+                                state.selected_model.metadata,
+                                "create_daos",
+                                v.value,
+                            ),
+                        )
+                        self.create_dtos_switch = ui.switch(
+                            "DTOs",
+                            value=True,
+                            on_change=lambda v: setattr(
+                                state.selected_model.metadata,
+                                "create_dtos",
+                                v.value,
+                            ),
+                        )
 
                     with (
                         ui.button(icon="bolt", color="amber")
                         .classes("self-end")
-                        .tooltip("Quick-Add")
+                        .tooltip("Quick-Add"),
+                        ui.menu(),
                     ):
-                        with ui.menu():
-                            self.created_at_item = ui.menu_item(
-                                "Created At",
-                                on_click=lambda: self._toggle_quick_add(
-                                    "created_at",
-                                    is_created_at_timestamp=True,
-                                ),
-                            )
-                            self.updated_at_item = ui.menu_item(
-                                "Updated At",
-                                on_click=lambda: self._toggle_quick_add(
-                                    "updated_at",
-                                    is_updated_at_timestamp=True,
-                                ),
-                            )
+                        self.created_at_item = ui.menu_item(
+                            "Created At",
+                            on_click=lambda: self._toggle_quick_add(
+                                "created_at",
+                                is_created_at_timestamp=True,
+                            ),
+                        )
+                        self.updated_at_item = ui.menu_item(
+                            "Updated At",
+                            on_click=lambda: self._toggle_quick_add(
+                                "updated_at",
+                                is_updated_at_timestamp=True,
+                            ),
+                        )
 
-                    with ui.button(icon="add").classes("self-end"):
-                        with ui.menu():
-                            ui.menu_item(
-                                "Field",
-                                on_click=lambda: self.add_field_modal.open(),
-                            )
-                            ui.menu_item(
-                                "Relationship",
-                                on_click=lambda: self.add_relation_modal.open(
-                                    models=state.models,
-                                ),
-                            )
+                    with ui.button(icon="add").classes("self-end"), ui.menu():
+                        ui.menu_item(
+                            "Field",
+                            on_click=lambda: self.add_field_modal.open(),
+                        )
+                        ui.menu_item(
+                            "Relationship",
+                            on_click=lambda: self.add_relation_modal.open(
+                                models=state.models,
+                            ),
+                        )
 
             with ui.expansion("Fields", value=True).classes("w-full"):
                 self.table = ui.table(
@@ -146,11 +150,12 @@ class ModelEditorPanel(ui.card):
                     ui.button(
                         icon="edit",
                         on_click=lambda: self.update_field_modal.open(
-                            state.selected_field
+                            state.selected_field,
                         ),
                     ).bind_visibility_from(state, "selected_field")
                     ui.button(
-                        icon="delete", on_click=self._delete_field
+                        icon="delete",
+                        on_click=self._delete_field,
                     ).bind_visibility_from(state, "selected_field")
 
             with ui.expansion("Relationships", value=True).classes("w-full"):
@@ -166,11 +171,13 @@ class ModelEditorPanel(ui.card):
                     ui.button(
                         icon="edit",
                         on_click=lambda: self.update_relation_modal.open(
-                            state.selected_relation, state.models
+                            state.selected_relation,
+                            state.models,
                         ),
                     ).bind_visibility_from(state, "selected_relation")
                     ui.button(
-                        icon="delete", on_click=self._delete_relation
+                        icon="delete",
+                        on_click=self._delete_relation,
                     ).bind_visibility_from(state, "selected_relation")
 
     def _toggle_quick_add(
@@ -219,8 +226,8 @@ class ModelEditorPanel(ui.card):
         try:
             self._add_field(**kwargs)
             self.add_field_modal.close()
-        except ValueError as e:
-            ui.notify(str(e), type="negative")
+        except ValueError as exc:
+            ui.notify(str(exc), type="negative")
 
     def _handle_modal_add_relation(
         self,
@@ -255,8 +262,8 @@ class ModelEditorPanel(ui.card):
                 index=index,
                 unique=unique,
             )
-        except ValidationError as e:
-            notify_validation_error(e)
+        except ValidationError as exc:
+            notify_validation_error(exc)
             return
 
         state.selected_model.relationships.append(relationship)
@@ -272,7 +279,9 @@ class ModelEditorPanel(ui.card):
 
         for field in state.selected_model.fields:
             if field.name == field_input.name and field != getattr(
-                self, "selected_field", None
+                self,
+                "selected_field",
+                None,
             ):
                 ui.notify(
                     f"Field '{field_input.name}' already exists in this model.",
@@ -307,7 +316,8 @@ class ModelEditorPanel(ui.card):
         self._deselect_field()
 
     def _refresh_relationship_table(
-        self, relationships: list[ModelRelationship]
+        self,
+        relationships: list[ModelRelationship],
     ) -> None:
         if state.selected_model is None:
             return
@@ -348,8 +358,8 @@ class ModelEditorPanel(ui.card):
             state.selected_model.fields.append(field_input)
             self._refresh_table(state.selected_model.fields)
 
-        except ValidationError as e:
-            notify_validation_error(e)
+        except ValidationError as exc:
+            notify_validation_error(exc)
 
     def _deselect_field(self) -> None:
         state.selected_field = None
@@ -425,8 +435,8 @@ class ModelEditorPanel(ui.card):
             state.selected_model.fields[model_index] = field_input
             self._refresh_table(state.selected_model.fields)
 
-        except ValidationError as e:
-            notify_validation_error(e)
+        except ValidationError as exc:
+            notify_validation_error(exc)
 
     def _handle_update_relation(
         self,
@@ -463,8 +473,8 @@ class ModelEditorPanel(ui.card):
                 index=index,
                 unique=unique,
             )
-        except ValidationError as e:
-            notify_validation_error(e)
+        except ValidationError as exc:
+            notify_validation_error(exc)
             return
 
         model_index = state.selected_model.relationships.index(state.selected_relation)

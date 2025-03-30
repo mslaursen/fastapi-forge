@@ -13,14 +13,14 @@ class Header(ui.header):
                 icon="eva-github",
                 color="white",
                 on_click=lambda: ui.navigate.to(
-                    "https://github.com/mslaursen/fastapi-forge"
+                    "https://github.com/mslaursen/fastapi-forge",
                 ),
             ).classes("self-center", remove="bg-white").tooltip(
-                "Drop a ⭐️ if you like FastAPI Forge!"
+                "Drop a ⭐️ if you like FastAPI Forge!",
             )
 
             ui.label(text="FastAPI Forge").classes(
-                "font-bold ml-auto self-center text-2xl"
+                "font-bold ml-auto self-center text-2xl",
             )
 
             ui.button(

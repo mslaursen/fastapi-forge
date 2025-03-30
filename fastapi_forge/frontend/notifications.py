@@ -1,5 +1,5 @@
-from pydantic import ValidationError
 from nicegui import ui
+from pydantic import ValidationError
 
 
 def notify_validation_error(e: ValidationError) -> None:
