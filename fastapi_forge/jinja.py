@@ -6,7 +6,7 @@ from fastapi_forge.dtos import Model, ModelField, ModelFieldMetadata, ModelRelat
 from fastapi_forge.enums import FieldDataType
 from fastapi_forge.jinja_utils import generate_field, generate_relationship
 
-env = Environment(autoescape=True)
+env = Environment()
 env.filters["generate_relationship"] = generate_relationship
 env.filters["generate_field"] = generate_field
 
@@ -75,7 +75,7 @@ class {{ model.name_cc }}UpdateDTO(BaseModel):
 """
 
 dao_template = """
-from src.daos import BaseDAO
+from src.daos.base_daos import BaseDAO
 
 from src.models.{{ model.name }}_models import {{ model.name_cc }}
 from src.dtos.{{ model.name }}_dtos import {{ model.name_cc }}InputDTO, {{ model.name_cc }}UpdateDTO
@@ -185,7 +185,7 @@ async def test_post_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> Non
     {%- for relation in model.relationships %}
     {{ relation.field_name_no_id }} = await factories.{{ relation.target }}Factory.create()
     {%- endfor %}
-    
+
     input_json = {
         {%- for field in model.fields  if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or field.primary_key) -%}
         {%- if not field.primary_key and field.name.endswith('_id') -%}

@@ -28,8 +28,8 @@ async def _write_file(path: Path, content: str) -> None:
         async with aiofiles.open(path, "w") as file:
             await file.write(content)
         logger.info(f"Created file: {path}")
-    except OSError as e:
-        logger.error(f"Failed to write file {path}: {e}")
+    except OSError as exc:
+        logger.error(f"Failed to write file {path}: {exc}")
         raise
 
 
@@ -52,8 +52,8 @@ class ProjectLoader:
         with self.project_path.open() as stream:
             try:
                 return yaml.safe_load(stream)["project"]
-            except Exception as e:
-                raise e
+            except Exception as exc:
+                raise exc
 
     def load_project_spec(self) -> ProjectSpec:
         project_dict = self._load_project_to_dict()

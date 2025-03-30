@@ -37,12 +37,72 @@ dependencies = [
     {% endif %}
 ]
 
-
 [tool.pytest.ini_options]
 env = ["{{ cookiecutter.project_name|upper|replace('-', '_') }}_PG_DATABASE=test", "{{ cookiecutter.project_name|upper|replace('-', '_') }}_ENV=test"]
 
 [tool.ruff]
-exclude = ["template", "__init__.py"]
+exclude = ["migrations"]
+target-version = "py312"
 line-length = 88
 indent-width = 4
-select = ["I"]
+select = ["ALL"]
+ignore = [
+    #### modules
+    "ANN", #
+    "COM", #
+    "C90", #
+    "DJ",  #
+    "EXE", #
+    "T10", #
+    "TID", #
+
+    #### specific rules
+    "A001",
+    "A002",
+    "BLE001",
+    "B904",
+    "D100",
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "D105",
+    "D106",
+    "D107",
+    "D200",
+    "D205",
+    "D212",
+    "D400",
+    "D401",
+    "D404",
+    "D415",
+    "E402",
+    "E501",
+    "EM102",
+    "FBT001",
+    "FBT002",
+    "FBT003",
+    "N805",
+    "T201",
+    "TRY003",
+    "TRY201",
+    "TRY203",
+    "TRY300",
+    "TD002",
+    "TD003",
+    "FIX002",
+    "PLR0913",
+    "PLR2004",
+    "PGH003",
+    "RUF012",
+    "S701",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "PT006"]

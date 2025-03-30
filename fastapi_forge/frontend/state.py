@@ -66,8 +66,8 @@ class ProjectState(BaseModel):
 
             self.render_models_fn()
 
-        except ValidationError as e:
-            n.notify_validation_error(e)
+        except ValidationError as exc:
+            n.notify_validation_error(exc)
 
     def delete_model(self, model: Model) -> None:
         if model not in self.models:
