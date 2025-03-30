@@ -1,18 +1,24 @@
 from pydantic import BaseModel, ValidationError
-from fastapi_forge import dtos as m
+from fastapi_forge.dtos import (
+    Model,
+    ModelField,
+    ModelRelationship,
+    ProjectSpec,
+)
+from fastapi_forge.enums import FieldDataType
 from fastapi_forge.frontend import notifications as n
 from nicegui import ui
-import typing as t
+from typing import Callable
 
 
 class ProjectState(BaseModel):
-    models: list[m.Model] = []
-    selected_model: m.Model | None = None
-    selected_field: m.ModelField | None = None
-    selected_relation: m.ModelRelationship | None = None
+    models: list[Model] = []
+    selected_model: Model | None = None
+    selected_field: ModelField | None = None
+    selected_relation: ModelRelationship | None = None
 
-    render_models_fn: t.Callable | None = None
-    select_model_fn: t.Callable | None = None
+    render_models_fn: Callable | None = None
+    select_model_fn: Callable | None = None
 
     project_name: str = ""
     use_postgres: bool = False
@@ -21,7 +27,7 @@ class ProjectState(BaseModel):
     use_redis: bool = False
     use_rabbitmq: bool = False
 
-    def initialize_from_project(self, project: m.ProjectSpec) -> None:
+    def initialize_from_project(self, project: ProjectSpec) -> None:
         """Initialize the state from an existing project specification"""
         self.project_name = project.project_name
         self.use_postgres = project.use_postgres
@@ -44,16 +50,16 @@ class ProjectState(BaseModel):
             return
 
         try:
-            default_id_field = m.ModelField(
+            default_id_field = ModelField(
                 name="id",
-                type=m.FieldDataType.UUID,
+                type=FieldDataType.UUID,
                 primary_key=True,
                 nullable=False,
                 unique=True,
                 index=True,
             )
 
-            new_model = m.Model(name=model_name, fields=[default_id_field])
+            new_model = Model(name=model_name, fields=[default_id_field])
             self.models.append(new_model)
 
             self.render_models_fn()
@@ -61,7 +67,7 @@ class ProjectState(BaseModel):
         except ValidationError as e:
             n.notify_validation_error(e)
 
-    def delete_model(self, model: m.Model) -> None:
+    def delete_model(self, model: Model) -> None:
         if model not in self.models:
             ui.notify("Something went wrong...", type="warning")
             return
@@ -71,7 +77,7 @@ class ProjectState(BaseModel):
         if self.render_models_fn:
             self.render_models_fn()
 
-    def update_model_name(self, model: m.Model, new_name: str) -> None:
+    def update_model_name(self, model: Model, new_name: str) -> None:
         if any(m.name == new_name for m in self.models if m != model):
             n.notify_model_exists(new_name)
             return
@@ -83,27 +89,15 @@ class ProjectState(BaseModel):
         if self.render_models_fn:
             self.render_models_fn()
 
-    def add_field(self, **kwargs: t.Any) -> None:
-        if not self.selected_model:
-            n.notify_something_went_wrong()
-            return
-
-        try:
-            field = m.ModelField(**kwargs)
-            print(field)
-            self.selected_model.fields.append(field)
-        except ValidationError as e:
-            n.notify_validation_error(e)
-
-    def select_model(self, model: m.Model) -> None:
+    def select_model(self, model: Model) -> None:
         if self.select_model_fn is None:
             n.notify_something_went_wrong()
             return
         self.selected_model = model
         self.select_model_fn(model)
 
-    def get_project_spec(self) -> m.ProjectSpec:
-        return m.ProjectSpec(
+    def get_project_spec(self) -> ProjectSpec:
+        return ProjectSpec(
             project_name=self.project_name,
             use_postgres=self.use_postgres,
             use_alembic=self.use_alembic,
