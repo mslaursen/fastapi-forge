@@ -1,0 +1,499 @@
+from pydantic import BaseModel, ValidationError
+from fastapi_forge.dtos import ModelField, ModelRelationship, Model
+from fastapi_forge.gui import ModelPanel  # , AddFieldModal, AddRelationModal
+from fastapi_forge.gui import notifications as n
+from fastapi_forge.gui.notifications import notify_validation_error
+from fastapi_forge.gui.state import state
+from typing import Any
+from fastapi_forge.gui.constants import FIELD_COLUMNS, RELATIONSHIP_COLUMNS
+from fastapi_forge.jinja import render_model_to_model
+from nicegui import ui
+
+import typing as t
+
+
+class ModelEditorPanel(ui.card):
+    def __init__(self):
+        super().__init__()
+        self.visible = False
+
+        state.select_model_fn = self.set_selected_model
+
+        # self.add_field_modal: AddFieldModal = AddFieldModal()
+        # self.add_relation_modal: AddRelationModal = AddRelationModal()
+        # self.update_field_modal: UpdateFieldModal = UpdateFieldModal(
+        #    on_update_field=self._handle_update_field
+        # )
+        # self.update_relation_modal: UpdateRelationModal = UpdateRelationModal(
+        #    on_update_relation=self._handle_update_relation
+        # )
+
+        self._build()
+
+    def _show_code_preview(self) -> None:
+        if state.selected_model:
+            with (
+                ui.dialog() as modal,
+                ui.card().classes("no-shadow border-[1px]"),
+            ):
+                code = render_model_to_model(state.selected_model.get_preview())
+                code = code.split("class ")[1]
+                code = f"# ID is inherited from the `Base` class\nclass {code}"
+                ui.code(code).classes("w-full")
+                modal.open()
+
+    def _build(self) -> None:
+        with self:
+            with ui.row().classes("w-full justify-between items-center"):
+                with ui.row().classes("gap-4 items-center"):
+                    self.model_name_display = ui.label().classes("text-lg font-bold")
+                    ui.button(
+                        icon="visibility", on_click=self._show_code_preview
+                    ).tooltip("Preview SQLAlchemy model code")
+
+                with ui.row().classes("gap-2 items-center"):
+                    with ui.button(icon="menu").tooltip("Generate"):
+                        with ui.menu(), ui.column().classes("gap-0 p-2"):
+                            self.create_endpoints_switch = ui.switch(
+                                "Endpoints",
+                                value=True,
+                                on_change=lambda v: setattr(
+                                    state.selected_model.metadata,
+                                    "create_endpoints",
+                                    v.value,
+                                ),
+                            )
+                            self.create_tests_switch = ui.switch(
+                                "Tests",
+                                value=True,
+                                on_change=lambda v: setattr(
+                                    state.selected_model.metadata,
+                                    "create_tests",
+                                    v.value,
+                                ),
+                            )
+                            self.create_daos_switch = ui.switch(
+                                "DAOs",
+                                value=True,
+                                on_change=lambda v: setattr(
+                                    state.selected_model.metadata,
+                                    "create_daos",
+                                    v.value,
+                                ),
+                            )
+                            self.create_dtos_switch = ui.switch(
+                                "DTOs",
+                                value=True,
+                                on_change=lambda v: setattr(
+                                    state.selected_model.metadata,
+                                    "create_dtos",
+                                    v.value,
+                                ),
+                            )
+
+                    with (
+                        ui.button(icon="bolt", color="amber")
+                        .classes("self-end")
+                        .tooltip("Quick-Add")
+                    ):
+                        with ui.menu():
+                            self.created_at_item = ui.menu_item(
+                                "Created At",
+                                on_click=lambda: self._toggle_quick_add(
+                                    "created_at",
+                                    is_created_at_timestamp=True,
+                                ),
+                            )
+                            self.updated_at_item = ui.menu_item(
+                                "Updated At",
+                                on_click=lambda: self._toggle_quick_add(
+                                    "updated_at",
+                                    is_updated_at_timestamp=True,
+                                ),
+                            )
+
+                    with ui.button(icon="add").classes("self-end"):
+                        with ui.menu():
+                            ui.menu_item(
+                                "Field",
+                                on_click=lambda: self.add_field_modal.open(),
+                            )
+                            ui.menu_item(
+                                "Relationship",
+                                on_click=lambda: self.add_relation_modal.open(
+                                    models=(
+                                        state.modelsmodels if self.model_panel else []
+                                    ),
+                                ),
+                            )
+
+            with ui.expansion("Fields", value=True).classes("w-full"):
+                self.table = ui.table(
+                    columns=FIELD_COLUMNS,
+                    rows=[],
+                    row_key="name",
+                    selection="single",
+                    on_select=lambda e: self._on_select_field(e.selection),
+                ).classes("w-full no-shadow border-[1px]")
+
+                with ui.row().classes("w-full justify-end gap-2"):
+                    ui.button(
+                        icon="edit",
+                        on_click=lambda: self.update_field_modal.open(
+                            self.selected_field
+                        ),
+                    ).bind_visibility_from(self, "selected_field")
+                    ui.button(
+                        icon="delete", on_click=self._delete_field
+                    ).bind_visibility_from(self, "selected_field")
+
+            with ui.expansion("Relationships", value=True).classes("w-full"):
+                self.relationship_table = ui.table(
+                    columns=RELATIONSHIP_COLUMNS,
+                    rows=[],
+                    row_key="field_name",
+                    selection="single",
+                    on_select=lambda e: self._on_select_relation(e.selection),
+                ).classes("w-full no-shadow border-[1px]")
+
+                with ui.row().classes("w-full justify-end gap-2"):
+                    ui.button(
+                        icon="edit",
+                        on_click=lambda: self.update_relation_modal.open(
+                            state.selected_relation, state.models
+                        ),
+                    ).bind_visibility_from(state, "selected_relation")
+                    ui.button(
+                        icon="delete", on_click=self._delete_relation
+                    ).bind_visibility_from(state, "selected_relation")
+
+    def _toggle_quick_add(
+        self,
+        name: str,
+        is_created_at_timestamp: bool = False,
+        is_updated_at_timestamp: bool = False,
+    ) -> None:
+        if not state.selected_model:
+            return
+
+        attr = (
+            "is_created_at_timestamp"
+            if is_created_at_timestamp
+            else "is_updated_at_timestamp"
+        )
+
+        existing_quick_add = next(
+            (
+                field
+                for field in state.selected_model.fields
+                if getattr(field.metadata, attr) is True
+            ),
+            None,
+        )
+
+        if existing_quick_add:
+            self._delete(existing_quick_add)
+            return
+
+        self._add_field(
+            name,
+            "DateTime",
+            False,
+            False,
+            False,
+            False,
+            is_created_at_timestamp,
+            is_updated_at_timestamp,
+        )
+
+    def _handle_modal_add_field(
+        self,
+        **kwargs,
+    ) -> None:
+        try:
+            self._add_field(**kwargs)
+            self.add_field_modal.close()
+        except ValueError as e:
+            ui.notify(str(e), type="negative")
+
+    def _handle_modal_add_relation(
+        self,
+        field_name: str,
+        target_model: str,
+        nullable: bool,
+        index: bool,
+        unique: bool,
+        back_populates: str | None = None,
+    ) -> None:
+        if not state.selected_model:
+            return
+
+        target_model_instance = next(
+            (model for model in state.models if model.name == target_model),
+            None,
+        )
+        if not target_model_instance:
+            ui.notify(f"Model '{target_model}' not found.", type="negative")
+            return
+
+        if field_name in [field.name for field in state.selected_model.fields]:
+            ui.notify(f"Field '{field_name}' already exists.", type="negative")
+            return
+
+        try:
+            relationship = ModelRelationship(
+                field_name=field_name,
+                target_model=target_model_instance.name,
+                back_populates=back_populates,
+                nullable=nullable,
+                index=index,
+                unique=unique,
+            )
+        except ValidationError as e:
+            n.notify_validation_error(e)
+            return
+
+        state.selected_model.relationships.append(relationship)
+
+        self._refresh_relationship_table(state.selected_model.relationships)
+
+    def _validate_field_input(
+        self,
+        field_input: ModelField,
+    ) -> bool:
+        if not state.selected_model:
+            return True
+
+        for field in state.selected_model.fields:
+            if field.name == field_input.name and field != getattr(
+                self, "selected_field", None
+            ):
+                ui.notify(
+                    f"Field '{field_input.name}' already exists in this model.",
+                    type="negative",
+                )
+                return False
+
+            if field.primary_key and field_input.primary_key:
+                ui.notify(
+                    "A model cannot have multiple primary keys. "
+                    f"Current primary key: '{field.name}'",
+                    type="negative",
+                )
+                return False
+        return True
+
+    def _refresh_table(self, fields: list[ModelField]) -> None:
+        if state.selected_model is None:
+            return
+        self.table.rows = [field.model_dump() for field in fields]
+
+        quick_add_created_at_enabled = any(
+            field.metadata.is_created_at_timestamp for field in fields
+        )
+        quick_add_updated_at_enabled = any(
+            field.metadata.is_updated_at_timestamp for field in fields
+        )
+
+        self.created_at_item.enabled = not quick_add_created_at_enabled
+        self.updated_at_item.enabled = not quick_add_updated_at_enabled
+
+        self._deselect_field()
+
+    def _refresh_relationship_table(
+        self, relationships: list[ModelRelationship]
+    ) -> None:
+        if state.selected_model is None:
+            return
+        self.relationship_table.rows = [
+            relationship.model_dump() for relationship in relationships
+        ]
+        self._deselect_relation()
+
+    def _add_field(
+        self,
+        name: str,
+        type: str,
+        primary_key: bool,
+        nullable: bool,
+        unique: bool,
+        index: bool,
+        is_created_at_timestamp: bool = False,
+        is_updated_at_timestamp: bool = False,
+    ) -> None:
+        try:
+            field_input = ModelField(
+                name=name,
+                type=FieldDataType(type),
+                primary_key=primary_key,
+                nullable=nullable,
+                unique=unique,
+                index=index,
+                metadata=ModelFieldMetadata(
+                    is_created_at_timestamp=is_created_at_timestamp,
+                    is_updated_at_timestamp=is_updated_at_timestamp,
+                ),
+            )
+            if not self._validate_field_input(field_input):
+                return
+            if state.selected_model is None:
+                return
+
+            state.selected_model.fields.append(field_input)
+            self._refresh_table(state.selected_model.fields)
+
+        except ValidationError as e:
+            notify_validation_error(e)
+
+    def _deselect_field(self) -> None:
+        self.selected_field = None
+        self.table.selected = []
+
+    def _deselect_relation(self) -> None:
+        state.selected_relation = None
+        self.relationship_table.selected = []
+
+    def _on_select_field(self, selection: list[dict[str, Any]]) -> None:
+        if not state.selected_model:
+            return
+        if not selection:
+            self._deselect_field()
+            return
+        if selection[0].get("name") == "id":
+            self._deselect_field()
+        else:
+            self.selected_field = next(
+                (
+                    field
+                    for field in state.selected_model.fields
+                    if field.name == selection[0]["name"]
+                ),
+                None,
+            )
+
+    def _on_select_relation(self, selection: list[dict[str, Any]]) -> None:
+        if not state.selected_model:
+            return
+        if not selection:
+            self._deselect_relation()
+            return
+        state.selected_relation = next(
+            (
+                relation
+                for relation in state.selected_model.relationships
+                if relation.field_name == selection[0]["field_name"]
+            ),
+            None,
+        )
+
+    def _handle_update_field(
+        self,
+        name: str,
+        type: str,
+        primary_key: bool,
+        nullable: bool,
+        unique: bool,
+        index: bool,
+    ) -> None:
+        if (
+            not state.selected_model
+            or not self.selected_field
+            or self.selected_field.name == "id"
+        ):
+            return
+
+        try:
+            field_input = ModelField(
+                name=name,
+                type=FieldDataType(type),
+                primary_key=primary_key,
+                nullable=nullable,
+                unique=unique,
+                index=index,
+                metadata=self.selected_field.metadata,
+            )
+            if not self._validate_field_input(field_input):
+                return
+
+            model_index = state.selected_model.fields.index(self.selected_field)
+            state.selected_model.fields[model_index] = field_input
+            self._refresh_table(state.selected_model.fields)
+
+        except ValidationError as e:
+            notify_validation_error(e)
+
+    def _handle_update_relation(
+        self,
+        field_name: str,
+        target_model: str,
+        nullable: bool = False,
+        index: bool = False,
+        unique: bool = False,
+        back_populates: str | None = None,
+    ) -> None:
+        if not state.selected_model or not state.selected_relation:
+            return
+
+        target_model_instance = next(
+            (model for model in state.models if model.name == target_model),
+            None,
+        )
+        if not target_model_instance:
+            ui.notify(f"Model '{target_model}' not found.", type="negative")
+            return
+
+        if (
+            field_name in [field.name for field in state.selected_model.fields]
+            and field_name != state.selected_relation.field_name
+        ):
+            ui.notify(f"Field '{field_name}' already exists.", type="negative")
+            return
+        try:
+            relationship = ModelRelationship(
+                field_name=field_name,
+                target_model=target_model_instance.name,
+                back_populates=back_populates or None,
+                nullable=nullable,
+                index=index,
+                unique=unique,
+            )
+        except ValidationError as e:
+            notify_validation_error(e)
+            return
+
+        model_index = state.selected_model.relationships.index(state.selected_relation)
+        state.selected_model.relationships[model_index] = relationship
+        self._refresh_relationship_table(state.selected_model.relationships)
+
+    def _delete(self, field: ModelField) -> None:
+        if not state.selected_model:
+            ui.notify("No model selected.", type="negative")
+            return
+        state.selected_model.fields.remove(field)
+        self._refresh_table(state.selected_model.fields)
+
+    def _delete_relation(self) -> None:
+        if state.selected_model and state.selected_relation:
+            state.selected_model.relationships.remove(state.selected_relation)
+            self._refresh_relationship_table(state.selected_model.relationships)
+
+    def _delete_field(self) -> None:
+        if (
+            state.selected_model
+            and self.selected_field
+            and self.selected_field.name != "id"
+        ):
+            self._delete(self.selected_field)
+
+    def set_selected_model(self, model: Model) -> None:
+        self.model_name_display.text = model.name
+        metadata = model.metadata
+
+        self.create_endpoints_switch.value = metadata.create_endpoints
+        self.create_tests_switch.value = metadata.create_tests
+        self.create_dtos_switch.value = metadata.create_dtos
+        self.create_daos_switch.value = metadata.create_daos
+
+        self._refresh_table(model.fields)
+        self._refresh_relationship_table(model.relationships)
+        self.visible = True
