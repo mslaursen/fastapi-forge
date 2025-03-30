@@ -37,7 +37,10 @@ def _map_field_type_to_sa_type(field: ModelField) -> str:
 
 
 def _gen_field(
-    field: ModelField, sa_type: str, prefix_sa: bool = True, target: str | None = None
+    field: ModelField,
+    sa_type: str,
+    prefix_sa: bool = True,
+    target: str | None = None,
 ) -> str:
     args = [f"{'sa.' if prefix_sa else ''}{sa_type}"]
 
@@ -91,7 +94,10 @@ def _gen_datetime_field(field: ModelField, target: str | None = None) -> str:
 
 def _gen_jsonb_field(field: ModelField, target: str | None = None) -> str:
     return _gen_field(
-        field, _map_field_type_to_sa_type(field), prefix_sa=False, target=target
+        field,
+        _map_field_type_to_sa_type(field),
+        prefix_sa=False,
+        target=target,
     )
 
 

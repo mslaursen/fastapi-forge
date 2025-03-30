@@ -1,4 +1,8 @@
+from collections.abc import Callable
+
+from nicegui import ui
 from pydantic import BaseModel, ValidationError
+
 from fastapi_forge.dtos import (
     Model,
     ModelField,
@@ -7,8 +11,6 @@ from fastapi_forge.dtos import (
 )
 from fastapi_forge.enums import FieldDataType
 from fastapi_forge.frontend import notifications as n
-from nicegui import ui
-from typing import Callable
 
 
 class ProjectState(BaseModel):

@@ -1,10 +1,12 @@
-from nicegui import ui
-from fastapi_forge.frontend.state import state
-from fastapi_forge.frontend import ModelCreate, ModelRow
-from fastapi_forge.project_io import ProjectExporter
 import os
+
+from nicegui import ui
 from pydantic import ValidationError
+
+from fastapi_forge.frontend import ModelCreate, ModelRow
 from fastapi_forge.frontend.notifications import notify_validation_error
+from fastapi_forge.frontend.state import state
+from fastapi_forge.project_io import ProjectExporter
 
 
 class ModelPanel(ui.left_drawer):
@@ -28,7 +30,7 @@ class ModelPanel(ui.left_drawer):
                     on_click=self._export_project,
                     icon="file_download",
                 ).classes("w-full py-3 text-lg font-bold").tooltip(
-                    "Generates a YAML file containing the project configuration."
+                    "Generates a YAML file containing the project configuration.",
                 )
 
     async def _export_project(self) -> None:

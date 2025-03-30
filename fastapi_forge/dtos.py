@@ -1,15 +1,16 @@
+from typing import Annotated, Self
+
 from pydantic import (
     BaseModel,
-    computed_field,
-    Field,
-    model_validator,
-    field_validator,
     ConfigDict,
+    Field,
+    computed_field,
+    field_validator,
+    model_validator,
 )
-from typing import Annotated
+
 from fastapi_forge.enums import FieldDataType
-from typing_extensions import Self
-from fastapi_forge.string_utils import snake_to_camel, camel_to_snake_hyphen
+from fastapi_forge.string_utils import camel_to_snake_hyphen, snake_to_camel
 
 BoundedStr = Annotated[str, Field(..., min_length=1, max_length=100)]
 SnakeCaseStr = Annotated[BoundedStr, Field(..., pattern=r"^[a-z][a-z0-9_]*$")]
@@ -17,7 +18,8 @@ ModelName = SnakeCaseStr
 FieldName = SnakeCaseStr
 BackPopulates = Annotated[str, Field(..., pattern=r"^[a-z][a-z0-9_]*$")]
 ProjectName = Annotated[
-    BoundedStr, Field(..., pattern=r"^[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9])?$")
+    BoundedStr,
+    Field(..., pattern=r"^[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9])?$"),
 ]
 
 
@@ -63,7 +65,7 @@ class ModelField(_Base):
         if metadata.is_created_at_timestamp or metadata.is_updated_at_timestamp:
             if self.type != FieldDataType.DATETIME:
                 raise ValueError(
-                    "Create/update timestamp fields must be of type DateTime."
+                    "Create/update timestamp fields must be of type DateTime.",
                 )
 
         if metadata.is_foreign_key and self.type != FieldDataType.UUID:
@@ -189,7 +191,7 @@ class Model(_Base):
         ]
         if len(unque_relationships) != len(set(unque_relationships)):
             raise ValueError(
-                f"Model '{self.name}' contains duplicate relationship field names."
+                f"Model '{self.name}' contains duplicate relationship field names.",
             )
 
         return self
@@ -232,7 +234,7 @@ class Model(_Base):
                 ]
                 if missing:
                     error_message = rule["error_message"].format(
-                        missing=", ".join(missing)
+                        missing=", ".join(missing),
                     )
                     raise ValueError(error_message)
 
@@ -251,7 +253,7 @@ class Model(_Base):
                     unique=relation.unique,
                     index=relation.index,
                     metadata=ModelFieldMetadata(is_foreign_key=True),
-                )
+                ),
             )
 
         return preview_model
@@ -286,7 +288,7 @@ class ProjectSpec(_Base):
                 if relationship.target_model not in model_names_set:
                     raise ValueError(
                         f"Model '{model.name}' has a relationship to "
-                        f"'{relationship.target_model}', which does not exist."
+                        f"'{relationship.target_model}', which does not exist.",
                     )
 
         return self
@@ -324,7 +326,7 @@ class ProjectSpec(_Base):
             if has_cycle(model_name):
                 raise ValueError(
                     f"Circular reference detected involving model '{model_name}'. "
-                    "Remove bidirectional relationships between models."
+                    "Remove bidirectional relationships between models.",
                 )
 
         return self

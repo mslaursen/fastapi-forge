@@ -40,3 +40,9 @@ dependencies = [
 
 [tool.pytest.ini_options]
 env = ["{{ cookiecutter.project_name|upper|replace('-', '_') }}_PG_DATABASE=test", "{{ cookiecutter.project_name|upper|replace('-', '_') }}_ENV=test"]
+
+[tool.ruff]
+exclude = ["template", "__init__.py"]
+line-length = 88
+indent-width = 4
+select = ["I"]

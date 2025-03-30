@@ -1,11 +1,13 @@
+import asyncio
 import os
 import shutil
-import asyncio
+from time import perf_counter
+
 from cookiecutter.main import cookiecutter
+
 from fastapi_forge.dtos import ProjectSpec
 from fastapi_forge.logger import logger
 from fastapi_forge.project_io import ProjectBuilder
-from time import perf_counter
 
 
 def _get_template_path() -> str:

@@ -1,11 +1,12 @@
 from typing import Any
+
 from jinja2 import Environment
-from fastapi_forge.dtos import Model, ModelField, ModelRelationship, ModelFieldMetadata
+
+from fastapi_forge.dtos import Model, ModelField, ModelFieldMetadata, ModelRelationship
 from fastapi_forge.enums import FieldDataType
-from fastapi_forge.jinja_utils import generate_relationship, generate_field
+from fastapi_forge.jinja_utils import generate_field, generate_relationship
 
-
-env = Environment()
+env = Environment(autoescape=True)
 env.filters["generate_relationship"] = generate_relationship
 env.filters["generate_field"] = generate_field
 
@@ -28,7 +29,7 @@ class {{ model.name_cc }}(Base):
     \"\"\"{{ model.name_cc }} model.\"\"\"
 
     __tablename__ = "{{ model.name }}"
-    
+
     {% for field in model.fields_sorted -%}
     {{ field | generate_field(model.relationships if field.metadata.is_foreign_key else None) }}
     {% endfor %}

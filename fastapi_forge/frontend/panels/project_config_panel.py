@@ -1,14 +1,16 @@
+import os
+
 from nicegui import ui
 from pydantic import ValidationError
-from fastapi_forge.enums import FieldDataType
+
 from fastapi_forge.dtos import (
     Model,
     ModelField,
     ModelFieldMetadata,
 )
+from fastapi_forge.enums import FieldDataType
 from fastapi_forge.forge import build_project
 from fastapi_forge.frontend.notifications import notify_validation_error
-import os
 from fastapi_forge.frontend.state import state
 
 
@@ -21,18 +23,20 @@ class ProjectConfigPanel(ui.right_drawer):
     def _build(self) -> None:
         with self:
             with ui.column().classes(
-                "items-align content-start w-full gap-4"
+                "items-align content-start w-full gap-4",
             ) as self.column:
                 with ui.column().classes("w-full gap-2"):
                     ui.label("Project Name").classes("text-lg font-bold")
                     self.project_name = ui.input(
-                        placeholder="Project Name", value=state.project_name
+                        placeholder="Project Name",
+                        value=state.project_name,
                     ).classes("w-full")
 
                 with ui.column().classes("w-full gap-2"):
                     ui.label("Database").classes("text-lg font-bold")
                     self.use_postgres = ui.checkbox(
-                        "Postgres", value=state.use_postgres
+                        "Postgres",
+                        value=state.use_postgres,
                     ).classes("w-full")
 
                     self.use_mysql = (
@@ -57,7 +61,7 @@ class ProjectConfigPanel(ui.right_drawer):
                             on_change=self._handle_builtin_auth_change,
                         )
                         .tooltip(
-                            "Authentication is built in the API itself, using JWT."
+                            "Authentication is built in the API itself, using JWT.",
                         )
                         .classes("w-full")
                         .bind_enabled_from(self.use_postgres, "value")
@@ -72,7 +76,8 @@ class ProjectConfigPanel(ui.right_drawer):
                         .set_enabled(False)
                     )
                     self.use_rabbitmq = ui.checkbox(
-                        "RabbitMQ", value=state.use_rabbitmq
+                        "RabbitMQ",
+                        value=state.use_rabbitmq,
                     ).classes("w-full")
 
                 with ui.column().classes("w-full gap-2"):
@@ -111,15 +116,18 @@ class ProjectConfigPanel(ui.right_drawer):
                 with ui.column().classes("w-full gap-2"):
                     ui.label("Caching").classes("text-lg font-bold")
                     self.use_redis = ui.checkbox(
-                        "Redis", value=state.use_redis
+                        "Redis",
+                        value=state.use_redis,
                     ).classes("w-full")
 
                 with ui.column().classes("w-full gap-2"):
                     self.loading_spinner = ui.spinner(size="lg").classes(
-                        "hidden mt-4 self-center"
+                        "hidden mt-4 self-center",
                     )
                     self.create_button = ui.button(
-                        "Generate", icon="rocket", on_click=self._create_project
+                        "Generate",
+                        icon="rocket",
+                        on_click=self._create_project,
                     ).classes("w-full py-3 text-lg font-bold mt-4")
 
     def _bind_state_to_ui(self) -> None:

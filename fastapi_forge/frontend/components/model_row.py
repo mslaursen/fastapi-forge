@@ -1,4 +1,5 @@
 from nicegui import ui
+
 from fastapi_forge.dtos import Model
 from fastapi_forge.frontend.state import state
 
@@ -31,10 +32,12 @@ class ModelRow(ui.row):
 
             with ui.row().classes("gap-2"):
                 self.edit_button = ui.button(
-                    icon="edit", on_click=self._toggle_edit
+                    icon="edit",
+                    on_click=self._toggle_edit,
                 ).bind_visibility_from(self, "is_editing", lambda x: not x)
                 self.save_button = ui.button(
-                    icon="save", on_click=self._save_model
+                    icon="save",
+                    on_click=self._save_model,
                 ).bind_visibility_from(self, "is_editing")
                 ui.button(icon="delete", on_click=self._delete_model)
 
