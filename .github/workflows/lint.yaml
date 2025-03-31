@@ -25,4 +25,4 @@ jobs:
         run: uv sync --all-extras --dev
 
       - name: Lint with Ruff
-        run: uv run ruff format && uv run ruff check . --fix --unsafe-fixes
+        run: uv run ruff check .
