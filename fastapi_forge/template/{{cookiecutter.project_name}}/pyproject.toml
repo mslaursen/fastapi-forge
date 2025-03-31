@@ -1,4 +1,9 @@
 [project]
+name = "{{cookiecutter.project_name}}"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.8",
     "uvicorn>=0.34.0",
@@ -30,11 +35,7 @@ dependencies = [
     {%- if cookiecutter.use_rabbitmq -%}
     "aio-pika>=9.5.5",
     {%- endif %}
-]name = "{{cookiecutter.project_name}}"
-version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
-requires-python = ">=3.12"
+]
 
 [tool.pytest.ini_options]
 env = [
@@ -63,6 +64,7 @@ ignore = [
     #### specific rules
     "A001",
     "A002",
+    "ARG001",
     "B904",
     "BLE001",
     "D100",

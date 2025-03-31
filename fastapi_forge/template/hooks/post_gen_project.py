@@ -7,48 +7,20 @@ from fastapi_forge.logger import logger
 
 
 def git_init() -> None:
-    subprocess.run(
-        [
-            "git",
-            "init",
-        ]
-    )
-
-    subprocess.run(
-        [
-            "git",
-            "add",
-            ".",
-        ]
-    )
+    subprocess.run(["git", "init"])
+    subprocess.run(["git", "add", "."])
 
 
 def uv_init() -> None:
-    subprocess.run(
-        [
-            "uv",
-            "lock",
-        ]
-    )
+    subprocess.run(["uv", "lock"])
 
 
 def lint() -> None:
-    subprocess.run(
-        [
-            "make",
-            "lint",
-        ]
-    )
+    subprocess.run(["make", "lint"])
 
 
 def make_env() -> None:
-    subprocess.run(
-        [
-            "cp",
-            ".env.example",
-            ".env",
-        ]
-    )
+    subprocess.run(["cp", ".env.example", ".env"])
 
 
 def _get_delete_flagged() -> tuple[list[str], list[str]]:
@@ -80,6 +52,37 @@ def _get_delete_flagged() -> tuple[list[str], list[str]]:
     return files, folders
 
 
+def delete_empty_init_folders(root_dir: str = "src") -> None:
+    """Delete folders that only contain empty __init__.py files."""
+    for dirpath, dirnames, filenames in os.walk(root_dir, topdown=False):
+        # Skip the root directory itself
+        if dirpath == root_dir:
+            continue
+
+        if set(filenames) == {"__init__.py"} and not dirnames:
+            init_file = os.path.join(dirpath, "__init__.py")
+
+            try:
+                with open(init_file, "r") as f:
+                    content = f.read()
+                    has_code = any(
+                        line.strip() and not line.strip().startswith("#")
+                        for line in content.splitlines()
+                    )
+                    if "__all__ = []" in content:
+                        print(45747457745)
+                    else:
+                        print(123123123)
+                if not has_code:
+                    os.remove(init_file)
+                    os.rmdir(dirpath)
+                    logger.info(f"Deleted empty package: {dirpath}")
+                else:
+                    logger.info(f"Keeping package with code: {dirpath}")
+            except OSError as exc:
+                logger.info(f"Error processing package {dirpath}: {exc}")
+
+
 def cleanup():
     files, folders = _get_delete_flagged()
 
@@ -96,6 +99,8 @@ def cleanup():
             logger.info(f"Deleted folder: {folder_path}")
         except OSError as exc:
             logger.info(f"Error deleting folder {folder_path}: {exc}")
+
+    delete_empty_init_folders()
 
 
 if __name__ == "__main__":
