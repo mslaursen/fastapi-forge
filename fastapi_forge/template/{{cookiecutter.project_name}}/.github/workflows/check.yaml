@@ -1,0 +1,52 @@
+name: Lint & Test
+
+on: [push]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: "pyproject.toml"
+      - name: Install the project
+        run: uv sync --all-extras --dev
+      - name: Lint with Ruff
+        run: uv run ruff check .
+  {%- if cookiecutter.use_postgres %}
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:13.8-bullseye
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432
+        options: >-
+          --health-cmd "pg_isready"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: "pyproject.toml"
+      - name: Install the project
+        run: uv sync --all-extras --dev
+      - name: Run tests
+        env:
+          {{ cookiecutter.project_name|upper|replace('-', '_') }}_PG_HOST: localhost
+          {{ cookiecutter.project_name|upper|replace('-', '_') }}_PG_PORT: {% raw %}${{ job.services.postgres.ports['5432'] }}{% endraw %}
+        run: uv run pytest ./tests -v -s
+  {%- endif %}

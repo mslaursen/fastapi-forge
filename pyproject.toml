@@ -8,7 +8,7 @@ description = "Generate FastAPI projects based on database schema."
 readme = "README.md"
 requires-python = ">=3.12"
 dynamic = ["version"]
-dependencies = ["click", "nicegui", "cookiecutter", "pytest"]
+dependencies = ["click", "nicegui", "cookiecutter", "pytest", "ruff"]
 authors = [{ name = "mslaursen", email = "mslaursendk@gmail.com" }]
 
 [project.urls]
@@ -24,6 +24,8 @@ exclude = ["template", "__init__.py"]
 target-version = "py312"
 line-length = 88
 indent-width = 4
+
+[tool.ruff.lint]
 select = ["ALL"]
 ignore = [
     #### modules
@@ -47,6 +49,7 @@ ignore = [
     "D106",
     "D107",
     "D200",
+    "D203",
     "D205",
     "D212",
     "D400",
@@ -78,7 +81,7 @@ line-ending = "auto"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "PT006"]
+"__init__.py" = ["F401"]
 
 [tool.pytest]
 testpaths = ["tests", "integration"]
-"__init__.py" = ["F401"]

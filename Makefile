@@ -12,4 +12,4 @@ lint:
 	uv run ruff check . --fix --unsafe-fixes
 
 test:
-	uv run pytest tests -s
+	uv run pytest tests -s -v
