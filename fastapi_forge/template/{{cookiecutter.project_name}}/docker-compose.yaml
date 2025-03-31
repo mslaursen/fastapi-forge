@@ -11,10 +11,14 @@ services:
     env_file:
       - .env
     depends_on:
-      {% if cookiecutter.use_postgres %}
+      {%- if cookiecutter.use_postgres %}
       postgres:
         condition: service_healthy
-      {% endif %}
+      {%- endif %}
+      {%- if cookiecutter.use_redis %}
+      redis:
+        condition: service_healthy
+      {%- endif %}
     environment:
       {{ cookiecutter.project_name|upper|replace('-', '_') }}_RELOAD: "True"
       {{ cookiecutter.project_name|upper|replace('-', '_') }}_SERVER_HOST: 0.0.0.0
@@ -39,6 +43,10 @@ services:
       {{ cookiecutter.project_name|upper|replace('-', '_') }}_RABBITMQ_CONNECTION_POOL_SIZE: 2
       {{ cookiecutter.project_name|upper|replace('-', '_') }}_RABBITMQ_CHANNEL_POOL_SIZE: 10
       {% endif %}
+    {%- if cookiecutter.use_alembic %}
+    volumes:
+      - ./migrations:/app/migrations
+    {% endif %}
     develop:
       watch:
         - action: sync
@@ -47,11 +55,11 @@ services:
         - action: sync
           path: ./tests
           target: /app/tests
-        {% if cookiecutter.use_alembic %}
+        {%- if cookiecutter.use_alembic %}
         - action: sync
           path: ./migrations
           target: /app/migrations
-        {% endif %}
+        {%- endif %}
         - action: rebuild
           path: pyproject.toml
         - action: rebuild
@@ -74,7 +82,7 @@ services:
       timeout: 3s
       retries: 40
   {% endif %}
-  {% if cookiecutter.use_redis %}
+  {%- if cookiecutter.use_redis %}
   redis:
     image: bitnami/redis:7.4
     container_name: {{ cookiecutter.project_name }}-redis
@@ -92,11 +100,11 @@ services:
       - {{ cookiecutter.project_name }}-redis-data:/bitnami/redis/data
   {% endif %}
 volumes:
-  {% if cookiecutter.use_postgres %}
+  {%- if cookiecutter.use_postgres %}
   {{ cookiecutter.project_name }}-pg-data:
     name: {{ cookiecutter.project_name }}-pg-data
-  {% endif %}
-  {% if cookiecutter.use_redis %}
+  {%- endif %}
+  {%- if cookiecutter.use_redis %}
   {{ cookiecutter.project_name }}-redis-data:
     name: {{ cookiecutter.project_name }}-redis-data
   {% endif %}
