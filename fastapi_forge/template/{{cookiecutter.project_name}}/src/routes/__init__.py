@@ -1,9 +1,7 @@
 from src.routes.health_routes import router as health_router
-{% if cookiecutter.create_routes %}
 {% for model in cookiecutter.models.models if model.metadata.create_endpoints -%}
 from src.routes.{{ model.name }}_routes import router as {{ model.name }}_router
 {% endfor %}
-{% endif %}
 {% if cookiecutter.use_builtin_auth %}
 from src.routes.auth_routes import router as auth_router
 {% endif %}

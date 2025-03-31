@@ -21,6 +21,7 @@ config:
       - src/dtos/auth_dtos.py
       - src/routes/auth_routes.py
       - src/utils/auth_utils.py
+      - src/constants.py
 
   use_redis:
     value: {{cookiecutter.use_redis | lower}}
@@ -33,3 +34,5 @@ config:
     type: bool
     paths:
       - src/services/rabbitmq
+      - src/routes/demo_routes.py
+
