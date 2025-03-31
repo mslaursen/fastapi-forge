@@ -45,6 +45,8 @@ exclude = ["migrations"]
 target-version = "py312"
 line-length = 88
 indent-width = 4
+
+[tool.ruff.lint]
 select = ["ALL"]
 ignore = [
     #### modules
@@ -57,10 +59,8 @@ ignore = [
     "TID", #
 
     #### specific rules
-    "A001",
     "A002",
     "BLE001",
-    "B904",
     "D100",
     "D101",
     "D102",
@@ -70,11 +70,11 @@ ignore = [
     "D106",
     "D107",
     "D200",
+    "D203",
     "D205",
     "D212",
     "D400",
     "D401",
-    "D404",
     "D415",
     "E402",
     "E501",
@@ -87,14 +87,10 @@ ignore = [
     "TRY003",
     "TRY201",
     "TRY203",
-    "TRY300",
     "TD002",
     "TD003",
     "FIX002",
     "PLR0913",
-    "PLR2004",
-    "PGH003",
-    "RUF012",
     "S701",
 ]
 
@@ -106,3 +102,7 @@ line-ending = "auto"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "PT006"]
+"__init__.py" = ["F401"]
+
+[tool.pytest]
+testpaths = ["tests", "integration"]
