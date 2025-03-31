@@ -1,10 +1,7 @@
 name: Lint
 
-on:
-  push:
-    branches:
-      - main
 
+on: [push]
 jobs:
   uv-example:
     name: python
