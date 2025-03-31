@@ -17,12 +17,6 @@
     "use_rabbitmq": {
         "default": true
     },
-    "create_routes": {
-        "default": true
-    },
-    "create_tests": {
-        "default": true
-    },
     "models": {
         "models": []
     },

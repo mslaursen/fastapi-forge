@@ -57,7 +57,7 @@ class ProjectLoader:
 
     def load_project_spec(self) -> ProjectSpec:
         project_dict = self._load_project_to_dict()
-        models = [Model(**model) for model in project_dict.get("models", [])]
+        models = [Model(**model) for model in project_dict.get("models", []) or []]
         project_dict.pop("models")
         return ProjectSpec(**project_dict, models=models)
 
