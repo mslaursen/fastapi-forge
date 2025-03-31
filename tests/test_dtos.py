@@ -60,7 +60,7 @@ def test_invalid_field_name(invalid_name: str) -> None:
         (FieldDataType.INTEGER, 'factory.Faker("random_int")'),
         (
             FieldDataType.FLOAT,
-            'factory.Faker("pyfloat", posistive=True, min_value=0.1, max_value=100)',
+            'factory.Faker("pyfloat", positive=True, min_value=0.1, max_value=100)',
         ),
         (FieldDataType.BOOLEAN, 'factory.Faker("boolean")'),
         (FieldDataType.DATETIME, 'factory.Faker("date_time")'),
