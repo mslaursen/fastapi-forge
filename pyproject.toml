@@ -8,7 +8,7 @@ description = "Generate FastAPI projects based on database schema."
 readme = "README.md"
 requires-python = ">=3.12"
 dynamic = ["version"]
-dependencies = ["click", "nicegui", "cookiecutter", "pytest"]
+dependencies = ["click", "nicegui", "cookiecutter", "pytest", "ruff"]
 authors = [{ name = "mslaursen", email = "mslaursendk@gmail.com" }]
 
 [project.urls]
