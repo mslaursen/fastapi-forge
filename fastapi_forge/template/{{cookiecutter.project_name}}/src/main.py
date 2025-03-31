@@ -49,7 +49,9 @@ def get_app() -> FastAPI:
         logger.info(
             settings.model_dump_json(indent=2),
         )
-
+    {% if cookiecutter.use_alembic %}
+    logger.info("Alembic enabled - see Makefile for migration commands")
+    {% endif %}
     app = FastAPI(lifespan=lifespan)
     add_middleware(app)
     app.include_router(base_router)
