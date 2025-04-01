@@ -20,7 +20,9 @@ class ProjectState(BaseModel):
     selected_relation: ModelRelationship | None = None
 
     render_models_fn: Callable | None = None
+    render_model_editor_fn: Callable | None = None
     select_model_fn: Callable | None = None
+    deselect_model_fn: Callable | None = None
 
     project_name: str = ""
     use_postgres: bool = False
@@ -70,16 +72,22 @@ class ProjectState(BaseModel):
             n.notify_validation_error(exc)
 
     def delete_model(self, model: Model) -> None:
-        if model not in self.models:
+        if (
+            model not in self.models
+            or self.deselect_model_fn is None
+            or self.render_models_fn is None
+        ):
             ui.notify("Something went wrong...", type="warning")
             return
+
         self.models.remove(model)
-        if self.selected_model == model:
-            self.selected_model = None
-        if self.render_models_fn:
-            self.render_models_fn()
+        self.deselect_model_fn()
+        self.render_models_fn()
 
     def update_model_name(self, model: Model, new_name: str) -> None:
+        if model.name == new_name:
+            return
+
         if any(m.name == new_name for m in self.models if m != model):
             n.notify_model_exists(new_name)
             return
@@ -88,15 +96,30 @@ class ProjectState(BaseModel):
         model.name = new_name
         self._update_relationships_for_rename(old_name, new_name)
 
+        if self.select_model_fn and model == self.selected_model:
+            self.select_model_fn(model)
+
         if self.render_models_fn:
             self.render_models_fn()
 
+        self.render_model_editor_fn()
+
     def select_model(self, model: Model) -> None:
-        if self.select_model_fn is None:
+        print("selecting")
+        if (
+            self.select_model_fn is None
+            or self.render_models_fn is None
+            or self.deselect_model_fn is None
+        ):
             n.notify_something_went_wrong()
             return
         self.selected_model = model
         self.select_model_fn(model)
+
+        if model not in self.models:
+            self.deselect_model_fn()
+
+        self.render_models_fn()
 
     def get_project_spec(self) -> ProjectSpec:
         return ProjectSpec(

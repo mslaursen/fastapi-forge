@@ -1,5 +1,7 @@
 from typing import Any
 
+SELECTED_MODEL_TEXT_COLOR = "text-black-500 dark:text-amber-300"
+
 FIELD_COLUMNS: list[dict[str, Any]] = [
     {
         "name": "name",

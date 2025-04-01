@@ -38,10 +38,12 @@ def load_initial_project(path: Path) -> p.ProjectSpec:
 def create_ui_components() -> None:
     """Create all UI components"""
     with ui.column().classes("w-full h-full items-center justify-center mt-4"):
-        ModelEditorPanel().classes("no-shadow min-w-[600px]")
+        ModelEditorPanel().classes(
+            "shadow-2xl dark:shadow-none min-w-[700px] max-w-[800px]"
+        )
 
-    ModelPanel()
-    ProjectConfigPanel()
+    ModelPanel().classes("shadow-xl dark:shadow-none")
+    ProjectConfigPanel().classes("shadow-xl dark:shadow-none")
 
 
 def run_ui(reload: bool) -> None:
