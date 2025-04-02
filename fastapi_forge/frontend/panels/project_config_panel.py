@@ -200,11 +200,41 @@ class ProjectConfigPanel(ui.right_drawer):
                 state.render_models_fn()
             ui.notify("The 'auth_user' model has been deleted.", type="positive")
 
+    async def _warn_override(self) -> bool:
+        """Show a confirmation dialog if the project already exists."""
+        dialog = ui.dialog()
+        with dialog, ui.card().classes("w-full max-w-md p-6 text-center"):
+            ui.icon("warning", color="orange-500").classes("text-4xl self-center")
+            ui.markdown(
+                f"Project '{state.project_name}' already exists!\n\n"
+                "This will **permanently overwrite** the existing project directory.\n"
+                "Are you sure you want to continue?"
+            ).classes("text-center")
+
+            with ui.row().classes("w-full justify-center gap-4 mt-4"):
+                ui.button("Cancel", color="primary", on_click=dialog.close)
+                ui.button(
+                    "Overwrite", color="negative", on_click=lambda: dialog.submit(True)
+                )
+
+        return await dialog
+
     async def _create_project(self) -> None:
-        """Generate the project based on current state"""
+        """Generate the project based on the current state."""
+        project_path = Path(state.project_name)
+
+        if project_path.exists():
+            try:
+                override = await self._warn_override()
+                if not override:
+                    ui.notify("Project generation cancelled.", type="warning")
+                    return
+            except Exception as e:
+                ui.notify(f"Error displaying confirmation: {e}", type="negative")
+                return
+
         self.create_button.classes("hidden")
         self.loading_spinner.classes(remove="hidden")
-
         ongoing_notification = ui.notification("Generating project...")
 
         try:

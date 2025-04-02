@@ -36,13 +36,14 @@ class ModelRow(ui.row):
             )
             self.name_label.bind_visibility_from(self, "is_editing", lambda x: not x)
 
-            with ui.row().classes("gap-2"):
+            with ui.row().classes("flex-nowrap gap-2 min-w-fit"):
                 self.edit_button = (
                     ui.button(
                         icon="edit",
                     )
                     .on("click.stop", self._toggle_edit)
                     .bind_visibility_from(self, "is_editing", lambda x: not x)
+                    .classes("min-w-fit")
                 )
 
                 self.save_button = (
@@ -51,11 +52,14 @@ class ModelRow(ui.row):
                     )
                     .on("click.stop", self._save_model)
                     .bind_visibility_from(self, "is_editing")
+                    .classes("min-w-fit")
                 )
 
                 ui.button(
                     icon="delete",
-                ).on("click.stop", lambda: state.delete_model(self.model))
+                ).on("click.stop", lambda: state.delete_model(self.model)).classes(
+                    "min-w-fit"
+                )
 
     def _toggle_edit(self) -> None:
         self.is_editing = not self.is_editing
