@@ -18,6 +18,7 @@ class ModelRow(ui.row):
         self._build()
 
     def _build(self) -> None:
+        self.on("click", lambda: state.select_model(self.model))
         base_classes = "w-full flex items-center justify-between cursor-pointer p-2 rounded transition-all"
         if self.is_selected_row:
             base_classes += " bg-blue-100 dark:bg-blue-900 border-l-4 border-blue-500"
@@ -25,11 +26,7 @@ class ModelRow(ui.row):
             base_classes += " hover:bg-gray-100 dark:hover:bg-gray-800"
 
         with self.classes(base_classes):
-            self.name_label = (
-                ui.label(text=self.model.name)
-                .classes("self-center")
-                .on("click", lambda: state.select_model(self.model))
-            )
+            self.name_label = ui.label(text=self.model.name).classes("self-center")
             if self.color:
                 self.name_label.classes(add=self.color)
             self.name_input = (
@@ -39,23 +36,31 @@ class ModelRow(ui.row):
             )
             self.name_label.bind_visibility_from(self, "is_editing", lambda x: not x)
 
-            # self.on("click", lambda: state.select_model(self.model))
-
             with ui.row().classes("gap-2"):
-                self.edit_button = ui.button(
-                    icon="edit",
-                    on_click=self._toggle_edit,
-                ).bind_visibility_from(self, "is_editing", lambda x: not x)
-                self.save_button = ui.button(
-                    icon="save",
-                    on_click=self._save_model,
-                ).bind_visibility_from(self, "is_editing")
-                ui.button(
-                    icon="delete", on_click=lambda _: state.delete_model(self.model)
+                # Use click.stop to prevent event bubbling
+                self.edit_button = (
+                    ui.button(
+                        icon="edit",
+                    )
+                    .on("click.stop", self._toggle_edit)
+                    .bind_visibility_from(self, "is_editing", lambda x: not x)
                 )
+
+                self.save_button = (
+                    ui.button(
+                        icon="save",
+                    )
+                    .on("click.stop", self._save_model)
+                    .bind_visibility_from(self, "is_editing")
+                )
+
+                ui.button(
+                    icon="delete",
+                ).on("click.stop", lambda: state.delete_model(self.model))
 
     def _toggle_edit(self) -> None:
         print("editing")
+
         self.is_editing = not self.is_editing
 
     def _save_model(self) -> None:

@@ -105,7 +105,10 @@ class ProjectState(BaseModel):
         self.render_model_editor_fn()
 
     def select_model(self, model: Model) -> None:
-        print("selecting")
+        if self.selected_model == model:
+            return
+        # print("selecting")
+
         if (
             self.select_model_fn is None
             or self.render_models_fn is None
