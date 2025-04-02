@@ -37,7 +37,6 @@ class ModelRow(ui.row):
             self.name_label.bind_visibility_from(self, "is_editing", lambda x: not x)
 
             with ui.row().classes("gap-2"):
-                # Use click.stop to prevent event bubbling
                 self.edit_button = (
                     ui.button(
                         icon="edit",
@@ -59,8 +58,6 @@ class ModelRow(ui.row):
                 ).on("click.stop", lambda: state.delete_model(self.model))
 
     def _toggle_edit(self) -> None:
-        print("editing")
-
         self.is_editing = not self.is_editing
 
     def _save_model(self) -> None:
