@@ -55,7 +55,6 @@ def _get_delete_flagged() -> tuple[list[str], list[str]]:
 def delete_empty_init_folders(root_dir: str = "src") -> None:
     """Delete folders that only contain empty __init__.py files."""
     for dirpath, dirnames, filenames in os.walk(root_dir, topdown=False):
-        # Skip the root directory itself
         if dirpath == root_dir:
             continue
 
@@ -69,10 +68,6 @@ def delete_empty_init_folders(root_dir: str = "src") -> None:
                         line.strip() and not line.strip().startswith("#")
                         for line in content.splitlines()
                     )
-                    if "__all__ = []" in content:
-                        print(45747457745)
-                    else:
-                        print(123123123)
                 if not has_code:
                     os.remove(init_file)
                     os.rmdir(dirpath)
@@ -108,4 +103,4 @@ if __name__ == "__main__":
     uv_init()
     make_env()
     lint()
-    git_init()
+    # git_init()

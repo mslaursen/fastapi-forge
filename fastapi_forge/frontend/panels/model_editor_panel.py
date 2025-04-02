@@ -23,6 +23,8 @@ class ModelEditorPanel(ui.card):
         self.visible = False
 
         state.select_model_fn = self.set_selected_model
+        state.deselect_model_fn = self.deselect_model
+        state.render_model_editor_fn = self.refresh
 
         self.add_field_modal: AddFieldModal = AddFieldModal(
             on_add_field=self._handle_modal_add_field,
@@ -298,6 +300,10 @@ class ModelEditorPanel(ui.card):
                 return False
         return True
 
+    def refresh(self) -> None:
+        self._refresh_table(state.selected_model.fields)
+        self._refresh_relationship_table(state.selected_model.relationships)
+
     def _refresh_table(self, fields: list[ModelField]) -> None:
         if state.selected_model is None:
             return
@@ -513,3 +519,6 @@ class ModelEditorPanel(ui.card):
         self._refresh_table(model.fields)
         self._refresh_relationship_table(model.relationships)
         self.visible = True
+
+    def deselect_model(self) -> None:
+        self.visible = False
