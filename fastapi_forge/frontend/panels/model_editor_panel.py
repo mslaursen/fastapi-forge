@@ -407,6 +407,7 @@ class ModelEditorPanel(ui.card):
         nullable: bool,
         unique: bool,
         index: bool,
+        metadata: ModelFieldMetadata,
         default_value: str | None = None,
         extra_kwargs: dict[str, Any] | None = None,
     ) -> None:
@@ -431,7 +432,7 @@ class ModelEditorPanel(ui.card):
                 index=index,
                 default_value=default_value,
                 extra_kwargs=extra_kwargs,
-                metadata=state.selected_field.metadata,
+                metadata=metadata,
             )
 
             model_index = state.selected_model.fields.index(state.selected_field)
