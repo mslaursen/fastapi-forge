@@ -4,7 +4,7 @@ from collections.abc import Callable
 from nicegui import ui
 from pydantic import ValidationError
 
-from fastapi_forge.dtos import ModelField
+from fastapi_forge.dtos import ModelField, ModelFieldMetadata
 from fastapi_forge.enums import FieldDataType
 from fastapi_forge.frontend.notifications import notify_validation_error
 from fastapi_forge.frontend.state import state
@@ -40,6 +40,7 @@ class BaseFieldModal(ui.dialog, ABC):
                     self.field_type = ui.select(
                         list(FieldDataType),
                         label="Field Type",
+                        on_change=self._toggle_metadata_visibility,
                     ).props("outlined dense")
                     self.default_value = ui.input(label="Default Value").props(
                         "outlined dense"
@@ -50,6 +51,23 @@ class BaseFieldModal(ui.dialog, ABC):
                     self.nullable = ui.checkbox("Nullable").props("dense")
                     self.unique = ui.checkbox("Unique").props("dense")
                     self.index = ui.checkbox("Index").props("dense")
+
+                self.metadata_card = (
+                    ui.card()
+                    .classes("w-full p-4 border rounded-lg")
+                    .bind_visibility_from(self, "show_metadata")
+                )
+                with self.metadata_card:
+                    with ui.row().classes("w-full justify-between items-center mb-2"):
+                        ui.label("Field Metadata").classes("text-md font-medium")
+
+                    with ui.row().classes("w-full gap-4"):
+                        self.created_at = ui.checkbox("Created At Timestamp").props(
+                            "dense"
+                        )
+                        self.updated_at = ui.checkbox("Updated At Timestamp").props(
+                            "dense"
+                        )
 
                 with ui.card().classes("w-full p-4 border rounded-lg"):
                     with ui.row().classes("w-full justify-between items-center"):
@@ -64,6 +82,9 @@ class BaseFieldModal(ui.dialog, ABC):
 
             with ui.row().classes("w-full justify-end p-4 border-t gap-2"):
                 self._build_action_buttons()
+
+    def _toggle_metadata_visibility(self):
+        self.show_metadata = self.field_type.value == FieldDataType.DATETIME
 
     def _add_kwarg_row(self, key: str = "", value: str = "") -> None:
         with (
@@ -113,6 +134,15 @@ class BaseFieldModal(ui.dialog, ABC):
                     index=self.index.value,
                     default_value=self.default_value.value or None,
                     extra_kwargs=self.extra_kwargs or None,
+                    metadata=ModelFieldMetadata(
+                        is_created_at_timestamp=(
+                            self.created_at.value if self.show_metadata else False
+                        ),
+                        is_updated_at_timestamp=(
+                            self.updated_at.value if self.show_metadata else False
+                        ),
+                        is_foreign_key=False,
+                    ),
                 )
                 ui.code(generate_field(preview_field)).classes("w-full")
                 modal.open()
@@ -127,6 +157,9 @@ class BaseFieldModal(ui.dialog, ABC):
         self.unique.value = False
         self.index.value = False
         self.default_value.value = ""
+        self.created_at.value = False
+        self.updated_at.value = False
+        self.show_metadata = False
         self.extra_kwargs = {}
         self.kwargs_container.clear()
 
@@ -137,6 +170,7 @@ class AddFieldModal(BaseFieldModal):
     def __init__(self, on_add_field: Callable):
         super().__init__()
         self.on_add_field = on_add_field
+        self.show_metadata = False
 
     def _build_action_buttons(self) -> None:
         ui.button("Cancel", on_click=self.close)
@@ -151,6 +185,15 @@ class AddFieldModal(BaseFieldModal):
                 index=self.index.value,
                 default_value=self.default_value.value or None,
                 extra_kwargs=self.extra_kwargs or None,
+                metadata=ModelFieldMetadata(
+                    is_created_at_timestamp=(
+                        self.created_at.value if self.show_metadata else False
+                    ),
+                    is_updated_at_timestamp=(
+                        self.updated_at.value if self.show_metadata else False
+                    ),
+                    is_foreign_key=False,
+                ),
             ),
         )
 
@@ -161,6 +204,7 @@ class UpdateFieldModal(BaseFieldModal):
     def __init__(self, on_update_field: Callable):
         super().__init__()
         self.on_update_field = on_update_field
+        self.show_metadata = False
 
     def _build_action_buttons(self) -> None:
         ui.button("Cancel", on_click=self.close)
@@ -182,6 +226,15 @@ class UpdateFieldModal(BaseFieldModal):
             index=self.index.value,
             default_value=self.default_value.value or None,
             extra_kwargs=self.extra_kwargs or None,
+            metadata=ModelFieldMetadata(
+                is_created_at_timestamp=(
+                    self.created_at.value if self.show_metadata else False
+                ),
+                is_updated_at_timestamp=(
+                    self.updated_at.value if self.show_metadata else False
+                ),
+                is_foreign_key=False,
+            ),
         )
         self.close()
 
@@ -195,6 +248,9 @@ class UpdateFieldModal(BaseFieldModal):
             self.unique.value = field.unique
             self.index.value = field.index
             self.default_value.value = field.default_value or ""
+            self.created_at.value = field.metadata.is_created_at_timestamp
+            self.updated_at.value = field.metadata.is_updated_at_timestamp
+            self.show_metadata = field.type == FieldDataType.DATETIME
             self.extra_kwargs = field.extra_kwargs.copy() if field.extra_kwargs else {}
             self.kwargs_container.clear()
 
