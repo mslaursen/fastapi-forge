@@ -220,8 +220,12 @@ class ModelEditorPanel(ui.card):
             nullable=False,
             unique=False,
             index=False,
-            default_value="",
-            extra_kwargs={},
+            default_value="datetime.now(timezone.utc)",
+            extra_kwargs=(
+                {"onupdate": "datetime.now(timezone.utc)"}
+                if is_updated_at_timestamp
+                else None
+            ),
             metadata=ModelFieldMetadata(
                 is_created_at_timestamp=is_created_at_timestamp,
                 is_updated_at_timestamp=is_updated_at_timestamp,
