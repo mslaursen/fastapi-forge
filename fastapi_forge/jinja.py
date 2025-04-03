@@ -2,7 +2,13 @@ from typing import Any
 
 from jinja2 import Environment
 
-from fastapi_forge.dtos import Model, ModelField, ModelFieldMetadata, ModelRelationship
+from fastapi_forge.dtos import (
+    Model,
+    ModelField,
+    ModelFieldMetadata,
+    ModelMetadata,
+    ModelRelationship,
+)
 from fastapi_forge.enums import FieldDataType
 from fastapi_forge.jinja_utils import generate_field, generate_relationship
 
@@ -444,6 +450,7 @@ if __name__ == "__main__":
     models = [
         Model(
             name="auth_user",
+            metadata=ModelMetadata(is_auth_model=True),
             fields=[
                 ModelField(
                     name="id",
