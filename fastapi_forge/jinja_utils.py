@@ -29,19 +29,19 @@ def _gen_field(
 ) -> str:
     args = [f"{'sa.' if prefix_sa else ''}{sa_type}"]
 
-    if field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp:
-        args.append("default=datetime.now(timezone.utc)")
-        if field.metadata.is_updated_at_timestamp:
-            args.append("onupdate=datetime.now(timezone.utc)")
-    else:
-        if field.metadata.is_foreign_key and target:
-            args.append(f'sa.ForeignKey("{target + ".id"}", ondelete="CASCADE")')
-        if field.primary_key:
-            args.append("primary_key=True")
-        if field.unique:
-            args.append("unique=True")
-        if field.index:
-            args.append("index=True")
+    if field.metadata.is_foreign_key and target:
+        args.append(f'sa.ForeignKey("{target + ".id"}", ondelete="CASCADE")')
+    if field.primary_key:
+        args.append("primary_key=True")
+    if field.unique:
+        args.append("unique=True")
+    if field.index:
+        args.append("index=True")
+    if field.default_value:
+        args.append(f"default={field.default_value}")
+    if field.extra_kwargs:
+        for k, v in field.extra_kwargs.items():
+            args.append(f"{k}={v}")
 
     if not isinstance(field.type, FieldDataType):
         field.type = FieldDataType(field.type)

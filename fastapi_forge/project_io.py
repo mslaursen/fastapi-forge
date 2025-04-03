@@ -107,6 +107,7 @@ class ProjectBuilder:
         self._insert_relation_fields()
 
     def _insert_relation_fields(self) -> None:
+        """Adds ModelFields to a model, based its relationships."""
         for model in self.project_spec.models:
             field_names_set = {field.name for field in model.fields}
             for relation in model.relationships:
@@ -161,7 +162,12 @@ class ProjectBuilder:
         tasks = []
         for method, render_func in TEST_RENDERERS.items():
             method_suffix = "id" if method == HTTPMethod.GET_ID else ""
-            file_name = f"test_{method.value.replace('_id', '')}_{camel_to_snake(model.name)}{f'_{method_suffix}' if method_suffix else ''}.py"
+            file_name = (
+                f"test_{method.value.replace('_id', '')}"
+                f"_{camel_to_snake(model.name)}"
+                f"{f'_{method_suffix}' if method_suffix else ''}"
+                ".py"
+            )
             tasks.append(_write_file(test_dir / file_name, render_func(model)))
 
         await asyncio.gather(*tasks)

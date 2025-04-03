@@ -20,10 +20,14 @@ project:
           type: String
         - name: created_at
           type: DateTime
+          default_value: datetime.now(timezone.utc)
           metadata:
             is_created_at_timestamp: true
         - name: updated_at
           type: DateTime
+          default_value: datetime.now(timezone.utc)
+          extra_kwargs:
+            onupdate: datetime.now(timezone.utc)
           metadata:
             is_updated_at_timestamp: true
       relationships: []
@@ -45,10 +49,14 @@ project:
           nullable: true
         - name: created_at
           type: DateTime
+          default_value: datetime.now(timezone.utc)
           metadata:
             is_created_at_timestamp: true
         - name: updated_at
           type: DateTime
+          default_value: datetime.now(timezone.utc)
+          extra_kwargs:
+            onupdate: datetime.now(timezone.utc)
           metadata:
             is_updated_at_timestamp: true
       relationships:
@@ -75,10 +83,14 @@ project:
           nullable: true
         - name: created_at
           type: DateTime
+          default_value: datetime.now(timezone.utc)
           metadata:
             is_created_at_timestamp: true
         - name: updated_at
           type: DateTime
+          default_value: datetime.now(timezone.utc)
+          extra_kwargs:
+            onupdate: datetime.now(timezone.utc)
           metadata:
             is_updated_at_timestamp: true
       relationships: []
@@ -90,8 +102,6 @@ project:
           primary_key: true
         - name: purchase_date
           type: DateTime
-          metadata:
-            is_created_at_timestamp: true
         - name: playtime_hours
           type: Integer
         - name: achievements_unlocked
@@ -99,10 +109,14 @@ project:
           default: 0
         - name: created_at
           type: DateTime
+          default_value: datetime.now(timezone.utc)
           metadata:
             is_created_at_timestamp: true
         - name: updated_at
           type: DateTime
+          default_value: datetime.now(timezone.utc)
+          extra_kwargs:
+            onupdate: datetime.now(timezone.utc)
           metadata:
             is_updated_at_timestamp: true
       relationships:
@@ -126,10 +140,14 @@ project:
           type: Integer
         - name: created_at
           type: DateTime
+          default_value: datetime.now(timezone.utc)
           metadata:
             is_created_at_timestamp: true
         - name: updated_at
           type: DateTime
+          default_value: datetime.now(timezone.utc)
+          extra_kwargs:
+            onupdate: datetime.now(timezone.utc)
           metadata:
             is_updated_at_timestamp: true
       relationships:
@@ -154,10 +172,14 @@ project:
           nullable: true
         - name: created_at
           type: DateTime
+          default_value: datetime.now(timezone.utc)
           metadata:
             is_created_at_timestamp: true
         - name: updated_at
           type: DateTime
+          default_value: datetime.now(timezone.utc)
+          extra_kwargs:
+            onupdate: datetime.now(timezone.utc)
           metadata:
             is_updated_at_timestamp: true
       relationships:
