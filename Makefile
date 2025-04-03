@@ -13,3 +13,6 @@ lint:
 
 test:
 	uv run pytest tests -s -v
+
+test-filter:
+	uv run pytest tests -v -s -k $(filter)

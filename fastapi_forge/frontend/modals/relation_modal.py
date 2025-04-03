@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from collections.abc import Callable
 
 from nicegui import ui
@@ -5,39 +6,65 @@ from nicegui import ui
 from fastapi_forge.dtos import Model, ModelRelationship
 
 
-class AddRelationModal(ui.dialog):
+class BaseRelationModal(ui.dialog, ABC):
+    title: str
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._build_common_ui()
+
+    def _build_common_ui(self) -> None:
+        with self, ui.card().classes("w-full max-w-2xl shadow-lg rounded-lg"):
+            with ui.row().classes("w-full justify-between items-center p-4 border-b"):
+                ui.label(self.title).classes("text-xl font-semibold")
+
+            with ui.column().classes("w-full p-6 space-y-4"):
+                with ui.grid(columns=2).classes("w-full gap-4"):
+                    self.field_name = ui.input(label="Field Name").props(
+                        "outlined dense"
+                    )
+                    self.target_model = ui.select(
+                        label="Target Model",
+                        options=[],
+                    ).props("outlined dense")
+                    self.back_populates = ui.input(label="Back Populates").props(
+                        "outlined dense"
+                    )
+
+                with ui.row().classes("w-full justify-between gap-4"):
+                    self.nullable = ui.checkbox("Nullable").props("dense")
+                    self.index = ui.checkbox("Index").props("dense")
+                    self.unique = ui.checkbox("Unique").props("dense")
+
+            with ui.row().classes("w-full justify-end p-4 border-t gap-2"):
+                self._build_action_buttons()
+
+    @abstractmethod
+    def _build_action_buttons(self) -> None:
+        pass
+
+    def _reset(self) -> None:
+        self.field_name.value = ""
+        self.target_model.value = None
+        self.back_populates.value = ""
+        self.nullable.value = False
+        self.index.value = False
+        self.unique.value = False
+
+
+class AddRelationModal(BaseRelationModal):
+    title = "Add Relationship"
+
     def __init__(self, on_add_relation: Callable):
         super().__init__()
         self.on_add_relation = on_add_relation
-        self.on("hide", lambda: self._reset())
-        self._build()
 
-    def _build(self) -> None:
-        with self, ui.card().classes("no-shadow border-[1px]"):
-            ui.label("Add Relationship").classes("text-lg font-bold")
-            with ui.row().classes("w-full gap-2"):
-                self.field_name = ui.input(label="Field Name").classes("w-full")
-                self.target_model = ui.select(
-                    label="Target Model",
-                    options=[],
-                ).classes("w-full")
-
-                self.nullable = ui.checkbox("Nullable").classes("w-full")
-                self.index = ui.checkbox("Index").classes("w-full")
-                self.unique = ui.checkbox("Unique").classes("w-full")
-
-                self.back_populates = ui.input(label="Back Populates").classes("w-full")
-
-            with ui.row().classes("w-full justify-end gap-2"):
-                ui.button("Close", on_click=self.close)
-                ui.button(
-                    "Add Relation",
-                    on_click=self._add_relation,
-                )
-
-    def _set_target_model_options(self, models: list[Model]) -> None:
-        self.target_model.options = [model.name for model in models]
-        self.target_model.value = models[0].name if models else None
+    def _build_action_buttons(self) -> None:
+        ui.button("Cancel", on_click=self.close)
+        ui.button(
+            "Add Relation",
+            on_click=self._add_relation,
+        )
 
     def _add_relation(self) -> None:
         self.on_add_relation(
@@ -50,51 +77,26 @@ class AddRelationModal(ui.dialog):
         )
         self.close()
 
-    def _reset(self) -> None:
-        self.field_name.value = ""
-        self.target_model.value = None
-        self.back_populates.value = ""
-        self.nullable.value = False
-        self.index.value = False
-        self.unique.value = False
-
     def open(self, models: list[Model]) -> None:
         self.target_model.options = [model.name for model in models]
         self.target_model.value = models[0].name if models else None
         super().open()
 
 
-class UpdateRelationModal(ui.dialog):
+class UpdateRelationModal(BaseRelationModal):
+    title = "Update Relationship"
+
     def __init__(self, on_update_relation: Callable):
         super().__init__()
         self.on_update_relation = on_update_relation
         self.selected_relation: ModelRelationship | None = None
 
-        self.on("hide", lambda: self._reset())
-        self._build()
-
-    def _build(self) -> None:
-        with self, ui.card().classes("no-shadow border-[1px]"):
-            ui.label("Update Relationship").classes("text-lg font-bold")
-            with ui.row().classes("w-full gap-2"):
-                self.field_name = ui.input(label="Field Name").classes("w-full")
-                self.target_model = ui.select(
-                    label="Target Model",
-                    options=[],
-                ).classes("w-full")
-
-                self.nullable = ui.checkbox("Nullable").classes("w-full")
-                self.index = ui.checkbox("Index").classes("w-full")
-                self.unique = ui.checkbox("Unique").classes("w-full")
-
-                self.back_populates = ui.input(label="Back Populates").classes("w-full")
-
-            with ui.row().classes("w-full justify-end gap-2"):
-                ui.button("Close", on_click=self.close)
-                ui.button(
-                    "Update Relation",
-                    on_click=self._update_relation,
-                )
+    def _build_action_buttons(self) -> None:
+        ui.button("Cancel", on_click=self.close)
+        ui.button(
+            "Update Relation",
+            on_click=self._update_relation,
+        )
 
     def _update_relation(self) -> None:
         if not self.selected_relation:
@@ -119,15 +121,6 @@ class UpdateRelationModal(ui.dialog):
             self.index.value = relation.index
             self.unique.value = relation.unique
             self.back_populates.value = relation.back_populates
-
-    def _reset(self) -> None:
-        self.selected_relation = None
-        self.field_name.value = ""
-        self.target_model.value = None
-        self.back_populates.value = ""
-        self.nullable.value = False
-        self.index.value = False
-        self.unique.value = False
 
     def open(
         self,

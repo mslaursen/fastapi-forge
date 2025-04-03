@@ -1,104 +1,187 @@
+from abc import ABC, abstractmethod
 from collections.abc import Callable
 
 from nicegui import ui
+from pydantic import ValidationError
 
 from fastapi_forge.dtos import ModelField
 from fastapi_forge.enums import FieldDataType
+from fastapi_forge.frontend.notifications import notify_validation_error
 from fastapi_forge.frontend.state import state
+from fastapi_forge.jinja_utils import generate_field
 
 
-class AddFieldModal(ui.dialog):
-    def __init__(self, on_add_field: Callable):
-        super().__init__()
-        self.on_add_field = on_add_field
-        self.on("hide", lambda: self.reset())
+class BaseFieldModal(ui.dialog, ABC):
+    title: str
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.extra_kwargs = {}
         self._build()
 
-    def _build(self) -> None:
-        with self, ui.card().classes("no-shadow border-[1px]"):
-            ui.label("Add New Field").classes("text-lg font-bold")
-            with ui.row().classes("w-full gap-2"):
-                self.field_name = ui.input(label="Field Name").classes("w-full")
-                self.field_type = ui.select(
-                    list(FieldDataType),
-                    label="Field Type",
-                ).classes("w-full")
-                self.primary_key = ui.checkbox("Primary Key").classes("w-full")
-                self.nullable = ui.checkbox("Nullable").classes("w-full")
-                self.unique = ui.checkbox("Unique").classes("w-full")
-                self.index = ui.checkbox("Index").classes("w-full")
+    @abstractmethod
+    def _build_action_buttons(self) -> None:
+        pass
 
-            with ui.row().classes("w-full justify-end gap-2"):
-                ui.button("Close", on_click=self.close)
+    def _build(self) -> None:
+        with self, ui.card().classes("w-full max-w-2xl no-shadow rounded-lg"):
+            with ui.row().classes("w-full justify-between items-center p-4 border-b"):
+                ui.label(self.title).classes("text-xl font-semibold")
                 ui.button(
-                    "Add Field",
-                    on_click=lambda: self.on_add_field(
-                        name=self.field_name.value,
-                        type=self.field_type.value,
-                        primary_key=self.primary_key.value,
-                        nullable=self.nullable.value,
-                        unique=self.unique.value,
-                        index=self.index.value,
-                    ),
+                    icon="visibility",
+                    on_click=self._show_field_preview,
+                ).props("flat dense").tooltip("Preview SQLAlchemy field code")
+
+            with ui.column().classes("w-full p-6 space-y-4"):
+                with ui.grid(columns=2).classes("w-full gap-4"):
+                    self.field_name = ui.input(label="Field Name").props(
+                        "outlined dense"
+                    )
+                    self.field_type = ui.select(
+                        list(FieldDataType),
+                        label="Field Type",
+                    ).props("outlined dense")
+                    self.default_value = ui.input(label="Default Value").props(
+                        "outlined dense"
+                    )
+
+                with ui.row().classes("w-full justify-between gap-4"):
+                    self.primary_key = ui.checkbox("Primary Key").props("dense")
+                    self.nullable = ui.checkbox("Nullable").props("dense")
+                    self.unique = ui.checkbox("Unique").props("dense")
+                    self.index = ui.checkbox("Index").props("dense")
+
+                with ui.card().classes("w-full p-4 border rounded-lg"):
+                    with ui.row().classes("w-full justify-between items-center"):
+                        ui.label("Extra Column Arguments").classes(
+                            "text-md font-medium"
+                        )
+                        ui.button(
+                            "Add Argument", icon="add", on_click=self._add_kwarg_row
+                        )
+
+                    self.kwargs_container = ui.column().classes("w-full gap-2 mt-2")
+
+            with ui.row().classes("w-full justify-end p-4 border-t gap-2"):
+                self._build_action_buttons()
+
+    def _add_kwarg_row(self, key: str = "", value: str = "") -> None:
+        with (
+            self.kwargs_container,
+            ui.row().classes("w-full items-center gap-2") as row,
+        ):
+            key_input = (
+                ui.input(label="Key", value=key)
+                .props("outlined dense")
+                .classes("flex-1")
+            )
+            value_input = (
+                ui.input(label="Value", value=value)
+                .props("outlined dense")
+                .classes("flex-1")
+            )
+
+            def update_kwargs():
+                if key_input.value and value_input.value:
+                    self.extra_kwargs[key_input.value] = value_input.value
+                elif key_input.value in self.extra_kwargs:
+                    del self.extra_kwargs[key_input.value]
+
+            def remove_row():
+                if key_input.value in self.extra_kwargs:
+                    del self.extra_kwargs[key_input.value]
+                row.delete()
+
+            ui.button(icon="delete", on_click=remove_row)
+
+            key_input.on("blur", update_kwargs)
+            value_input.on("blur", update_kwargs)
+            key_input.on("keydown.enter", update_kwargs)
+            value_input.on("keydown.enter", update_kwargs)
+
+    def _show_field_preview(self) -> None:
+        if not self.field_name.value:
+            return
+        try:
+            with ui.dialog() as modal, ui.card().classes("no-shadow border-[1px]"):
+                preview_field = ModelField(
+                    name=self.field_name.value,
+                    type=self.field_type.value,
+                    primary_key=self.primary_key.value,
+                    nullable=self.nullable.value,
+                    unique=self.unique.value,
+                    index=self.index.value,
+                    default_value=self.default_value.value or None,
+                    extra_kwargs=self.extra_kwargs or None,
                 )
+                ui.code(generate_field(preview_field)).classes("w-full")
+                modal.open()
+        except ValidationError as exc:
+            notify_validation_error(exc)
 
     def reset(self) -> None:
-        """Reset the modal fields to their default values."""
         self.field_name.value = ""
         self.field_type.value = None
         self.primary_key.value = False
         self.nullable.value = False
         self.unique.value = False
         self.index.value = False
+        self.default_value.value = ""
+        self.extra_kwargs = {}
+        self.kwargs_container.clear()
 
 
-class UpdateFieldModal(ui.dialog):
-    def __init__(
-        self,
-        on_update_field: Callable,
-    ):
+class AddFieldModal(BaseFieldModal):
+    title = "Add Field"
+
+    def __init__(self, on_add_field: Callable):
+        super().__init__()
+        self.on_add_field = on_add_field
+
+    def _build_action_buttons(self) -> None:
+        ui.button("Cancel", on_click=self.close)
+        ui.button(
+            self.title,
+            on_click=lambda: self.on_add_field(
+                name=self.field_name.value,
+                type=self.field_type.value,
+                primary_key=self.primary_key.value,
+                nullable=self.nullable.value,
+                unique=self.unique.value,
+                index=self.index.value,
+                default_value=self.default_value.value or None,
+                extra_kwargs=self.extra_kwargs or None,
+            ),
+        )
+
+
+class UpdateFieldModal(BaseFieldModal):
+    title = "Update Field"
+
+    def __init__(self, on_update_field: Callable):
         super().__init__()
         self.on_update_field = on_update_field
-        self.on("hide", lambda: self._reset())
-        self._build()
 
-    def _build(self) -> None:
-        with self, ui.card().classes("no-shadow border-[1px]"):
-            ui.label("Update Field").classes("text-lg font-bold")
-            with ui.row().classes("w-full gap-2"):
-                self.field_name = ui.input(label="Field Name", value="").classes(
-                    "w-full",
-                )
-                self.field_type = ui.select(
-                    list(FieldDataType),
-                    label="Field Type",
-                    value=None,
-                ).classes("w-full")
-                self.primary_key = ui.checkbox("Primary Key", value=False).classes(
-                    "w-full",
-                )
-                self.nullable = ui.checkbox("Nullable", value=False).classes("w-full")
-                self.unique = ui.checkbox("Unique", value=False).classes("w-full")
-                self.index = ui.checkbox("Index", value=False).classes("w-full")
-
-            with ui.row().classes("w-full justify-end gap-2"):
-                ui.button("Close", on_click=self.close)
-                ui.button(
-                    "Update Field",
-                    on_click=self._handle_update,
-                )
+    def _build_action_buttons(self) -> None:
+        ui.button("Cancel", on_click=self.close)
+        ui.button(
+            self.title,
+            on_click=self._handle_update,
+        )
 
     def _handle_update(self) -> None:
         if not state.selected_field:
             return
 
         self.on_update_field(
-            self.field_name.value,
-            self.field_type.value,
-            self.primary_key.value,
-            self.nullable.value,
-            self.unique.value,
-            self.index.value,
+            name=self.field_name.value,
+            type=self.field_type.value,
+            primary_key=self.primary_key.value,
+            nullable=self.nullable.value,
+            unique=self.unique.value,
+            index=self.index.value,
+            default_value=self.default_value.value or None,
+            extra_kwargs=self.extra_kwargs or None,
         )
         self.close()
 
@@ -111,15 +194,13 @@ class UpdateFieldModal(ui.dialog):
             self.nullable.value = field.nullable
             self.unique.value = field.unique
             self.index.value = field.index
+            self.default_value.value = field.default_value or ""
+            self.extra_kwargs = field.extra_kwargs.copy() if field.extra_kwargs else {}
+            self.kwargs_container.clear()
 
-    def _reset(self) -> None:
-        state.selected_field = None
-        self.field_name.value = ""
-        self.field_type.value = None
-        self.primary_key.value = False
-        self.nullable.value = False
-        self.unique.value = False
-        self.index.value = False
+            if field.extra_kwargs:
+                for key, value in field.extra_kwargs.items():
+                    self._add_kwarg_row(key, str(value))
 
     def open(self, field: ModelField | None = None) -> None:
         if field:

@@ -12,7 +12,10 @@ from fastapi_forge.frontend.modals import (
     UpdateFieldModal,
     UpdateRelationModal,
 )
-from fastapi_forge.frontend.notifications import notify_validation_error
+from fastapi_forge.frontend.notifications import (
+    notify_field_exists,
+    notify_validation_error,
+)
 from fastapi_forge.frontend.state import state
 from fastapi_forge.jinja import render_model_to_model
 
@@ -211,14 +214,18 @@ class ModelEditorPanel(ui.card):
             return
 
         self._add_field(
-            name,
-            "DateTime",
-            False,
-            False,
-            False,
-            False,
-            is_created_at_timestamp,
-            is_updated_at_timestamp,
+            name=name,
+            type="DateTime",
+            primary_key=False,
+            nullable=False,
+            unique=False,
+            index=False,
+            default_value="",
+            extra_kwargs={},
+            metadata=ModelFieldMetadata(
+                is_created_at_timestamp=is_created_at_timestamp,
+                is_updated_at_timestamp=is_updated_at_timestamp,
+            ),
         )
 
     def _handle_modal_add_field(
@@ -272,34 +279,6 @@ class ModelEditorPanel(ui.card):
 
         self._refresh_relationship_table(state.selected_model.relationships)
 
-    def _validate_field_input(
-        self,
-        field_input: ModelField,
-    ) -> bool:
-        if not state.selected_model:
-            return True
-
-        for field in state.selected_model.fields:
-            if field.name == field_input.name and field != getattr(
-                self,
-                "selected_field",
-                None,
-            ):
-                ui.notify(
-                    f"Field '{field_input.name}' already exists in this model.",
-                    type="negative",
-                )
-                return False
-
-            if field.primary_key and field_input.primary_key:
-                ui.notify(
-                    "A model cannot have multiple primary keys. "
-                    f"Current primary key: '{field.name}'",
-                    type="negative",
-                )
-                return False
-        return True
-
     def refresh(self) -> None:
         self._refresh_table(state.selected_model.fields)
         self._refresh_relationship_table(state.selected_model.relationships)
@@ -332,17 +311,29 @@ class ModelEditorPanel(ui.card):
         ]
         self._deselect_relation()
 
+    def _field_name_exists(self, field_name: str) -> bool:
+        return any(field.name == field_name for field in state.selected_model.fields)
+
     def _add_field(
         self,
+        *,
         name: str,
         type: str,
         primary_key: bool,
         nullable: bool,
         unique: bool,
         index: bool,
-        is_created_at_timestamp: bool = False,
-        is_updated_at_timestamp: bool = False,
+        default_value: str | None = None,
+        extra_kwargs: dict[str, Any] | None = None,
+        metadata: ModelFieldMetadata | None = None,
     ) -> None:
+        if state.selected_model is None:
+            return
+
+        if self._field_name_exists(name):
+            notify_field_exists(name, state.selected_model.name)
+            return
+
         try:
             field_input = ModelField(
                 name=name,
@@ -351,13 +342,13 @@ class ModelEditorPanel(ui.card):
                 nullable=nullable,
                 unique=unique,
                 index=index,
-                metadata=ModelFieldMetadata(
-                    is_created_at_timestamp=is_created_at_timestamp,
-                    is_updated_at_timestamp=is_updated_at_timestamp,
-                ),
+                default_value=default_value,
+                extra_kwargs=extra_kwargs,
             )
-            if not self._validate_field_input(field_input):
-                return
+
+            if metadata:
+                field_input.metadata = metadata
+
             if state.selected_model is None:
                 return
 
@@ -416,12 +407,18 @@ class ModelEditorPanel(ui.card):
         nullable: bool,
         unique: bool,
         index: bool,
+        default_value: str | None = None,
+        extra_kwargs: dict[str, Any] | None = None,
     ) -> None:
         if (
             not state.selected_model
             or not state.selected_field
             or state.selected_field.name == "id"
         ):
+            return
+
+        if state.selected_field.name != name and self._field_name_exists(name):
+            notify_field_exists(name, state.selected_model.name)
             return
 
         try:
@@ -432,10 +429,10 @@ class ModelEditorPanel(ui.card):
                 nullable=nullable,
                 unique=unique,
                 index=index,
+                default_value=default_value,
+                extra_kwargs=extra_kwargs,
                 metadata=state.selected_field.metadata,
             )
-            if not self._validate_field_input(field_input):
-                return
 
             model_index = state.selected_model.fields.index(state.selected_field)
             state.selected_model.fields[model_index] = field_input
