@@ -1,4 +1,4 @@
-from typing import Annotated, Self
+from typing import Annotated, Any, Self
 
 from pydantic import (
     BaseModel,
@@ -44,6 +44,10 @@ class ModelField(_Base):
     nullable: bool = False
     unique: bool = False
     index: bool = False
+
+    default_value: str | None = None
+    extra_kwargs: dict[str, Any] | None = None
+
     metadata: ModelFieldMetadata = ModelFieldMetadata()
 
     @computed_field
@@ -74,6 +78,14 @@ class ModelField(_Base):
         if metadata.is_foreign_key and self.type != FieldDataType.UUID:
             msg = "Foreign Keys must be of type UUID."
             raise ValueError(msg)
+
+        if self.extra_kwargs and any(
+            k == "default" for k, _ in self.extra_kwargs.items()
+        ):
+            msg = "The 'default' argument should be set through the default attr."
+            raise ValueError(
+                msg,
+            )
         return self
 
     @computed_field
@@ -197,6 +209,16 @@ class Model(_Base):
         if len(unque_relationships) != len(set(unque_relationships)):
             raise ValueError(
                 f"Model '{self.name}' contains duplicate relationship field names.",
+            )
+
+        if sum(field.metadata.is_created_at_timestamp for field in self.fields) > 1:
+            raise ValueError(
+                f"Model '{self.name}' has more than one 'created_at_timestamp' fields."
+            )
+
+        if sum(field.metadata.is_updated_at_timestamp for field in self.fields) > 1:
+            raise ValueError(
+                f"Model '{self.name}' has more than one 'updated_at_timestamp' fields."
             )
 
         return self
