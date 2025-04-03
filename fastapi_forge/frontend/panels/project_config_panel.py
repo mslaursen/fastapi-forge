@@ -177,11 +177,14 @@ class ProjectConfigPanel(ui.right_drawer):
                         ModelField(
                             name="created_at",
                             type=FieldDataType.DATETIME,
+                            default_value="datetime.now(timezone.utc)",
                             metadata=ModelFieldMetadata(is_created_at_timestamp=True),
                         ),
                         ModelField(
                             name="updated_at",
                             type=FieldDataType.DATETIME,
+                            default_value="datetime.now(timezone.utc)",
+                            extra_kwargs={"onupdate": "datetime.now(timezone.utc)"},
                             metadata=ModelFieldMetadata(is_updated_at_timestamp=True),
                         ),
                     ],
