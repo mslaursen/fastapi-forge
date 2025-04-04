@@ -9,11 +9,13 @@ class ModelRow(ui.row):
         self,
         model: Model,
         color: str | None = None,
+        icon: str | None = None,
     ):
         super().__init__(wrap=False)
         self.model = model
         self.is_selected_row = model == state.selected_model
         self.color = color
+        self.icon = icon
         self.is_editing = False
         self._build()
 
@@ -26,7 +28,12 @@ class ModelRow(ui.row):
             base_classes += " hover:bg-gray-100 dark:hover:bg-gray-800"
 
         with self.classes(base_classes):
-            self.name_label = ui.label(text=self.model.name).classes("self-center")
+            with ui.row().classes("flex-nowrap gap-2 min-w-fit"):
+                if self.icon:
+                    ui.icon(self.icon, color="green", size="20px").classes(
+                        "self-center"
+                    )
+                self.name_label = ui.label(text=self.model.name).classes("self-center")
             if self.color:
                 self.name_label.classes(add=self.color)
             self.name_input = (

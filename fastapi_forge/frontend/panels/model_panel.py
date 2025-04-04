@@ -58,11 +58,14 @@ class ModelPanel(ui.left_drawer):
 
         with self.model_list:
             for model in state.models:
-                ModelRow(
+                mr = ModelRow(
                     model,
                     color=(
                         SELECTED_MODEL_TEXT_COLOR
                         if model == state.selected_model
                         else None
                     ),
+                    icon="security" if model.metadata.is_auth_model else None,
                 )
+                if model.metadata.is_auth_model:
+                    mr.tooltip("This model is used for Auth.")
