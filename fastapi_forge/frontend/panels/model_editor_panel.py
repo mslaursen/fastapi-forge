@@ -5,7 +5,11 @@ from pydantic import ValidationError
 
 from fastapi_forge.dtos import Model, ModelField, ModelFieldMetadata, ModelRelationship
 from fastapi_forge.enums import FieldDataType
-from fastapi_forge.frontend.constants import FIELD_COLUMNS, RELATIONSHIP_COLUMNS
+from fastapi_forge.frontend.constants import (
+    DEFAULT_AUTH_USER_FIELDS,
+    FIELD_COLUMNS,
+    RELATIONSHIP_COLUMNS,
+)
 from fastapi_forge.frontend.modals import (
     AddFieldModal,
     AddRelationModal,
@@ -28,6 +32,7 @@ class ModelEditorPanel(ui.card):
         state.select_model_fn = self.set_selected_model
         state.deselect_model_fn = self.deselect_model
         state.render_model_editor_fn = self.refresh
+        state.render_actions_fn = self._render_action_group
 
         self.add_field_modal: AddFieldModal = AddFieldModal(
             on_add_field=self._handle_modal_add_field,
@@ -56,6 +61,63 @@ class ModelEditorPanel(ui.card):
                 ui.code(code).classes("w-full")
                 modal.open()
 
+    def _toggle_auth_model(self) -> None:
+        if not state.selected_model or not state.use_builtin_auth:
+            return
+
+        if not state.selected_model.metadata.is_auth_model and any(
+            m.metadata.is_auth_model for m in state.models
+        ):
+            ui.notify(
+                "Cannot have more than one authentication model.", type="negative"
+            )
+            return
+
+        model = state.selected_model
+        model.metadata.is_auth_model = not model.metadata.is_auth_model
+
+        if not model.metadata.is_auth_model:
+            self._remove_auth_fields(model)
+            if state.render_model_editor_fn:
+                state.render_model_editor_fn()
+
+        if state.render_models_fn:
+            state.render_models_fn()
+        self._render_action_group.refresh()
+
+        if model.metadata.is_auth_model:
+            self._setup_auth_model_fields(model)
+
+    def _remove_auth_fields(self, model: Model) -> None:
+        for field_name in ("email", "password"):
+            if field := next((f for f in model.fields if f.name == field_name), None):
+                model.fields.remove(field)
+
+    def _setup_auth_model_fields(self, model: Model) -> None:
+        self._remove_auth_fields(model)
+        id_index = 0
+        insert_position = id_index + 1 if id_index >= 0 else 0
+        for field in reversed(DEFAULT_AUTH_USER_FIELDS):
+            model.fields.insert(insert_position, field)
+
+        self._refresh_table(model.fields)
+
+    @ui.refreshable
+    def _render_action_group(self) -> None:
+        ui.button(
+            icon="security",
+            on_click=self._toggle_auth_model,
+            color=(
+                "green"
+                if state.use_builtin_auth
+                and state.selected_model
+                and state.selected_model.metadata.is_auth_model
+                else "grey"
+            ),
+        ).tooltip("Authentication model").bind_visibility_from(
+            state, "use_builtin_auth"
+        )
+
     def _build(self) -> None:
         with self:
             with ui.row().classes("w-full justify-between items-center"):
@@ -67,6 +129,7 @@ class ModelEditorPanel(ui.card):
                     ).tooltip("Preview SQLAlchemy model code")
 
                 with ui.row().classes("gap-2 items-center"):
+                    self._render_action_group()
                     with (
                         ui.button(icon="menu").tooltip("Generate"),
                         ui.menu(),
@@ -373,22 +436,30 @@ class ModelEditorPanel(ui.card):
         self.relationship_table.selected = []
 
     def _on_select_field(self, selection: list[dict[str, Any]]) -> None:
-        if not state.selected_model:
-            return
-        if not selection:
+        if not state.selected_model or not selection:
             self._deselect_field()
             return
-        if selection[0].get("name") == "id":
-            self._deselect_field()
-        else:
-            state.selected_field = next(
-                (
-                    field
-                    for field in state.selected_model.fields
-                    if field.name == selection[0]["name"]
-                ),
-                None,
+
+        name = selection[0].get("name")
+
+        if (
+            state.selected_model.metadata.is_auth_model
+            and state.use_builtin_auth
+            and name in ("password", "email")
+        ):
+            ui.notify(
+                f"Cannot edit {name} field in authentication model.", type="warning"
             )
+            self._deselect_field()
+            return
+
+        if name == "id":
+            self._deselect_field()
+            return
+
+        state.selected_field = next(
+            (field for field in state.selected_model.fields if field.name == name), None
+        )
 
     def _on_select_relation(self, selection: list[dict[str, Any]]) -> None:
         if not state.selected_model:
@@ -422,6 +493,17 @@ class ModelEditorPanel(ui.card):
             or not state.selected_field
             or state.selected_field.name == "id"
         ):
+            return
+
+        if state.selected_model.metadata.is_auth_model and name == "password":
+            ui.notify(
+                "Cannot rename password field in authentication model.", type="negative"
+            )
+            return
+        if state.selected_model.metadata.is_auth_model and name == "email":
+            ui.notify(
+                "Cannot rename email field in authentication model.", type="negative"
+            )
             return
 
         if state.selected_field.name != name and self._field_name_exists(name):

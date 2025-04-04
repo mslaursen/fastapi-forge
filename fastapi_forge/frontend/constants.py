@@ -1,5 +1,8 @@
 from typing import Any
 
+from fastapi_forge.dtos import ModelField
+from fastapi_forge.enums import FieldDataType
+
 SELECTED_MODEL_TEXT_COLOR = "text-black-500 dark:text-amber-300"
 
 FIELD_COLUMNS: list[dict[str, Any]] = [
@@ -45,4 +48,18 @@ RELATIONSHIP_COLUMNS: list[dict[str, Any]] = [
     {"name": "nullable", "label": "Nullable", "field": "nullable", "align": "center"},
     {"name": "index", "label": "Index", "field": "index", "align": "center"},
     {"name": "unique", "label": "Unique", "field": "unique", "align": "center"},
+]
+
+
+DEFAULT_AUTH_USER_FIELDS: list[ModelField] = [
+    ModelField(
+        name="email",
+        type=FieldDataType.STRING,
+        unique=True,
+        index=True,
+    ),
+    ModelField(
+        name="password",
+        type=FieldDataType.STRING,
+    ),
 ]
