@@ -145,13 +145,13 @@ class ModelRelationship(_Base):
         return snake_to_camel(self.target_model)
 
 
-class ModelGenerationMetadata(_Base):
-    """Metadata used for code generation."""
-
+class ModelMetadata(_Base):
     create_endpoints: bool = True
     create_tests: bool = True
     create_daos: bool = True
     create_dtos: bool = True
+
+    is_auth_model: bool = False
 
 
 class Model(_Base):
@@ -160,7 +160,7 @@ class Model(_Base):
     name: ModelName
     fields: list[ModelField]
     relationships: list[ModelRelationship] = []
-    metadata: ModelGenerationMetadata = ModelGenerationMetadata()
+    metadata: ModelMetadata = ModelMetadata()
 
     @computed_field
     @property
@@ -320,6 +320,10 @@ class ProjectSpec(_Base):
                         f"Model '{model.name}' has a relationship to "
                         f"'{relationship.target_model}', which does not exist.",
                     )
+
+        if sum(model.metadata.is_auth_model for model in self.models) > 1:
+            msg = "Only one model can be an auth user."
+            raise ValueError(msg)
 
         return self
 

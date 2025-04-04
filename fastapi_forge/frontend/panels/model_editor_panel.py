@@ -284,6 +284,8 @@ class ModelEditorPanel(ui.card):
         self._refresh_relationship_table(state.selected_model.relationships)
 
     def refresh(self) -> None:
+        if state.selected_model is None:
+            return
         self._refresh_table(state.selected_model.fields)
         self._refresh_relationship_table(state.selected_model.relationships)
 
