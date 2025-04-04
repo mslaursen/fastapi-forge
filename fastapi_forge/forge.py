@@ -49,7 +49,8 @@ async def build_project(spec: ProjectSpec) -> None:
             if auth_user:
                 extra_context["auth_model"] = auth_user.model_dump()
             else:
-                logger.warning("No AuthUser model found in the project spec.")
+                logger.warning("No auth model found. Skipping authentication setup.")
+                extra_context["use_builtin_auth"] = False
 
         cookiecutter(
             template_path,
