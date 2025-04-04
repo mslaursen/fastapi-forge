@@ -1,11 +1,12 @@
-{%- if cookiecutter.use_builtin_auth %}
+from typing import Annotated
+
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPBearer as _HTTPBearer
-from src.dtos.auth_user_dtos import AuthUserDTO
-from src.daos import GetDAOs
+
 from src import exceptions
+from src.daos import GetDAOs
+from src.dtos.{{ cookiecutter.auth_model.name }}_dtos import {{ cookiecutter.auth_model.name_cc }}DTO
 from src.utils import auth_utils
-from typing import Annotated
 
 
 class HTTPBearer(_HTTPBearer):
@@ -20,7 +21,8 @@ class HTTPBearer(_HTTPBearer):
             obj = await super().__call__(request)
             return obj.credentials if obj else None
         except HTTPException:
-            raise exceptions.Http401("Missing token.")
+            msg = "Missing token."
+            raise exceptions.Http401(msg)
 
 
 auth_scheme = HTTPBearer()
@@ -37,17 +39,17 @@ GetToken = Annotated[str, Depends(get_token)]
 async def get_current_user(
     token: GetToken,
     daos: GetDAOs,
-) -> AuthUserDTO:
+) -> {{ cookiecutter.auth_model.name_cc }}DTO:
     """Get current user from token data."""
     token_data = auth_utils.decode_token(token)
 
-    user = await daos.auth_user.filter_first(id=token_data.user_id)
+    user = await daos.{{ cookiecutter.auth_model.name }}.filter_first(id=token_data.user_id)
 
     if not user:
-        raise exceptions.Http404("Decoded user not found.")
+        msg = "Decoded user not found."
+        raise exceptions.Http404(msg)
 
-    return AuthUserDTO.model_validate(user)
+    return {{ cookiecutter.auth_model.name_cc }}DTO.model_validate(user)
 
 
-GetCurrentUser = Annotated[AuthUserDTO, Depends(get_current_user)]
-{% endif %}
+GetCurrentUser = Annotated[{{ cookiecutter.auth_model.name_cc }}DTO, Depends(get_current_user)]

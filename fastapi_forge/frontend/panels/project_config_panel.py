@@ -12,6 +12,7 @@ from fastapi_forge.dtos import (
 )
 from fastapi_forge.enums import FieldDataType
 from fastapi_forge.forge import build_project
+from fastapi_forge.frontend.constants import DEFAULT_AUTH_USER_FIELDS
 from fastapi_forge.frontend.notifications import notify_validation_error
 from fastapi_forge.frontend.state import state
 
@@ -166,16 +167,7 @@ class ProjectConfigPanel(ui.right_drawer):
                             unique=True,
                             index=True,
                         ),
-                        ModelField(
-                            name="email",
-                            type=FieldDataType.STRING,
-                            unique=True,
-                            index=True,
-                        ),
-                        ModelField(
-                            name="password",
-                            type=FieldDataType.STRING,
-                        ),
+                        *DEFAULT_AUTH_USER_FIELDS,
                         ModelField(
                             name="created_at",
                             type=FieldDataType.DATETIME,

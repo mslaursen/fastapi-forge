@@ -313,6 +313,10 @@ class ProjectSpec(_Base):
             msg = "Cannot use built-in auth if PostgreSQL is not enabled."
             raise ValueError(msg)
 
+        if self.use_builtin_auth and self.get_auth_model() is None:
+            msg = "Cannot use built-in auth if no auth model is defined."
+            raise ValueError(msg)
+
         for model in self.models:
             for relationship in model.relationships:
                 if relationship.target_model not in model_names_set:
@@ -364,3 +368,11 @@ class ProjectSpec(_Base):
                 )
 
         return self
+
+    def get_auth_model(self) -> Model | None:
+        if not self.use_builtin_auth:
+            return None
+        for model in self.models:
+            if model.metadata.is_auth_model:
+                return model
+        return None

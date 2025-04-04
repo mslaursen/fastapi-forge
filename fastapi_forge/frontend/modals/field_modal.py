@@ -122,6 +122,10 @@ class BaseFieldModal(ui.dialog, ABC):
 
     def _show_field_preview(self) -> None:
         if not self.field_name.value:
+            ui.notify("Set a field name first", type="warning")
+            return
+        if not self.field_type.value:
+            ui.notify("Select a field type first", type="warning")
             return
         try:
             with ui.dialog() as modal, ui.card().classes("no-shadow border-[1px]"):

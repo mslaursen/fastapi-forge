@@ -27,6 +27,7 @@ class ProjectState(BaseModel):
 
     render_models_fn: Callable | None = None
     render_model_editor_fn: Callable | None = None
+    render_actions_fn: Callable | None = None
     select_model_fn: Callable[[Model], None] | None = None
     deselect_model_fn: Callable | None = None
 
@@ -177,6 +178,8 @@ class ProjectState(BaseModel):
             self.render_models_fn()
         if self.render_model_editor_fn:
             self.render_model_editor_fn()
+        if self.render_actions_fn:
+            self.render_actions_fn.refresh()
 
 
 state: ProjectState = ProjectState()
