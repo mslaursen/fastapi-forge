@@ -448,13 +448,18 @@ class ModelEditorPanel(ui.card):
             and name in ("password", "email")
         ):
             ui.notify(
-                f"Cannot edit {name} field in authentication model.", type="warning"
+                f"Cannot edit {name} field in authentication model.",
+                type="warning",
             )
             self._deselect_field()
             return
 
         if name == "id":
             self._deselect_field()
+            ui.notify(
+                "Cannot edit the 'id' field, it is automatically generated.",
+                type="warning",
+            )
             return
 
         state.selected_field = next(
@@ -488,22 +493,18 @@ class ModelEditorPanel(ui.card):
         default_value: str | None = None,
         extra_kwargs: dict[str, Any] | None = None,
     ) -> None:
-        if (
-            not state.selected_model
-            or not state.selected_field
-            or state.selected_field.name == "id"
-        ):
+        if not state.selected_model or not state.selected_field:
             return
 
-        if state.selected_model.metadata.is_auth_model and name == "password":
-            ui.notify(
-                "Cannot rename password field in authentication model.", type="negative"
-            )
-            return
-        if state.selected_model.metadata.is_auth_model and name == "email":
-            ui.notify(
-                "Cannot rename email field in authentication model.", type="negative"
-            )
+        exclude_set = {"id"}
+        if (
+            state.selected_model
+            and state.selected_model.metadata.is_auth_model
+            and state.use_builtin_auth
+        ):
+            exclude_set.update({"email", "password"})
+
+        if name in exclude_set:
             return
 
         if state.selected_field.name != name and self._field_name_exists(name):
