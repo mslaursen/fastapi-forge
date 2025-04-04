@@ -8,6 +8,7 @@ from fastapi_forge.dtos import (
     Model,
     ModelField,
     ModelFieldMetadata,
+    ModelMetadata,
 )
 from fastapi_forge.enums import FieldDataType
 from fastapi_forge.forge import build_project
@@ -156,6 +157,7 @@ class ProjectConfigPanel(ui.right_drawer):
             try:
                 auth_user_model = Model(
                     name="auth_user",
+                    metadata=ModelMetadata(is_auth_model=True),
                     fields=[
                         ModelField(
                             name="id",
