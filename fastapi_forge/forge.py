@@ -37,17 +37,26 @@ async def build_project(spec: ProjectSpec) -> None:
 
         template_path = str(_get_template_path())
 
+        extra_context = {
+            **spec.model_dump(exclude={"models"}),
+            "models": {
+                "models": [model.model_dump() for model in spec.models],
+            },
+        }
+
+        if spec.use_builtin_auth:
+            auth_user = spec.get_auth_model()
+            if auth_user:
+                extra_context["auth_model"] = auth_user.model_dump()
+            else:
+                logger.warning("No AuthUser model found in the project spec.")
+
         cookiecutter(
             template_path,
             output_dir=str(Path.cwd()),
             no_input=True,
             overwrite_if_exists=True,
-            extra_context={
-                **spec.model_dump(exclude={"models"}),
-                "models": {
-                    "models": [model.model_dump() for model in spec.models],
-                },
-            },
+            extra_context=extra_context,
         )
         logger.info(f"Project '{spec.project_name}' created successfully.")
 

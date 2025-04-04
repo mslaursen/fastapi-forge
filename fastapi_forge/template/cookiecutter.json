@@ -20,6 +20,7 @@
     "models": {
         "models": []
     },
+    "auth_model": null,
     "_extensions": [
         "local_extensions.camel_to_snake"
     ]
