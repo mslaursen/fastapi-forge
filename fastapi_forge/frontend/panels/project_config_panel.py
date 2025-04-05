@@ -197,7 +197,7 @@ class ProjectConfigPanel(ui.right_drawer):
                 state.render_models_fn()
             ui.notify("The 'auth_user' model has been deleted.", type="positive")
 
-    async def _warn_override(self) -> bool:
+    async def _warn_overwrite(self) -> bool:
         """Show a confirmation dialog if the project already exists."""
         dialog = ui.dialog()
         with dialog, ui.card().classes("w-full max-w-md p-6 text-center"):
@@ -222,8 +222,8 @@ class ProjectConfigPanel(ui.right_drawer):
 
         if project_path.exists():
             try:
-                override = await self._warn_override()
-                if not override:
+                overwrite = await self._warn_overwrite()
+                if not overwrite:
                     ui.notify("Project generation cancelled.", type="warning")
                     return
             except Exception as e:
