@@ -100,6 +100,25 @@ services:
     volumes:
       - {{ cookiecutter.project_name }}-redis-data:/bitnami/redis/data
   {% endif %}
+  {%- if cookiecutter.use_rabbitmq -%}
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: {{ cookiecutter.project_name }}-rabbitmq
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+      RABBITMQ_DEFAULT_VHOST: /
+    healthcheck:
+      test: rabbitmq-diagnostics -q check_running
+      interval: 2s
+      timeout: 3s
+      retries: 40
+    volumes:
+      - {{ cookiecutter.project_name }}-rabbitmq-data:/var/lib/rabbitmq
+  {% endif %}
 volumes:
   {%- if cookiecutter.use_postgres %}
   {{ cookiecutter.project_name }}-pg-data:
@@ -108,4 +127,8 @@ volumes:
   {%- if cookiecutter.use_redis %}
   {{ cookiecutter.project_name }}-redis-data:
     name: {{ cookiecutter.project_name }}-redis-data
+  {% endif %}
+  {%- if cookiecutter.use_rabbitmq -%}
+  {{ cookiecutter.project_name }}-rabbitmq-data:
+    name: {{ cookiecutter.project_name }}-rabbitmq-data
   {% endif %}
