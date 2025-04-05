@@ -1,3 +1,4 @@
+{% if cookiecutter.use_builtin_auth %}
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request
@@ -53,3 +54,4 @@ async def get_current_user(
 
 
 GetCurrentUser = Annotated[{{ cookiecutter.auth_model.name_cc }}DTO, Depends(get_current_user)]
+{% endif %}

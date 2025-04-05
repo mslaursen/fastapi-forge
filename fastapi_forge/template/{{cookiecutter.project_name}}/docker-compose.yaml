@@ -9,6 +9,7 @@ services:
       - "8000:8000"
     env_file:
       - .env
+    {%- if cookiecutter.use_postgres or cookiecutter.use_redis or cookiecutter.use_rabbitmq %}
     depends_on:
       {%- if cookiecutter.use_postgres %}
       postgres:
@@ -18,6 +19,11 @@ services:
       redis:
         condition: service_healthy
       {%- endif %}
+      {%- if cookiecutter.use_rabbitmq %}
+      rabbitmq:
+        condition: service_healthy
+      {%- endif %}
+    {%- endif %}
     environment:
       {{ cookiecutter.project_name|upper|replace('-', '_') }}_RELOAD: "True"
       {{ cookiecutter.project_name|upper|replace('-', '_') }}_SERVER_HOST: 0.0.0.0
@@ -119,6 +125,7 @@ services:
     volumes:
       - {{ cookiecutter.project_name }}-rabbitmq-data:/var/lib/rabbitmq
   {% endif %}
+{%- if cookiecutter.use_postgres or cookiecutter.use_redis or cookiecutter.use_rabbitmq %}
 volumes:
   {%- if cookiecutter.use_postgres %}
   {{ cookiecutter.project_name }}-pg-data:
@@ -132,3 +139,4 @@ volumes:
   {{ cookiecutter.project_name }}-rabbitmq-data:
     name: {{ cookiecutter.project_name }}-rabbitmq-data
   {% endif %}
+{%- endif %}

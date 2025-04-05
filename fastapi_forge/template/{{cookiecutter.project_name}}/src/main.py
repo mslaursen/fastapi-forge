@@ -6,13 +6,13 @@ from fastapi import FastAPI
 from src.settings import settings
 from src.routes import base_router
 from src.middleware import add_middleware
-{%- if cookiecutter.use_postgres %}
+{% if cookiecutter.use_postgres %}
 from src.db import db_lifetime
 {% endif %}
-{%- if cookiecutter.use_redis -%}
+{% if cookiecutter.use_redis -%}
 from src.services.redis import redis_lifetime
 {% endif %}
-{%- if cookiecutter.use_rabbitmq -%}
+{% if cookiecutter.use_rabbitmq -%}
 from src.services.rabbitmq import rabbitmq_lifetime
 from src.constants import QUEUE_CONFIGS
 {% endif %}
