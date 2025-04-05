@@ -1,38 +1,38 @@
-# Used for post project generation tasks.
+# Used for post project generation tasks
 # You may delete this file!
 
-config:
+paths:
   use_postgres:
-    value: {{cookiecutter.use_postgres | lower}}
-    type: bool
-    paths:
-
+    enabled: {{cookiecutter.use_postgres | lower}}
+    paths: []
+    
   use_alembic:
-    value: {{cookiecutter.use_alembic | lower}}
-    type: bool
+    enabled: {{cookiecutter.use_alembic | lower}}
     paths:
       - migrations
 
   use_builtin_auth:
-    value: {{cookiecutter.use_builtin_auth | lower}}
-    type: bool
+    enabled: {{cookiecutter.use_builtin_auth | lower}}
     paths:
       - src/dependencies/auth_dependencies.py
       - src/dtos/auth_dtos.py
       - src/routes/auth_routes.py
       - src/utils/auth_utils.py
-      - src/constants.py
 
   use_redis:
-    value: {{cookiecutter.use_redis | lower}}
-    type: bool
+    enabled: {{cookiecutter.use_redis | lower}}
     paths:
       - src/services/redis
 
   use_rabbitmq:
-    value: {{cookiecutter.use_rabbitmq | lower}}
-    type: bool
+    enabled: {{cookiecutter.use_rabbitmq | lower}}
     paths:
       - src/services/rabbitmq
       - src/routes/demo_routes.py
 
+  constants:
+    requires_all:
+      - use_builtin_auth
+      - use_rabbitmq
+    paths:
+      - src/constants.py
