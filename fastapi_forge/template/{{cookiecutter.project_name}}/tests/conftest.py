@@ -96,7 +96,7 @@ async def mock_redis() -> AsyncGenerator[FakeRedis, None]:
     """Provide a fake Redis instance."""
     client = FakeRedis()
     yield client
-    await client.close()
+    await client.aclose()
 {% endif %}
 
 

@@ -9,7 +9,8 @@ from pydantic import (
     model_validator,
 )
 
-from fastapi_forge.enums import DataTypeInfo, FieldDataType, registry
+from fastapi_forge.data_type_registry import DataTypeInfo, registry
+from fastapi_forge.enums import FieldDataType
 from fastapi_forge.string_utils import camel_to_snake_hyphen, snake_to_camel
 
 BoundedStr = Annotated[str, Field(..., min_length=1, max_length=100)]
