@@ -1,5 +1,6 @@
 from enum import StrEnum
 from uuid import uuid4
+from pydantic import BaseModel
 
 
 class HTTPMethod(StrEnum):
@@ -21,26 +22,16 @@ class FieldDataType(StrEnum):
 
 
 # register a DataTypeInfo with a FieldDataType to make it easier to support types
-class DataTypeInfo:
-    def __init__(
-        self,
-        pydantic_annotation: str,
-        sqlalchemy_type: str,
-        sqlalchemy_prefix: bool,
-        python_type: str,
-        faker_generator: str,
-        value: str,
-        test_value: str,
-        test_func: str = "",
-    ):
-        self.pydantic_annotation = pydantic_annotation
-        self.sqlalchemy_type = sqlalchemy_type
-        self.sqlalchemy_prefix = sqlalchemy_prefix
-        self.python_type = python_type
-        self.faker_generator = faker_generator
-        self.value = value
-        self.test_value = test_value
-        self.test_func = test_func
+class DataTypeInfo(BaseModel):
+
+    pydantic_annotation: str
+    sqlalchemy_type: str
+    sqlalchemy_prefix: bool
+    python_type: str
+    faker_field_value: str
+    value: str
+    test_value: str
+    test_func: str = ""
 
 
 class DataTypeInfoRegistry:
@@ -62,6 +53,7 @@ class DataTypeInfoRegistry:
 
 
 registry = DataTypeInfoRegistry()
+faker_placeholder = "factory.Faker({placeholder})"
 
 
 registry.register(
@@ -69,12 +61,11 @@ registry.register(
     DataTypeInfo(
         pydantic_annotation="str",
         sqlalchemy_type="String",
-        sqlalchemy_prefix=False,
+        sqlalchemy_prefix=True,
         python_type="str",
-        faker_generator="text",
+        faker_field_value=faker_placeholder.format(placeholder='"text"'),
         value="hello",
         test_value="'world'",
-        test_func="",
     ),
 )
 
@@ -83,9 +74,9 @@ registry.register(
     DataTypeInfo(
         pydantic_annotation="int",
         sqlalchemy_type="Integer",
-        sqlalchemy_prefix=False,
+        sqlalchemy_prefix=True,
         python_type="int",
-        faker_generator="random_int",
+        faker_field_value=faker_placeholder.format(placeholder='"random_int"'),
         value="1",
         test_value="2",
     ),
@@ -98,7 +89,9 @@ registry.register(
         sqlalchemy_type="Float",
         sqlalchemy_prefix=False,
         python_type="float",
-        faker_generator="pyfloat",
+        faker_field_value=faker_placeholder.format(
+            placeholder='"pyfloat", positive=True, min_value=0.1, max_value=100'
+        ),
         value="1.0",
         test_value="2.0",
     ),
@@ -111,7 +104,7 @@ registry.register(
         sqlalchemy_type="Boolean",
         sqlalchemy_prefix=False,
         python_type="bool",
-        faker_generator="boolean",
+        faker_field_value=faker_placeholder.format(placeholder='"boolean"'),
         value="True",
         test_value="False",
     ),
@@ -124,7 +117,7 @@ registry.register(
         sqlalchemy_type="DateTime",
         sqlalchemy_prefix=False,
         python_type="datetime",
-        faker_generator="date_time",
+        faker_field_value=faker_placeholder.format(placeholder='"date_time"'),
         value="datetime.now(timezone.utc)",
         test_value="datetime.now(timezone.utc)",
         test_func=".isoformat()",
@@ -138,7 +131,7 @@ registry.register(
         sqlalchemy_type="UUID",
         sqlalchemy_prefix=False,
         python_type="UUID",
-        faker_generator="uuid4",
+        faker_field_value=str(uuid4()),
         value=str(uuid4()),
         test_value=str(uuid4()),
     ),
@@ -151,7 +144,7 @@ registry.register(
         sqlalchemy_type="JSONB",
         sqlalchemy_prefix=True,
         python_type="dict",
-        faker_generator="TODO",
+        faker_field_value="{}",
         value="{}",
         test_value='{"key": "value"}',
     ),

@@ -16,7 +16,7 @@ def test_primary_key_defaults_to_unique() -> None:
         primary_key=True,
         unique=False,
     )
-    assert model_field.factory_field_value is None
+    assert model_field.type_info.faker_field_value is None
     assert model_field.unique is True
 
 
@@ -72,7 +72,7 @@ def test_factory_field_value(
     expected_factory_value: str | None,
 ) -> None:
     model_field = ModelField(name="name", type=data_type)
-    assert model_field.factory_field_value == expected_factory_value
+    assert model_field.type_info.faker_field_value == expected_factory_value
 
 
 ###############################

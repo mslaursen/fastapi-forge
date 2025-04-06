@@ -54,6 +54,7 @@ class ModelField(_Base):
         """Convert field name to camelCase."""
         return snake_to_camel(self.name)
 
+    @computed_field
     @property
     def type_info(self) -> DataTypeInfo:
         return registry.get(self.type)
@@ -89,32 +90,6 @@ class ModelField(_Base):
                 msg,
             )
         return self
-
-    @computed_field
-    @property
-    def factory_field_value(self) -> str | dict | None:
-        """Return the appropriate factory default for the model field."""
-        faker_placeholder = "factory.Faker({placeholder})"
-
-        if "email" in self.name and self.type == FieldDataType.STRING:
-            return faker_placeholder.format(placeholder='"email"')
-
-        type_to_faker = {
-            FieldDataType.STRING: '"text"',
-            FieldDataType.INTEGER: '"random_int"',
-            FieldDataType.FLOAT: '"pyfloat", positive=True, min_value=0.1, max_value=100',
-            FieldDataType.BOOLEAN: '"boolean"',
-            FieldDataType.DATETIME: '"date_time"',
-            FieldDataType.JSONB: {},
-        }
-
-        if self.type not in type_to_faker:
-            return None
-
-        if self.type == FieldDataType.JSONB:
-            return type_to_faker[FieldDataType.JSONB]
-
-        return faker_placeholder.format(placeholder=type_to_faker[self.type])
 
 
 class ModelRelationship(_Base):
