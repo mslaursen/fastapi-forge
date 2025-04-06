@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import pytest
 from pydantic import ValidationError
 
@@ -16,7 +18,7 @@ def test_primary_key_defaults_to_unique() -> None:
         primary_key=True,
         unique=False,
     )
-    assert model_field.factory_field_value is None
+    assert UUID(model_field.type_info.faker_field_value)
     assert model_field.unique is True
 
 
@@ -64,7 +66,6 @@ def test_invalid_field_name(invalid_name: str) -> None:
         ),
         (FieldDataType.BOOLEAN, 'factory.Faker("boolean")'),
         (FieldDataType.DATETIME, 'factory.Faker("date_time")'),
-        (FieldDataType.UUID, None),
     ],
 )
 def test_factory_field_value(
@@ -72,7 +73,7 @@ def test_factory_field_value(
     expected_factory_value: str | None,
 ) -> None:
     model_field = ModelField(name="name", type=data_type)
-    assert model_field.factory_field_value == expected_factory_value
+    assert model_field.type_info.faker_field_value == expected_factory_value
 
 
 ###############################
