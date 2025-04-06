@@ -9,6 +9,7 @@ from pydantic import (
     model_validator,
 )
 
+from fastapi_forge.data_type_registry import DataTypeInfo, registry
 from fastapi_forge.enums import FieldDataType
 from fastapi_forge.string_utils import camel_to_snake_hyphen, snake_to_camel
 
@@ -44,10 +45,8 @@ class ModelField(_Base):
     nullable: bool = False
     unique: bool = False
     index: bool = False
-
     default_value: str | None = None
     extra_kwargs: dict[str, Any] | None = None
-
     metadata: ModelFieldMetadata = ModelFieldMetadata()
 
     @computed_field
@@ -55,6 +54,11 @@ class ModelField(_Base):
     def name_cc(self) -> str:
         """Convert field name to camelCase."""
         return snake_to_camel(self.name)
+
+    @computed_field
+    @property
+    def type_info(self) -> DataTypeInfo:
+        return registry.get(self.type)
 
     @model_validator(mode="after")
     def _validate(self) -> Self:
@@ -87,32 +91,6 @@ class ModelField(_Base):
                 msg,
             )
         return self
-
-    @computed_field
-    @property
-    def factory_field_value(self) -> str | dict | None:
-        """Return the appropriate factory default for the model field."""
-        faker_placeholder = "factory.Faker({placeholder})"
-
-        if "email" in self.name and self.type == FieldDataType.STRING:
-            return faker_placeholder.format(placeholder='"email"')
-
-        type_to_faker = {
-            FieldDataType.STRING: '"text"',
-            FieldDataType.INTEGER: '"random_int"',
-            FieldDataType.FLOAT: '"pyfloat", positive=True, min_value=0.1, max_value=100',
-            FieldDataType.BOOLEAN: '"boolean"',
-            FieldDataType.DATETIME: '"date_time"',
-            FieldDataType.JSONB: {},
-        }
-
-        if self.type not in type_to_faker:
-            return None
-
-        if self.type == FieldDataType.JSONB:
-            return type_to_faker[FieldDataType.JSONB]
-
-        return faker_placeholder.format(placeholder=type_to_faker[self.type])
 
 
 class ModelRelationship(_Base):

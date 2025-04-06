@@ -83,7 +83,7 @@ class {{ model.name_cc }}Factory(BaseFactory[{{ model.name_cc }}]):
 
     {%- for field in model.fields %}
     {%- if "id" not in field.name %}
-    {{ field.name }} = {{ field.factory_field_value }}
+    {{ field.name }} = {{ field.type_info.faker_field_value }}
     {%- endif %}
     {%- endfor %}
 
