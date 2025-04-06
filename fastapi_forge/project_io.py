@@ -2,11 +2,20 @@ import asyncio
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 import aiofiles
+import click
+import psycopg2
 import yaml
 
-from fastapi_forge.dtos import Model, ModelField, ModelFieldMetadata, ProjectSpec
+from fastapi_forge.dtos import (
+    Model,
+    ModelField,
+    ModelFieldMetadata,
+    ModelRelationship,
+    ProjectSpec,
+)
 from fastapi_forge.enums import FieldDataType, HTTPMethod
 from fastapi_forge.jinja import (
     render_model_to_dao,
@@ -21,6 +30,178 @@ from fastapi_forge.jinja import (
 )
 from fastapi_forge.logger import logger
 from fastapi_forge.string_utils import camel_to_snake
+
+
+def _inspect_postgres_schema(
+    connection_string: str, schema: str = "public"
+) -> dict[str, Any]:
+    logger.info(f"Querying database schema from: {connection_string}")
+    try:
+        parsed = urlparse(connection_string)
+        if parsed.scheme != "postgresql":
+            msg = "Connection string must start with 'postgresql://'"
+            raise ValueError(msg)
+
+        db_name = parsed.path[1:]
+        if not db_name:
+            msg = "Database name not found in connection string"
+            raise ValueError(msg)
+
+        conn = psycopg2.connect(connection_string)
+        cur = conn.cursor()
+
+        query = """
+        WITH foreign_keys AS (
+            SELECT
+                tc.table_schema,
+                tc.table_name,
+                kcu.column_name,
+                ccu.table_schema AS foreign_table_schema,
+                ccu.table_name AS foreign_table_name,
+                ccu.column_name AS foreign_column_name
+            FROM
+                information_schema.table_constraints AS tc
+                JOIN information_schema.key_column_usage AS kcu
+                    ON tc.constraint_name = kcu.constraint_name
+                    AND tc.table_schema = kcu.table_schema
+                JOIN information_schema.constraint_column_usage AS ccu
+                    ON ccu.constraint_name = tc.constraint_name
+                    AND ccu.table_schema = tc.table_schema
+            WHERE tc.constraint_type = 'FOREIGN KEY'
+        ),
+        primary_keys AS (
+            SELECT
+                tc.table_schema,
+                tc.table_name,
+                kcu.column_name,
+                TRUE AS is_primary_key
+            FROM
+                information_schema.table_constraints tc
+                JOIN information_schema.key_column_usage kcu
+                    ON tc.constraint_name = kcu.constraint_name
+                    AND tc.table_schema = kcu.table_schema
+            WHERE
+                tc.constraint_type = 'PRIMARY KEY'
+        ),
+        unique_constraints AS (
+            SELECT
+                tc.table_schema,
+                tc.table_name,
+                kcu.column_name,
+                TRUE AS is_unique
+            FROM
+                information_schema.table_constraints tc
+                JOIN information_schema.key_column_usage kcu
+                    ON tc.constraint_name = kcu.constraint_name
+                    AND tc.table_schema = kcu.table_schema
+            WHERE
+                tc.constraint_type = 'UNIQUE'
+        ),
+        indexes AS (
+            SELECT
+                n.nspname AS table_schema,
+                t.relname AS table_name,
+                a.attname AS column_name,
+                TRUE AS is_indexed
+            FROM
+                pg_class t,
+                pg_class i,
+                pg_index ix,
+                pg_attribute a,
+                pg_namespace n
+            WHERE
+                t.oid = ix.indrelid
+                AND i.oid = ix.indexrelid
+                AND a.attrelid = t.oid
+                AND a.attnum = ANY(ix.indkey)
+                AND t.relnamespace = n.oid
+                AND n.nspname = %s
+        ),
+        column_defaults AS (
+            SELECT
+                table_schema,
+                table_name,
+                column_name,
+                column_default
+            FROM
+                information_schema.columns
+            WHERE
+                table_schema = %s
+                AND column_default IS NOT NULL
+        )
+        SELECT
+            t.table_schema,
+            t.table_name,
+            json_agg(
+                json_build_object(
+                    'name', c.column_name,
+                    'type', c.data_type,
+                    'nullable', c.is_nullable = 'YES',
+                    'primary_key', COALESCE(pk.is_primary_key, FALSE),
+                    'unique', COALESCE(uc.is_unique, FALSE),
+                    'index', COALESCE(idx.is_indexed, FALSE),
+                    'default', cd.column_default,
+                    'foreign_key',
+                    CASE WHEN fk.foreign_table_name IS NOT NULL THEN
+                        json_build_object(
+                            'field_name', c.column_name,
+                            'target_model', fk.foreign_table_name
+                        )
+                    ELSE NULL END
+                )
+                ORDER BY c.ordinal_position
+            ) AS columns
+        FROM
+            information_schema.tables t
+            JOIN information_schema.columns c
+                ON t.table_schema = c.table_schema
+                AND t.table_name = c.table_name
+            LEFT JOIN foreign_keys fk
+                ON t.table_schema = fk.table_schema
+                AND t.table_name = fk.table_name
+                AND c.column_name = fk.column_name
+            LEFT JOIN primary_keys pk
+                ON t.table_schema = pk.table_schema
+                AND t.table_name = pk.table_name
+                AND c.column_name = pk.column_name
+            LEFT JOIN unique_constraints uc
+                ON t.table_schema = uc.table_schema
+                AND t.table_name = uc.table_name
+                AND c.column_name = uc.column_name
+            LEFT JOIN indexes idx
+                ON t.table_schema = idx.table_schema
+                AND t.table_name = idx.table_name
+                AND c.column_name = idx.column_name
+            LEFT JOIN column_defaults cd
+                ON t.table_schema = cd.table_schema
+                AND t.table_name = cd.table_name
+                AND c.column_name = cd.column_name
+        WHERE
+            t.table_schema = %s
+            AND t.table_type = 'BASE TABLE'
+        GROUP BY
+            t.table_schema, t.table_name
+        ORDER BY
+            t.table_schema, t.table_name;
+        """
+
+        cur.execute(query, (schema, schema, schema))
+        tables = cur.fetchall()
+
+        return {
+            "database_name": db_name,
+            "schema_data": {
+                f"{table_schema}.{table_name}": columns
+                for table_schema, table_name, columns in tables
+            },
+        }
+
+    except psycopg2.Error as e:
+        raise click.ClickException(f"Database error: {e}") from e
+    finally:
+        if "conn" in locals():
+            cur.close()
+            conn.close()
 
 
 async def _write_file(path: Path, content: str) -> None:
@@ -63,6 +244,75 @@ class ProjectLoader:
 
     def load_project_input(self) -> ProjectSpec:
         return ProjectSpec(**self._load_project_to_dict())
+
+    @classmethod
+    def load_project_spec_from_db(
+        cls, connection_string: str, schema: str = "public"
+    ) -> ProjectSpec:
+        db_info = _inspect_postgres_schema(connection_string, schema)
+        db_schema: dict[str, Any] = db_info["schema_data"]
+        db_name: str = db_info["database_name"]
+
+        models = []
+        for table_name_full, columns_data in db_schema.items():
+            _, table_name = table_name_full.split(".")
+            columns_data: list[dict[str, Any]]
+
+            fields: list[ModelField] = []
+            relationships: list[ModelRelationship] = []
+            for column in columns_data:
+                if "foreign_key" in column:
+                    foreign_key = column.pop("foreign_key")
+                    if foreign_key is not None:
+                        relationship = ModelRelationship(**foreign_key)
+                        relationships.append(relationship)
+
+                        # continue, since relationships automatically
+                        # converts into fields as well - to avoid duplicate field
+                        continue
+
+                data_type = FieldDataType.from_db_type(column.pop("type"))
+                column["type"] = data_type
+                default = None
+                extra_kwargs = None
+
+                metadata = ModelFieldMetadata()
+                if data_type == FieldDataType.DATETIME:
+                    column_name = column["name"]
+                    default_timestamp = column.get("default") == "CURRENT_TIMESTAMP"
+                    if default_timestamp:
+                        if "create" in column_name:
+                            metadata.is_created_at_timestamp = True
+                            default = "datetime.now(timezone.utc)"
+                        elif "update" in column_name:
+                            metadata.is_updated_at_timestamp = True
+                            default = "datetime.now(timezone.utc)"
+                            extra_kwargs = {"onupdate": "datetime.now(timezone.utc)"}
+
+                # temporary until any primary key name is supported
+                if column["primary_key"] is True:
+                    column["name"] = "id"
+
+                field = ModelField(
+                    **column,
+                    metadata=metadata,
+                    default_value=default,
+                    extra_kwargs=extra_kwargs,
+                )
+                fields.append(field)
+
+            model = Model(
+                name=table_name,
+                fields=fields,
+                relationships=relationships,
+            )
+            models.append(model)
+
+        return ProjectSpec(
+            project_name=db_name,
+            models=models,
+            use_postgres=True,
+        )
 
 
 class ProjectExporter:

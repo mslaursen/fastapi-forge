@@ -6,6 +6,9 @@ from sqlalchemy.ext.asyncio import (
 from src.db import Base
 import factory
 from typing import Any
+from datetime import datetime, timezone,  timedelta
+
+
 
 {% for model in cookiecutter.models.models -%}
 from src.models.{{ model.name }}_models import {{ model.name_cc }}
