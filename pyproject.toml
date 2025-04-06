@@ -8,7 +8,14 @@ description = "Generate FastAPI projects based on database schema."
 readme = "README.md"
 requires-python = ">=3.12"
 dynamic = ["version"]
-dependencies = ["click", "nicegui", "cookiecutter", "pytest", "ruff"]
+dependencies = [
+    "click",
+    "nicegui",
+    "cookiecutter",
+    "pytest",
+    "ruff",
+    "psycopg2-binary>=2.9.10",
+]
 authors = [{ name = "mslaursen", email = "mslaursendk@gmail.com" }]
 
 [project.urls]
@@ -69,6 +76,7 @@ ignore = [
     "TD002",
     "TD003",
     "FIX002",
+    "PLR0911",
     "PLR0913",
     "PGH003",
     "S701",

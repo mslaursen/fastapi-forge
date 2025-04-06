@@ -11,7 +11,7 @@ test:
 	$(DOCKER_CMD) pytest ./tests -v -s
 
 test-filter:
-	$(DOCKER_CMD) /tests -v -s -k $(filter)
+	$(DOCKER_CMD) pytest ./tests -v -s -k $(filter)
 
 mig-gen:
 	$(DOCKER_CMD) alembic revision --autogenerate -m "$(name)"

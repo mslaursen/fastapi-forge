@@ -49,17 +49,6 @@ registry.register(
     ),
 )
 
-registry.register(
-    FieldDataType.INTEGER,
-    DataTypeInfo(
-        sqlalchemy_type="Integer",
-        sqlalchemy_prefix=True,
-        python_type="int",
-        faker_field_value=faker_placeholder.format(placeholder='"random_int"'),
-        value="1",
-        test_value="2",
-    ),
-)
 
 registry.register(
     FieldDataType.FLOAT,
@@ -121,5 +110,17 @@ registry.register(
         faker_field_value="{}",
         value="{}",
         test_value='{"another_key": 123}',
+    ),
+)
+
+registry.register(
+    FieldDataType.INTEGER,
+    DataTypeInfo(
+        sqlalchemy_type="Integer",
+        sqlalchemy_prefix=True,
+        python_type="int",
+        faker_field_value=faker_placeholder.format(placeholder='"random_int"'),
+        value="1",
+        test_value="2",
     ),
 )

@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:13.8-bullseye
+    hostname: forge
+    container_name: forge
+    environment:
+      POSTGRES_PASSWORD: forge
+      POSTGRES_USER: forge
+      POSTGRES_DB: forge
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    restart: always
+    healthcheck:
+      test: pg_isready -U forge
+      interval: 2s
+      timeout: 3s
+      retries: 40
