@@ -271,8 +271,7 @@ class ProjectLoader:
                         # converts into fields as well - to avoid duplicate field
                         continue
 
-                db_type = column.pop("type")
-                data_type = FieldDataType.from_db_type(db_type)
+                data_type = FieldDataType.from_db_type(column.pop("type"))
                 column["type"] = data_type
 
                 metadata = ModelFieldMetadata()
