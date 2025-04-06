@@ -1,14 +1,6 @@
 from enum import StrEnum
 
 
-class HTTPMethod(StrEnum):
-    GET = "get"
-    GET_ID = "get_id"
-    POST = "post"
-    PATCH = "patch"
-    DELETE = "delete"
-
-
 class FieldDataType(StrEnum):
     STRING = "String"
     INTEGER = "Integer"
@@ -17,17 +9,6 @@ class FieldDataType(StrEnum):
     DATETIME = "DateTime"
     UUID = "UUID"
     JSONB = "JSONB"
-
-    def as_python_type(self) -> str:
-        return {
-            FieldDataType.STRING: "str",
-            FieldDataType.INTEGER: "int",
-            FieldDataType.FLOAT: "float",
-            FieldDataType.BOOLEAN: "bool",
-            FieldDataType.DATETIME: "datetime",
-            FieldDataType.UUID: "UUID",
-            FieldDataType.JSONB: "dict[str, Any]",
-        }[self]
 
     @classmethod
     def from_db_type(cls, db_type: str) -> "FieldDataType":

@@ -32,14 +32,19 @@ def main() -> None:
     help="PostgreSQL connection URL (e.g., postgresql://user:password@host:port/dbname)",
 )
 def start(
-    use_example: bool,
-    no_ui: bool,
+    use_example: bool = False,
+    no_ui: bool = False,
     from_yaml: str | None = None,
     db_url: str | None = None,
 ) -> None:
     """Start the FastAPI Forge server and generate a new project."""
-    if sum([use_example, bool(from_yaml), bool(db_url)]) > 1:
+    option_count = sum([use_example, bool(from_yaml), bool(db_url)])
+    if option_count > 1:
         msg = "Only one of '--use-example', '--from-yaml', or '--db-url' can be used."
+        raise click.UsageError(msg)
+
+    if no_ui and option_count < 1:
+        msg = "Option '--no-ui' requires one of '--use-example', '--from-yaml', or '--db-url' to be set."
         raise click.UsageError(msg)
 
     project_spec = None
@@ -49,15 +54,13 @@ def start(
         if not yaml_path.is_file():
             raise click.FileError(f"YAML file not found: {yaml_path}")
         project_spec = ProjectLoader(project_path=yaml_path).load_project_input()
-
     elif db_url:
         project_spec = ProjectLoader.load_project_spec_from_db(
             connection_string=db_url,
         )
-
-    else:
+    elif use_example:
         base_path = Path(__file__).parent / "example-projects"
-        path = base_path / ("game_zone.yaml" if use_example else "empty-service.yaml")
+        path = base_path / "game_zone.yaml"
         project_spec = ProjectLoader(project_path=path).load_project_input()
 
     init(project_spec=project_spec, no_ui=no_ui)
