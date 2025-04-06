@@ -87,7 +87,7 @@ registry.register(
     DataTypeInfo(
         pydantic_annotation="float",
         sqlalchemy_type="Float",
-        sqlalchemy_prefix=False,
+        sqlalchemy_prefix=True,
         python_type="float",
         faker_field_value=faker_placeholder.format(
             placeholder='"pyfloat", positive=True, min_value=0.1, max_value=100'
@@ -102,7 +102,7 @@ registry.register(
     DataTypeInfo(
         pydantic_annotation="bool",
         sqlalchemy_type="Boolean",
-        sqlalchemy_prefix=False,
+        sqlalchemy_prefix=True,
         python_type="bool",
         faker_field_value=faker_placeholder.format(placeholder='"boolean"'),
         value="True",
@@ -115,7 +115,7 @@ registry.register(
     DataTypeInfo(
         pydantic_annotation="datetime",
         sqlalchemy_type="DateTime",
-        sqlalchemy_prefix=False,
+        sqlalchemy_prefix=True,
         python_type="datetime",
         faker_field_value=faker_placeholder.format(placeholder='"date_time"'),
         value="datetime.now(timezone.utc)",
@@ -142,7 +142,7 @@ registry.register(
     DataTypeInfo(
         pydantic_annotation="dict[str, Any]",
         sqlalchemy_type="JSONB",
-        sqlalchemy_prefix=True,
+        sqlalchemy_prefix=False,
         python_type="dict",
         faker_field_value="{}",
         value="{}",
