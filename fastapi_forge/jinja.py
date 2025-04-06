@@ -59,7 +59,7 @@ class {{ model.name_cc }}DTO(BaseOrmModel):
 
     id: UUID
     {% for field in model.fields_sorted if not field.primary_key -%}
-    {{ field.name }}: {{ type_mapping[field.type] }}{% if field.nullable %} | None{% endif %}
+    {{ field.name }}: {{ field.type_info.python_type }}{% if field.nullable %} | None{% endif %}
     {% endfor %}
 
 
@@ -76,7 +76,7 @@ class {{ model.name_cc }}UpdateDTO(BaseModel):
     \"\"\"{{ model.name_cc }} update DTO.\"\"\"
 
     {% for field in model.fields_sorted if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or field.primary_key) -%}
-    {{ field.name }}: {{ type_mapping[field.type] }} | None = None
+    {{ field.name }}: {{ field.type_info.python_type }} | None = None
     {% endfor %}
 """
 
@@ -197,11 +197,7 @@ async def test_post_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> Non
         {%- if not field.primary_key and field.name.endswith('_id') -%}
         "{{ field.name }}": str({{ field.name | replace('_id', '.id') }}),
         {%- elif not field.primary_key %}
-        {%- if field.type == "DateTime" %}
-        "{{ field.name }}": {{ type_to_input_value_mapping[field.type] }}.isoformat(),
-        {%- else %}
-        "{{ field.name }}": {{ type_to_input_value_mapping[field.type] }},
-        {%- endif %}
+        "{{ field.name }}": {{ field.type_info.test_value }}{{ field.type_info.test_func }},
         {%- endif %}
         {%- endfor %}
     }
@@ -217,11 +213,7 @@ async def test_post_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> Non
     {%- if not field.primary_key and field.name.endswith('_id') %}
     assert db_{{ model.name }}.{{ field.name }} == UUID(input_json["{{ field.name }}"])
     {%- elif not field.primary_key %}
-    {%- if field.type == "DateTime" %}
-    assert db_{{ model.name }}.{{ field.name }}.isoformat() == input_json["{{ field.name }}"]
-    {%- else %}
-    assert db_{{ model.name }}.{{ field.name }} == input_json["{{ field.name }}"]
-    {%- endif %}
+    assert db_{{ model.name }}.{{ field.name }}{{ field.type_info.test_func }} == input_json["{{ field.name }}"]
     {%- endif %}
     {%- endfor %}
 """
@@ -391,26 +383,37 @@ def _render(model: Model, template_name: str, **kwargs: Any) -> str:
 
 
 def render_model_to_model(model: Model) -> str:
-    return _render(model, model_template, type_mapping=TYPE_MAPPING)
+    return _render(
+        model,
+        model_template,
+    )
 
 
 def render_model_to_dto(model: Model) -> str:
-    return _render(model, dto_template, type_mapping=TYPE_MAPPING)
+    return _render(
+        model,
+        dto_template,
+    )
 
 
 def render_model_to_dao(model: Model) -> str:
-    return _render(model, dao_template)
+    return _render(
+        model,
+        dao_template,
+    )
 
 
 def render_model_to_routers(model: Model) -> str:
-    return _render(model, routers_template)
+    return _render(
+        model,
+        routers_template,
+    )
 
 
 def render_model_to_post_test(model: Model) -> str:
     return _render(
         model,
         test_template_post,
-        type_to_input_value_mapping=TYPE_TO_INPUT_VALUE_MAPPING,
     )
 
 
@@ -418,7 +421,6 @@ def render_model_to_get_test(model: Model) -> str:
     return _render(
         model,
         test_template_get,
-        type_to_input_value_mapping=TYPE_TO_INPUT_VALUE_MAPPING,
     )
 
 
@@ -426,7 +428,6 @@ def render_model_to_get_id_test(model: Model) -> str:
     return _render(
         model,
         test_template_get_id,
-        type_to_input_value_mapping=TYPE_TO_INPUT_VALUE_MAPPING,
     )
 
 
@@ -434,7 +435,6 @@ def render_model_to_patch_test(model: Model) -> str:
     return _render(
         model,
         test_template_patch,
-        type_to_input_value_mapping=TYPE_TO_INPUT_VALUE_MAPPING,
     )
 
 
@@ -442,7 +442,6 @@ def render_model_to_delete_test(model: Model) -> str:
     return _render(
         model,
         test_template_delete,
-        type_to_input_value_mapping=TYPE_TO_INPUT_VALUE_MAPPING,
     )
 
 
@@ -473,73 +472,29 @@ if __name__ == "__main__":
                     type=FieldDataType.STRING,
                     primary_key=False,
                     nullable=False,
-                    unique=False,
-                    index=False,
-                ),
-            ],
-        ),
-        Model(
-            name="model_a",
-            fields=[
-                ModelField(
-                    name="id",
-                    type=FieldDataType.UUID,
-                    primary_key=True,
                     unique=True,
-                ),
-            ],
-        ),
-        Model(
-            name="model_b",
-            fields=[
-                ModelField(
-                    name="id",
-                    type=FieldDataType.UUID,
-                    primary_key=True,
-                    unique=True,
+                    index=True,
                 ),
                 ModelField(
-                    name="updated_at",
+                    name="timestamp",
                     type=FieldDataType.DATETIME,
-                    metadata=ModelFieldMetadata(
-                        is_updated_at_timestamp=True,
-                    ),
-                ),
-                ModelField(
-                    name="created_at",
-                    type=FieldDataType.DATETIME,
-                    metadata=ModelFieldMetadata(
-                        is_created_at_timestamp=True,
-                    ),
-                ),
-                ModelField(
-                    name="is_mohammad",
-                    type=FieldDataType.BOOLEAN,
                 ),
             ],
             relationships=[
                 ModelRelationship(
-                    field_name="model_a0_id",
-                    target_model="model_a",
-                ),
-                ModelRelationship(
-                    field_name="model_a1_id",
-                    target_model="model_a",
-                ),
-                ModelRelationship(
-                    field_name="user_id",
-                    target_model="auth_user",
-                ),
+                    field_name="yo_id",
+                    target_model="yo",
+                )
             ],
-        ),
+        )
     ]
 
     render_funcs = [
-        render_model_to_model,
+        # render_model_to_model,
         # render_model_to_dto,
         # render_model_to_dao,
         # render_model_to_routers,
-        # render_model_to_post_test,
+        render_model_to_post_test,
         # render_model_to_get_test,
         # render_model_to_get_id_test,
         # render_model_to_patch_test,
@@ -553,4 +508,4 @@ if __name__ == "__main__":
         print("=" * 80)
         print()
 
-        print(fn(models[2]))
+        print(fn(models[0]))

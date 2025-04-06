@@ -9,7 +9,7 @@ from pydantic import (
     model_validator,
 )
 
-from fastapi_forge.enums import FieldDataType
+from fastapi_forge.enums import DataTypeInfo, FieldDataType, registry
 from fastapi_forge.string_utils import camel_to_snake_hyphen, snake_to_camel
 
 BoundedStr = Annotated[str, Field(..., min_length=1, max_length=100)]
@@ -44,10 +44,8 @@ class ModelField(_Base):
     nullable: bool = False
     unique: bool = False
     index: bool = False
-
     default_value: str | None = None
     extra_kwargs: dict[str, Any] | None = None
-
     metadata: ModelFieldMetadata = ModelFieldMetadata()
 
     @computed_field
@@ -55,6 +53,10 @@ class ModelField(_Base):
     def name_cc(self) -> str:
         """Convert field name to camelCase."""
         return snake_to_camel(self.name)
+
+    @property
+    def type_info(self) -> DataTypeInfo:
+        return registry.get(self.type)
 
     @model_validator(mode="after")
     def _validate(self) -> Self:

@@ -2,32 +2,15 @@ from fastapi_forge.dtos import ModelField, ModelRelationship
 from fastapi_forge.enums import FieldDataType
 
 
-def _map_field_type_to_sa_type(field: ModelField) -> str:
-    field_type_mapping = {
-        FieldDataType.UUID: "UUID(as_uuid=True)",
-        FieldDataType.STRING: "String",
-        FieldDataType.INTEGER: "Integer",
-        FieldDataType.FLOAT: "Float",
-        FieldDataType.BOOLEAN: "Boolean",
-        FieldDataType.DATETIME: "DateTime(timezone=True)",
-        FieldDataType.JSONB: "JSONB",
-    }
-
-    sa_type = field_type_mapping.get(field.type)
-
-    if sa_type is None:
-        raise ValueError(f"Unsupported field type: {field.type}")
-
-    return sa_type
-
-
 def _gen_field(
     field: ModelField,
-    sa_type: str,
-    prefix_sa: bool = True,
     target: str | None = None,
 ) -> str:
-    args = [f"{'sa.' if prefix_sa else ''}{sa_type}"]
+
+    type_info = field.type_info
+    args = [
+        f"{'sa.' if type_info.sqlalchemy_prefix else ''}{type_info.sqlalchemy_type}"
+    ]
 
     if field.metadata.is_foreign_key and target:
         args.append(f'sa.ForeignKey("{target + ".id"}", ondelete="CASCADE")')
@@ -47,43 +30,10 @@ def _gen_field(
         field.type = FieldDataType(field.type)
 
     return f"""
-    {field.name}: Mapped[{field.type.as_python_type()}{" | None" if field.nullable else ""}] = mapped_column(
+    {field.name}: Mapped[{field.type_info.python_type}{" | None" if field.nullable else ""}] = mapped_column(
         {",\n        ".join(args)}
     )
     """.strip()
-
-
-def _gen_uuid_field(field: ModelField, target: str | None = None) -> str:
-    return _gen_field(field, _map_field_type_to_sa_type(field), target=target)
-
-
-def _gen_string_field(field: ModelField, target: str | None = None) -> str:
-    return _gen_field(field, _map_field_type_to_sa_type(field), target=target)
-
-
-def _gen_integer_field(field: ModelField, target: str | None = None) -> str:
-    return _gen_field(field, _map_field_type_to_sa_type(field), target=target)
-
-
-def _gen_float_field(field: ModelField, target: str | None = None) -> str:
-    return _gen_field(field, _map_field_type_to_sa_type(field), target=target)
-
-
-def _gen_boolean_field(field: ModelField, target: str | None = None) -> str:
-    return _gen_field(field, _map_field_type_to_sa_type(field), target=target)
-
-
-def _gen_datetime_field(field: ModelField, target: str | None = None) -> str:
-    return _gen_field(field, _map_field_type_to_sa_type(field), target=target)
-
-
-def _gen_jsonb_field(field: ModelField, target: str | None = None) -> str:
-    return _gen_field(
-        field,
-        _map_field_type_to_sa_type(field),
-        prefix_sa=False,
-        target=target,
-    )
 
 
 def generate_field(
@@ -107,20 +57,7 @@ def generate_field(
     if relationships is not None and target is None:
         raise ValueError(f"Target was not found for Foreign Key {field.name}")
 
-    type_to_fn = {
-        FieldDataType.UUID: _gen_uuid_field,
-        FieldDataType.STRING: _gen_string_field,
-        FieldDataType.INTEGER: _gen_integer_field,
-        FieldDataType.FLOAT: _gen_float_field,
-        FieldDataType.BOOLEAN: _gen_boolean_field,
-        FieldDataType.DATETIME: _gen_datetime_field,
-        FieldDataType.JSONB: _gen_jsonb_field,
-    }
-
-    if field.type not in type_to_fn:
-        raise ValueError(f"Unsupported field type: {field.type}")
-
-    return type_to_fn[field.type](field, target=target)
+    return _gen_field(field=field, target=target)
 
 
 def generate_relationship(relation: ModelRelationship) -> str:
