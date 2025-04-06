@@ -24,7 +24,6 @@ class FieldDataType(StrEnum):
 # register a DataTypeInfo with a FieldDataType to make it easier to support types
 class DataTypeInfo(BaseModel):
 
-    pydantic_annotation: str
     sqlalchemy_type: str
     sqlalchemy_prefix: bool
     python_type: str
@@ -59,7 +58,6 @@ faker_placeholder = "factory.Faker({placeholder})"
 registry.register(
     FieldDataType.STRING,
     DataTypeInfo(
-        pydantic_annotation="str",
         sqlalchemy_type="String",
         sqlalchemy_prefix=True,
         python_type="str",
@@ -72,7 +70,6 @@ registry.register(
 registry.register(
     FieldDataType.INTEGER,
     DataTypeInfo(
-        pydantic_annotation="int",
         sqlalchemy_type="Integer",
         sqlalchemy_prefix=True,
         python_type="int",
@@ -85,7 +82,6 @@ registry.register(
 registry.register(
     FieldDataType.FLOAT,
     DataTypeInfo(
-        pydantic_annotation="float",
         sqlalchemy_type="Float",
         sqlalchemy_prefix=True,
         python_type="float",
@@ -100,7 +96,6 @@ registry.register(
 registry.register(
     FieldDataType.BOOLEAN,
     DataTypeInfo(
-        pydantic_annotation="bool",
         sqlalchemy_type="Boolean",
         sqlalchemy_prefix=True,
         python_type="bool",
@@ -113,8 +108,7 @@ registry.register(
 registry.register(
     FieldDataType.DATETIME,
     DataTypeInfo(
-        pydantic_annotation="datetime",
-        sqlalchemy_type="DateTime",
+        sqlalchemy_type="DateTime(timezone=True)",
         sqlalchemy_prefix=True,
         python_type="datetime",
         faker_field_value=faker_placeholder.format(placeholder='"date_time"'),
@@ -127,9 +121,8 @@ registry.register(
 registry.register(
     FieldDataType.UUID,
     DataTypeInfo(
-        pydantic_annotation="UUID",
-        sqlalchemy_type="UUID",
-        sqlalchemy_prefix=False,
+        sqlalchemy_type="UUID(as_uuid=True)",
+        sqlalchemy_prefix=True,
         python_type="UUID",
         faker_field_value=str(uuid4()),
         value=str(uuid4()),
@@ -140,10 +133,9 @@ registry.register(
 registry.register(
     FieldDataType.JSONB,
     DataTypeInfo(
-        pydantic_annotation="dict[str, Any]",
         sqlalchemy_type="JSONB",
         sqlalchemy_prefix=False,
-        python_type="dict",
+        python_type="dict[str, Any]",
         faker_field_value="{}",
         value="{}",
         test_value='{"key": "value"}',
