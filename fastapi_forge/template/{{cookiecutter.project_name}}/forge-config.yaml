@@ -28,7 +28,11 @@ paths:
     enabled: {{cookiecutter.use_rabbitmq | lower}}
     paths:
       - src/services/rabbitmq
-      - src/routes/demo_routes.py
+
+  use_taskiq:
+    enabled: {{cookiecutter.use_taskiq | lower}}
+    paths:
+      - src/services/taskiq
 
   constants:
     requires_all:
@@ -36,3 +40,5 @@ paths:
       - use_rabbitmq
     paths:
       - src/constants.py
+
+  

@@ -14,8 +14,6 @@ dependencies = [
     "ruff>=0.9.4",
     {%- if cookiecutter.use_postgres -%}
     "sqlalchemy[asyncio]>=2.0.37",
-    {% endif %}
-    {%- if cookiecutter.use_postgres -%}
     "asyncpg>=0.30.0",
     {% endif %}
     {%- if cookiecutter.use_builtin_auth -%}
@@ -31,9 +29,17 @@ dependencies = [
     "factory-boy>=3.3.3",
     {%- if cookiecutter.use_redis -%}
     "redis>=5.2.1",
+    "fakeredis>=2.28.1",
     {% endif %}
     {%- if cookiecutter.use_rabbitmq -%}
     "aio-pika>=9.5.5",
+    {%- endif %}
+    {%- if cookiecutter.use_taskiq -%}
+    "taskiq>=0.11.16",
+    "taskiq-aio-pika>=0.4.1",
+    "taskiq-redis>=1.0.4",
+    "taskiq-fastapi>=0.3.4",
+    "orjson>=3.10.16",
     {%- endif %}
 ]
 
@@ -64,7 +70,9 @@ ignore = [
     #### specific rules
     "A001",
     "A002",
+    "ARG002",
     "ARG001",
+    "B008",
     "B904",
     "BLE001",
     "D100",

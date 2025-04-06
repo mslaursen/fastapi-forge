@@ -295,6 +295,7 @@ class ProjectSpec(_Base):
     use_builtin_auth: bool = False
     use_redis: bool = False
     use_rabbitmq: bool = False
+    use_taskiq: bool = False
     models: list[Model] = []
 
     @model_validator(mode="after")
@@ -329,6 +330,18 @@ class ProjectSpec(_Base):
             msg = "Only one model can be an auth user."
             raise ValueError(msg)
 
+        if self.use_taskiq and not (self.use_redis and self.use_rabbitmq):
+            missing = []
+            if not self.use_rabbitmq:
+                missing.append("RabbitMQ")
+            if not self.use_redis:
+                missing.append("Redis")
+
+            if missing:
+                raise ValueError(
+                    "TaskIQ is enabled, but the following are missing and required "
+                    f"for its operation: {', '.join(missing)}."
+                )
         return self
 
     @model_validator(mode="after")
