@@ -21,7 +21,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import JSONB
 from uuid import UUID
 from typing import Any, Annotated
-from datetime import datetime, timezone
+from datetime import datetime, timezone,  timedelta
+
+
 {% set unique_relationships = model.relationships | unique(attribute='target') %}
 {% for relation in unique_relationships -%}
 from src.models.{{ relation.target_model }}_models import {{ relation.target }}
@@ -45,7 +47,9 @@ class {{ model.name_cc }}(Base):
 """
 
 dto_template = """
-from datetime import datetime
+from datetime import datetime, timezone,  timedelta
+
+
 from pydantic import BaseModel, ConfigDict, Field
 from fastapi import Depends
 from uuid import UUID
@@ -177,7 +181,9 @@ import pytest
 from tests import factories
 from src.daos import AllDAOs
 from httpx import AsyncClient
-from datetime import datetime, timezone
+from datetime import datetime, timezone,  timedelta
+
+
 from typing import Any
 from uuid import UUID
 
@@ -221,7 +227,9 @@ test_template_get = """
 import pytest
 from tests import factories
 from httpx import AsyncClient
-from datetime import datetime
+from datetime import datetime, timezone,  timedelta
+
+
 from uuid import UUID
 
 URI = "/api/v1/{{ model.name_hyphen }}s/"
@@ -246,7 +254,9 @@ test_template_get_id = """
 import pytest
 from tests import factories
 from httpx import AsyncClient
-from datetime import datetime
+from datetime import datetime, timezone,  timedelta
+
+
 from uuid import UUID
 
 URI = "/api/v1/{{ model.name_hyphen }}s/{ {{- model.name -}}_id}"
@@ -276,7 +286,9 @@ import pytest
 from tests import factories
 from src.daos import AllDAOs
 from httpx import AsyncClient
-from datetime import datetime, timezone
+from datetime import datetime, timezone,  timedelta
+
+
 from typing import Any
 from uuid import UUID
 
@@ -322,7 +334,9 @@ import pytest
 from tests import factories
 from src.daos import AllDAOs
 from httpx import AsyncClient
-from datetime import datetime
+from datetime import datetime, timezone,  timedelta
+
+
 from uuid import UUID
 
 URI = "/api/v1/{{ model.name_hyphen }}s/{ {{- model.name -}}_id}"

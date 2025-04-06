@@ -273,22 +273,32 @@ class ProjectLoader:
 
                 data_type = FieldDataType.from_db_type(column.pop("type"))
                 column["type"] = data_type
+                default = None
+                extra_kwargs = None
 
                 metadata = ModelFieldMetadata()
                 if data_type == FieldDataType.DATETIME:
                     column_name = column["name"]
                     default_timestamp = column.get("default") == "CURRENT_TIMESTAMP"
                     if default_timestamp:
-                        if "created" in column_name:
+                        if "create" in column_name:
                             metadata.is_created_at_timestamp = True
-                        elif "updated" in column_name:
+                            default = "datetime.now(timezone.utc)"
+                        elif "update" in column_name:
                             metadata.is_updated_at_timestamp = True
+                            default = "datetime.now(timezone.utc)"
+                            extra_kwargs = {"onupdate": "datetime.now(timezone.utc)"}
 
                 # temporary until any primary key name is supported
                 if column["primary_key"] is True:
                     column["name"] = "id"
 
-                field = ModelField(**column, metadata=metadata)
+                field = ModelField(
+                    **column,
+                    metadata=metadata,
+                    default_value=default,
+                    extra_kwargs=extra_kwargs,
+                )
                 fields.append(field)
 
             model = Model(
