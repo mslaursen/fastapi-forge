@@ -6,7 +6,6 @@ def _gen_field(
     field: ModelField,
     target: str | None = None,
 ) -> str:
-
     type_info = field.type_info
     args = [
         f"{'sa.' if type_info.sqlalchemy_prefix else ''}{type_info.sqlalchemy_type}"
