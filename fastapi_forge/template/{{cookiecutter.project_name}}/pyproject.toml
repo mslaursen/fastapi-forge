@@ -50,7 +50,7 @@ env = [
 ]
 
 [tool.ruff]
-exclude = ["migrations"]
+exclude = ["migrations",".venv/", "Lib"]
 target-version = "py312"
 line-length = 88
 indent-width = 4
