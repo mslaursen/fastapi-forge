@@ -52,8 +52,10 @@ class ProjectConfigPanel(ui.right_drawer):
                     .set_enabled(False)
                 )
 
+            with ui.column().classes("w-full gap-2"):
+                ui.label("Migrations").classes("text-lg font-bold")
                 self.use_alembic = (
-                    ui.checkbox("Alembic (Migrations)", value=state.use_alembic)
+                    ui.checkbox("Alembic", value=state.use_alembic)
                     .classes("w-full")
                     .bind_enabled_from(self.use_postgres, "value")
                 )
@@ -75,12 +77,6 @@ class ProjectConfigPanel(ui.right_drawer):
 
             with ui.column().classes("w-full gap-2"):
                 ui.label("Messaging").classes("text-lg font-bold")
-                self.use_kafka = (
-                    ui.checkbox("Kafka")
-                    .classes("w-full")
-                    .tooltip("Coming soon!")
-                    .set_enabled(False)
-                )
                 self.use_rabbitmq = ui.checkbox(
                     "RabbitMQ",
                     value=state.use_rabbitmq,
@@ -102,6 +98,14 @@ class ProjectConfigPanel(ui.right_drawer):
                 )
 
             with ui.column().classes("w-full gap-2"):
+                ui.label("Caching").classes("text-lg font-bold")
+                self.use_redis = ui.checkbox(
+                    "Redis",
+                    value=state.use_redis,
+                    on_change=self._update_taskiq_state,
+                ).classes("w-full")
+
+            with ui.column().classes("w-full gap-2"):
                 ui.label("Metrics").classes("text-lg font-bold")
                 self.use_prometheus = (
                     ui.checkbox("Prometheus")
@@ -111,21 +115,13 @@ class ProjectConfigPanel(ui.right_drawer):
                 )
 
             with ui.column().classes("w-full gap-2"):
-                ui.label("Search").classes("text-lg font-bold")
+                ui.label("Object Storage").classes("text-lg font-bold")
                 self.use_elasticsearch = (
-                    ui.checkbox("ElasticSearch")
+                    ui.checkbox("S3")
                     .classes("w-full")
                     .tooltip("Coming soon!")
                     .set_enabled(False)
                 )
-
-            with ui.column().classes("w-full gap-2"):
-                ui.label("Caching").classes("text-lg font-bold")
-                self.use_redis = ui.checkbox(
-                    "Redis",
-                    value=state.use_redis,
-                    on_change=self._update_taskiq_state,
-                ).classes("w-full")
 
             with ui.column().classes("w-full gap-2"):
                 self.loading_spinner = ui.spinner(size="lg").classes(
