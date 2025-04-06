@@ -1,20 +1,35 @@
-from fastapi import FastAPI
+from collections.abc import AsyncGenerator
+from typing import Any
+
 import pytest
+{% if cookiecutter.use_redis %}
+from fakeredis.aioredis import FakeRedis
+from src.services.redis.redis_dependencies import get_redis
+{% endif %}
+from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
     async_sessionmaker,
     create_async_engine,
-    AsyncSession,
-    AsyncEngine,
 )
-from typing import Any, AsyncGenerator
 
 from src.daos import AllDAOs
+from src.db import meta
 from src.db.db_dependencies import get_db_session
 from src.main import get_app
-from src.settings import settings
-from src.db import meta
+{% if cookiecutter.use_rabbitmq %}
+from src.services.rabbitmq import (
+    RabbitMQServiceMock,
+    get_rabbitmq,
+)
+{% endif %}
 
+{% if cookiecutter.use_taskiq %}
+from src.services.taskiq.broker import broker
+{% endif %}
+from src.settings import settings
 from tests.factories import BaseFactory
 from tests.test_utils import create_test_db, drop_test_db
 
@@ -75,10 +90,40 @@ def inject_session(db_session: AsyncSession) -> None:
     BaseFactory.session = db_session
 
 
+{% if cookiecutter.use_redis %}
 @pytest.fixture
-def overwritten_deps(db_session: AsyncSession) -> dict[Any, Any]:
+async def mock_redis() -> AsyncGenerator[FakeRedis, None]:
+    """Provide a fake Redis instance."""
+    client = FakeRedis()
+    yield client
+    await client.close()
+{% endif %}
+
+
+{% if cookiecutter.use_rabbitmq %}
+@pytest.fixture
+def mock_rabbitmq() -> RabbitMQServiceMock:
+    """Provide a mock RabbitMQ instance."""
+    return RabbitMQServiceMock()
+{% endif %}
+
+
+@pytest.fixture
+def overwritten_deps(
+    db_session: AsyncSession,
+    {% if cookiecutter.use_redis %}
+    mock_redis: FakeRedis,
+    {% endif %}
+    {% if cookiecutter.use_rabbitmq %}
+    mock_rabbitmq: RabbitMQServiceMock,
+    {% endif %}
+) -> dict[Any, Any]:
     """Override dependencies for the test app."""
-    return {get_db_session: lambda: db_session}
+    return {
+        get_db_session: lambda: db_session,
+        get_redis: lambda: mock_redis,
+        get_rabbitmq: lambda: mock_rabbitmq,
+    }
 
 
 @pytest.fixture(scope="session")
@@ -92,6 +137,18 @@ def app(session_app: FastAPI, overwritten_deps: dict[Any, Any]) -> FastAPI:
     """Provide the FastAPI app instance (per test)."""
     session_app.dependency_overrides.update(overwritten_deps)
     return session_app
+
+
+{% if cookiecutter.use_taskiq %}
+@pytest.fixture(autouse=True)
+async def init_taskiq_dependencies(
+    overwritten_deps: dict[Any, Any],
+) -> AsyncGenerator[None, None]:
+    """Initialize Taskiq dependencies."""
+    broker.add_dependency_context(overwritten_deps)
+    yield
+    broker.custom_dependency_context = {}
+{% endif %}
 
 
 @pytest.fixture

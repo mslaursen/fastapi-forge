@@ -1,5 +1,6 @@
 services:
   api:
+    &api
     build:
       context: .
     image: {{ cookiecutter.project_name }}:latest
@@ -71,6 +72,19 @@ services:
           path: pyproject.toml
         - action: rebuild
           path: uv.lock
+  {% if cookiecutter.use_taskiq %}
+  taskiq-worker:
+    <<: *api
+    container_name: game_zone-taskiq-worker
+    ports: []
+    command: [ taskiq, worker, -fsd, src.services.taskiq.broker:broker, -w, "1", --max-fails, "1"]
+
+  taskiq-scheduler:
+    <<: *api
+    container_name: game_zone-taskiq-scheduler
+    ports: []
+    command: [ taskiq, scheduler, -fsd, src.services.taskiq.scheduler:scheduler ]
+  {%- endif %}
   {% if cookiecutter.use_postgres %}
   postgres:
     image: postgres:13.8-bullseye
@@ -108,7 +122,7 @@ services:
   {% endif %}
   {%- if cookiecutter.use_rabbitmq -%}
   rabbitmq:
-    image: rabbitmq:3-management
+    image: rabbitmq:3.8.27-management-alpine
     container_name: {{ cookiecutter.project_name }}-rabbitmq
     ports:
       - "15672:15672"

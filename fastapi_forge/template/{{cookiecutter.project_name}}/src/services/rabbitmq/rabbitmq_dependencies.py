@@ -1,4 +1,5 @@
 import json
+from abc import ABC, abstractmethod
 from typing import Annotated
 
 import aio_pika
@@ -8,18 +9,45 @@ from aio_pika.pool import Pool
 from fastapi import Depends, Request
 from loguru import logger
 from pydantic import BaseModel
+{% if cookiecutter.use_taskiq %}
+from taskiq import TaskiqDepends
+{% endif %}
 
 
-def get_rabbitmq_channel_pool(request: Request) -> Pool[aio_pika.Channel]:
+{% if cookiecutter.use_taskiq %}
+def get_rabbitmq_channel_pool(
+    request: Annotated[Request, TaskiqDepends()],
+) -> Pool[aio_pika.Channel]:
     return request.app.state.rabbitmq_channel_pool
-
+{% else %}
+def get_rabbitmq_channel_pool(
+    request: Request,
+) -> Pool[aio_pika.Channel]:
+    return request.app.state.rabbitmq_channel_pool
+{% endif %}
 
 GetRMQChannelPool = Annotated[
-    Pool[aio_pika.Channel], Depends(get_rabbitmq_channel_pool)
+    Pool[aio_pika.Channel],
+    Depends(get_rabbitmq_channel_pool),
 ]
 
 
-class RabbitMQService:
+class _AbstractRabbitMQService(ABC):
+    """Abstract RabbitMQ Service."""
+
+    @abstractmethod
+    async def _publish(
+        self,
+        exchange_name: str,
+        routing_key: str,
+        message: BaseModel,
+        exchange_type: ExchangeType = ExchangeType.TOPIC,
+    ) -> None:
+        msg = "Must be implemented in subclasses."
+        raise NotImplementedError(msg)
+
+
+class RabbitMQService(_AbstractRabbitMQService):
     """RabbitMQ Service."""
 
     def __init__(self, pool: GetRMQChannelPool):
@@ -60,7 +88,43 @@ class RabbitMQService:
         )
 
 
-GetRabbitMQ = Annotated[RabbitMQService, Depends(RabbitMQService)]
+class RabbitMQServiceMock(_AbstractRabbitMQService):
+    """Mock RabbitMQ Service."""
+
+    async def _publish(
+        self,
+        exchange_name: str,
+        routing_key: str,
+        message: BaseModel,
+        exchange_type: ExchangeType = ExchangeType.TOPIC,
+    ) -> None:
+        logger.info(
+            f"Mock publish to {exchange_name} with routing key {routing_key}: {message}"
+        )
+
+    async def send_demo_message(
+        self,
+        payload: BaseModel,
+    ) -> None:
+        """Send a demo message."""
+        await self._publish(
+            exchange_name="demo.exchange",
+            routing_key="demo.message.send",
+            message=payload,
+        )
+
+
+def get_rabbitmq(
+    channel_pool: GetRMQChannelPool,
+) -> RabbitMQService:
+    """Get RabbitMQ Service."""
+    return RabbitMQService(channel_pool)
+
+
+GetRabbitMQ = Annotated[
+    RabbitMQService,
+    Depends(get_rabbitmq),
+]
 
 
 class QueueConfig(BaseModel):

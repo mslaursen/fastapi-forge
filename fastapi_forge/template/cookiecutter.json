@@ -17,6 +17,9 @@
     "use_rabbitmq": {
         "default": true
     },
+    "use_taskiq": {
+        "default": true
+    },
     "models": {
         "models": []
     },

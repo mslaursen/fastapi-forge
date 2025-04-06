@@ -5,6 +5,7 @@ project:
   use_builtin_auth: true
   use_redis: true
   use_rabbitmq: true
+  use_taskiq: true
 
   models:
     - name: auth_user
