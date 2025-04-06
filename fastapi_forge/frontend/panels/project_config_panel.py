@@ -87,12 +87,10 @@ class ProjectConfigPanel(ui.right_drawer):
 
             with ui.column().classes("w-full gap-2"):
                 ui.label("Task Queues").classes("text-lg font-bold")
-                self.use_taskiq = (
-                    ui.checkbox("Taskiq")
-                    .classes("w-full")
-                    .tooltip("Coming soon!")
-                    .set_enabled(False)
-                )
+                self.use_taskiq = ui.checkbox(
+                    "Taskiq",
+                    value=state.use_taskiq,
+                ).classes("w-full")
                 self.use_celery = (
                     ui.checkbox("Celery")
                     .classes("w-full")
@@ -142,6 +140,8 @@ class ProjectConfigPanel(ui.right_drawer):
         self.use_alembic.bind_value_to(state, "use_alembic")
         self.use_builtin_auth.bind_value_to(state, "use_builtin_auth")
         self.use_rabbitmq.bind_value_to(state, "use_rabbitmq")
+        self.use_redis.bind_value_to(state, "use_redis")
+        self.use_taskiq.bind_value_to(state, "use_taskiq")
 
     def _handle_builtin_auth_change(self, event: ValueChangeEventArguments) -> None:
         """Handle JWT Auth checkbox changes"""
@@ -245,6 +245,7 @@ class ProjectConfigPanel(ui.right_drawer):
             state.use_builtin_auth = self.use_builtin_auth.value
             state.use_redis = self.use_redis.value
             state.use_rabbitmq = self.use_rabbitmq.value
+            state.use_taskiq = self.use_taskiq.value
 
             project_spec = state.get_project_spec()
             await build_project(project_spec)

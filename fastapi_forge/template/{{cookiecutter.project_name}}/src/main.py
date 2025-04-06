@@ -16,6 +16,9 @@ from src.services.redis import redis_lifetime
 from src.services.rabbitmq import rabbitmq_lifetime
 from src.constants import QUEUE_CONFIGS
 {% endif %}
+{% if cookiecutter.use_taskiq %}
+from src.services.taskiq import taskiq_lifetime
+{% endif %}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -29,6 +32,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     {%- if cookiecutter.use_rabbitmq -%}
     await rabbitmq_lifetime.setup_rabbitmq(app, configs=QUEUE_CONFIGS)
     {% endif %}
+    {%- if cookiecutter.use_taskiq %}
+    await taskiq_lifetime.setup_taskiq()
+    {% endif %}
     
     yield
 
@@ -40,6 +46,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     {% endif %}
     {%- if cookiecutter.use_rabbitmq -%}
     await rabbitmq_lifetime.shutdown_rabbitmq(app)
+    {% endif %}
+    {%- if cookiecutter.use_taskiq %}
+    await taskiq_lifetime.shutdown_taskiq()
     {% endif %}
 
 

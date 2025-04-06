@@ -295,6 +295,7 @@ class ProjectSpec(_Base):
     use_builtin_auth: bool = False
     use_redis: bool = False
     use_rabbitmq: bool = False
+    use_taskiq: bool = False
     models: list[Model] = []
 
     @model_validator(mode="after")

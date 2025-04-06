@@ -37,6 +37,7 @@ class ProjectState(BaseModel):
     use_builtin_auth: bool = False
     use_redis: bool = False
     use_rabbitmq: bool = False
+    use_taskiq: bool = False
 
     def initialize_from_project(self, project: ProjectSpec) -> None:
         """Initialize state from an existing project specification."""
@@ -46,6 +47,7 @@ class ProjectState(BaseModel):
         self.use_builtin_auth = project.use_builtin_auth
         self.use_redis = project.use_redis
         self.use_rabbitmq = project.use_rabbitmq
+        self.use_taskiq = project.use_taskiq
         self.models = project.models.copy()
 
         self._trigger_ui_refresh()
@@ -111,6 +113,7 @@ class ProjectState(BaseModel):
             use_builtin_auth=self.use_builtin_auth,
             use_redis=self.use_redis,
             use_rabbitmq=self.use_rabbitmq,
+            use_taskiq=self.use_taskiq,
             models=self.models,
         )
 
