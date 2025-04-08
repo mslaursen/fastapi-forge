@@ -121,8 +121,12 @@ def overwritten_deps(
     """Override dependencies for the test app."""
     return {
         get_db_session: lambda: db_session,
+        {% if cookiecutter.use_redis %}
         get_redis: lambda: mock_redis,
+        {% endif %}
+        {% if cookiecutter.use_rabbitmq %}
         get_rabbitmq: lambda: mock_rabbitmq,
+        {% endif %}
     }
 
 
