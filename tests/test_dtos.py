@@ -4,7 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from fastapi_forge.dtos import Model, ModelField, ModelRelationship, ProjectSpec
-from fastapi_forge.enums import FieldDataType
+from fastapi_forge.enums import FieldDataTypeEnum
 
 ########################
 # ModelField DTO tests #
@@ -14,7 +14,7 @@ from fastapi_forge.enums import FieldDataType
 def test_primary_key_defaults_to_unique() -> None:
     model_field = ModelField(
         name="id",
-        type=FieldDataType.UUID,
+        type=FieldDataTypeEnum.UUID,
         primary_key=True,
         unique=False,
     )
@@ -26,7 +26,7 @@ def test_primary_key_cannot_be_nullable() -> None:
     with pytest.raises(ValidationError) as exc_info:
         ModelField(
             name="id",
-            type=FieldDataType.UUID,
+            type=FieldDataTypeEnum.UUID,
             primary_key=True,
             nullable=True,
         )
@@ -50,7 +50,7 @@ def test_invalid_field_name(invalid_name: str) -> None:
     with pytest.raises(ValidationError) as exc_info:
         ModelField(
             name=invalid_name,
-            type=FieldDataType.STRING,
+            type=FieldDataTypeEnum.STRING,
         )
     assert "String should match pattern '^[a-z][a-z0-9_]*$'" in str(exc_info.value)
 
@@ -58,18 +58,18 @@ def test_invalid_field_name(invalid_name: str) -> None:
 @pytest.mark.parametrize(
     "data_type, expected_factory_value",
     [
-        (FieldDataType.STRING, 'factory.Faker("text")'),
-        (FieldDataType.INTEGER, 'factory.Faker("random_int")'),
+        (FieldDataTypeEnum.STRING, 'factory.Faker("text")'),
+        (FieldDataTypeEnum.INTEGER, 'factory.Faker("random_int")'),
         (
-            FieldDataType.FLOAT,
+            FieldDataTypeEnum.FLOAT,
             'factory.Faker("pyfloat", positive=True, min_value=0.1, max_value=100)',
         ),
-        (FieldDataType.BOOLEAN, 'factory.Faker("boolean")'),
-        (FieldDataType.DATETIME, 'factory.Faker("date_time")'),
+        (FieldDataTypeEnum.BOOLEAN, 'factory.Faker("boolean")'),
+        (FieldDataTypeEnum.DATETIME, 'factory.Faker("date_time")'),
     ],
 )
 def test_factory_field_value(
-    data_type: FieldDataType,
+    data_type: FieldDataTypeEnum,
     expected_factory_value: str | None,
 ) -> None:
     model_field = ModelField(name="name", type=data_type)
@@ -108,7 +108,7 @@ def test_project_spec_non_existing_target_model() -> None:
     model = Model(
         name="restaurant",
         fields=[
-            ModelField(name="id", type=FieldDataType.UUID, primary_key=True),
+            ModelField(name="id", type=FieldDataTypeEnum.UUID, primary_key=True),
         ],
         relationships=[
             ModelRelationship(

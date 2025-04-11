@@ -10,7 +10,7 @@ from pydantic import (
 )
 
 from fastapi_forge.data_type_registry import DataTypeInfo, registry
-from fastapi_forge.enums import FieldDataType
+from fastapi_forge.enums import FieldDataTypeEnum, OnDeleteEnum
 from fastapi_forge.string_utils import camel_to_snake_hyphen, snake_to_camel
 
 BoundedStr = Annotated[str, Field(..., min_length=1, max_length=100)]
@@ -40,11 +40,12 @@ class ModelField(_Base):
     """Represents a field in a model with validation and computed properties."""
 
     name: FieldName
-    type: FieldDataType
+    type: FieldDataTypeEnum
     primary_key: bool = False
     nullable: bool = False
     unique: bool = False
     index: bool = False
+    on_delete: OnDeleteEnum = OnDeleteEnum.CASCADE
     default_value: str | None = None
     extra_kwargs: dict[str, Any] | None = None
     metadata: ModelFieldMetadata = ModelFieldMetadata()
@@ -73,13 +74,13 @@ class ModelField(_Base):
         metadata = self.metadata
         if (
             metadata.is_created_at_timestamp or metadata.is_updated_at_timestamp
-        ) and self.type != FieldDataType.DATETIME:
+        ) and self.type != FieldDataTypeEnum.DATETIME:
             msg = "Create/update timestamp fields must be of type DateTime."
             raise ValueError(
                 msg,
             )
 
-        if metadata.is_foreign_key and self.type != FieldDataType.UUID:
+        if metadata.is_foreign_key and self.type != FieldDataTypeEnum.UUID:
             msg = "Foreign Keys must be of type UUID."
             raise ValueError(msg)
 
@@ -99,6 +100,7 @@ class ModelRelationship(_Base):
     field_name: FieldName
     target_model: ModelName
     back_populates: BackPopulates | None = None
+    on_delete: OnDeleteEnum = OnDeleteEnum.CASCADE
 
     nullable: bool = False
     unique: bool = False
@@ -252,7 +254,7 @@ class Model(_Base):
             preview_model.fields.append(
                 ModelField(
                     name=relation.field_name,
-                    type=FieldDataType.UUID,
+                    type=FieldDataTypeEnum.UUID,
                     primary_key=False,
                     nullable=relation.nullable,
                     unique=relation.unique,

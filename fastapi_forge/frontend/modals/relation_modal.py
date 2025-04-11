@@ -4,6 +4,7 @@ from collections.abc import Callable
 from nicegui import ui
 
 from fastapi_forge.dtos import Model, ModelRelationship
+from fastapi_forge.enums import OnDeleteEnum
 
 
 class BaseRelationModal(ui.dialog, ABC):
@@ -27,6 +28,11 @@ class BaseRelationModal(ui.dialog, ABC):
                         label="Target Model",
                         options=[],
                     ).props("outlined dense")
+                    self.on_delete = ui.select(
+                        label="On Delete",
+                        options=list(OnDeleteEnum),
+                        value=OnDeleteEnum.CASCADE,
+                    ).props("outlined dense")
                     self.back_populates = ui.input(label="Back Populates").props(
                         "outlined dense"
                     )
@@ -47,6 +53,7 @@ class BaseRelationModal(ui.dialog, ABC):
         self.field_name.value = ""
         self.target_model.value = None
         self.back_populates.value = ""
+        self.on_delete.value = None
         self.nullable.value = False
         self.index.value = False
         self.unique.value = False
@@ -74,6 +81,7 @@ class AddRelationModal(BaseRelationModal):
             nullable=self.nullable.value,
             index=self.index.value,
             unique=self.unique.value,
+            on_delete=self.on_delete.value,
         )
         self.close()
 
@@ -109,6 +117,7 @@ class UpdateRelationModal(BaseRelationModal):
             nullable=self.nullable.value,
             index=self.index.value,
             unique=self.unique.value,
+            on_delete=self.on_delete.value,
         )
         self.close()
 
@@ -121,6 +130,7 @@ class UpdateRelationModal(BaseRelationModal):
             self.index.value = relation.index
             self.unique.value = relation.unique
             self.back_populates.value = relation.back_populates
+            self.on_delete.value = relation.on_delete
 
     def open(
         self,

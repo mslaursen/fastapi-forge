@@ -8,7 +8,7 @@ from fastapi_forge.dtos import (
     ModelMetadata,
     ModelRelationship,
 )
-from fastapi_forge.enums import FieldDataType
+from fastapi_forge.enums import FieldDataTypeEnum
 from fastapi_forge.jinja_utils import generate_field, generate_relationship
 
 env = Environment()
@@ -434,7 +434,7 @@ if __name__ == "__main__":
             fields=[
                 ModelField(
                     name="id",
-                    type=FieldDataType.UUID,
+                    type=FieldDataTypeEnum.UUID,
                     primary_key=True,
                     nullable=False,
                     unique=True,
@@ -442,7 +442,7 @@ if __name__ == "__main__":
                 ),
                 ModelField(
                     name="email",
-                    type=FieldDataType.STRING,
+                    type=FieldDataTypeEnum.STRING,
                     primary_key=False,
                     nullable=False,
                     unique=True,
@@ -450,7 +450,7 @@ if __name__ == "__main__":
                 ),
                 ModelField(
                     name="password",
-                    type=FieldDataType.STRING,
+                    type=FieldDataTypeEnum.STRING,
                     primary_key=False,
                     nullable=False,
                     unique=True,
@@ -458,7 +458,7 @@ if __name__ == "__main__":
                 ),
                 ModelField(
                     name="timestamp",
-                    type=FieldDataType.DATETIME,
+                    type=FieldDataTypeEnum.DATETIME,
                 ),
             ],
             relationships=[
@@ -472,14 +472,14 @@ if __name__ == "__main__":
 
     render_funcs = [
         render_model_to_model,
-        render_model_to_dto,
-        render_model_to_dao,
-        render_model_to_routers,
-        render_model_to_post_test,
-        render_model_to_get_test,
-        render_model_to_get_id_test,
-        render_model_to_patch_test,
-        render_model_to_delete_test,
+        # render_model_to_dto,
+        # render_model_to_dao,
+        # render_model_to_routers,
+        # render_model_to_post_test,
+        # render_model_to_get_test,
+        # render_model_to_get_id_test,
+        # render_model_to_patch_test,
+        # render_model_to_delete_test,
     ]
 
     for fn in render_funcs:

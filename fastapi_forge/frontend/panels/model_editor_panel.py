@@ -4,7 +4,7 @@ from nicegui import ui
 from pydantic import ValidationError
 
 from fastapi_forge.dtos import Model, ModelField, ModelFieldMetadata, ModelRelationship
-from fastapi_forge.enums import FieldDataType
+from fastapi_forge.enums import FieldDataTypeEnum, OnDeleteEnum
 from fastapi_forge.frontend.constants import (
     DEFAULT_AUTH_USER_FIELDS,
     FIELD_COLUMNS,
@@ -312,6 +312,7 @@ class ModelEditorPanel(ui.card):
         nullable: bool,
         index: bool,
         unique: bool,
+        on_delete: OnDeleteEnum,
         back_populates: str | None = None,
     ) -> None:
         if not state.selected_model:
@@ -337,6 +338,7 @@ class ModelEditorPanel(ui.card):
                 nullable=nullable,
                 index=index,
                 unique=unique,
+                on_delete=on_delete,
             )
         except ValidationError as exc:
             notify_validation_error(exc)
@@ -406,7 +408,7 @@ class ModelEditorPanel(ui.card):
         try:
             field_input = ModelField(
                 name=name,
-                type=FieldDataType(type),
+                type=FieldDataTypeEnum(type),
                 primary_key=primary_key,
                 nullable=nullable,
                 unique=unique,
@@ -514,7 +516,7 @@ class ModelEditorPanel(ui.card):
         try:
             field_input = ModelField(
                 name=name,
-                type=FieldDataType(type),
+                type=FieldDataTypeEnum(type),
                 primary_key=primary_key,
                 nullable=nullable,
                 unique=unique,
@@ -538,6 +540,7 @@ class ModelEditorPanel(ui.card):
         nullable: bool = False,
         index: bool = False,
         unique: bool = False,
+        on_delete: OnDeleteEnum = OnDeleteEnum.CASCADE,
         back_populates: str | None = None,
     ) -> None:
         if not state.selected_model or not state.selected_relation:
@@ -565,6 +568,7 @@ class ModelEditorPanel(ui.card):
                 nullable=nullable,
                 index=index,
                 unique=unique,
+                on_delete=on_delete,
             )
         except ValidationError as exc:
             notify_validation_error(exc)
