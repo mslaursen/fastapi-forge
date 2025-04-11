@@ -28,8 +28,8 @@ def main() -> None:
     help="Generate a project using a custom configuration from a YAML file.",
 )
 @click.option(
-    "--db-url",
-    help="PostgreSQL connection URL (e.g., postgresql://user:password@host:port/dbname)",
+    "--conn-string",
+    help="PostgreSQL connection string (e.g., postgresql://user:password@host:port/dbname)",
 )
 def start(
     use_example: bool = False,
@@ -40,11 +40,11 @@ def start(
     """Start the FastAPI Forge server and generate a new project."""
     option_count = sum([use_example, bool(from_yaml), bool(db_url)])
     if option_count > 1:
-        msg = "Only one of '--use-example', '--from-yaml', or '--db-url' can be used."
+        msg = "Only one of '--use-example', '--from-yaml', or '--conn-string' can be used."
         raise click.UsageError(msg)
 
     if no_ui and option_count < 1:
-        msg = "Option '--no-ui' requires one of '--use-example', '--from-yaml', or '--db-url' to be set."
+        msg = "Option '--no-ui' requires one of '--use-example', '--from-yaml', or '--conn-string' to be set."
         raise click.UsageError(msg)
 
     project_spec = None

@@ -322,44 +322,6 @@ class ProjectSpec(_Base):
                 )
         return self
 
-    @model_validator(mode="after")
-    def _validate_circular_references(self) -> Self:
-        relationship_graph = {}
-
-        model_names = {model.name for model in self.models}
-
-        for model in self.models:
-            relationship_graph[model.name] = [
-                rel.target_model
-                for rel in model.relationships
-                if rel.target_model in model_names
-            ]
-
-        visited = set()
-        path = set()
-
-        def has_cycle(node):
-            if node in visited:
-                return False
-            visited.add(node)
-            path.add(node)
-
-            for neighbor in relationship_graph.get(node, []):
-                if neighbor in path or has_cycle(neighbor):
-                    return True
-
-            path.remove(node)
-            return False
-
-        for model_name in relationship_graph:
-            if has_cycle(model_name):
-                raise ValueError(
-                    f"Circular reference detected involving model '{model_name}'. "
-                    "Remove bidirectional relationships between models.",
-                )
-
-        return self
-
     def get_auth_model(self) -> Model | None:
         if not self.use_builtin_auth:
             return None

@@ -51,141 +51,102 @@ def _inspect_postgres_schema(
         cur = conn.cursor()
 
         query = """
-        WITH foreign_keys AS (
-            SELECT
-                tc.table_schema,
-                tc.table_name,
-                kcu.column_name,
-                ccu.table_schema AS foreign_table_schema,
-                ccu.table_name AS foreign_table_name,
-                ccu.column_name AS foreign_column_name
-            FROM
-                information_schema.table_constraints AS tc
-                JOIN information_schema.key_column_usage AS kcu
-                    ON tc.constraint_name = kcu.constraint_name
-                    AND tc.table_schema = kcu.table_schema
-                JOIN information_schema.constraint_column_usage AS ccu
-                    ON ccu.constraint_name = tc.constraint_name
-                    AND ccu.table_schema = tc.table_schema
-            WHERE tc.constraint_type = 'FOREIGN KEY'
-        ),
-        primary_keys AS (
-            SELECT
-                tc.table_schema,
-                tc.table_name,
-                kcu.column_name,
-                TRUE AS is_primary_key
-            FROM
-                information_schema.table_constraints tc
-                JOIN information_schema.key_column_usage kcu
-                    ON tc.constraint_name = kcu.constraint_name
-                    AND tc.table_schema = kcu.table_schema
-            WHERE
-                tc.constraint_type = 'PRIMARY KEY'
-        ),
-        unique_constraints AS (
-            SELECT
-                tc.table_schema,
-                tc.table_name,
-                kcu.column_name,
-                TRUE AS is_unique
-            FROM
-                information_schema.table_constraints tc
-                JOIN information_schema.key_column_usage kcu
-                    ON tc.constraint_name = kcu.constraint_name
-                    AND tc.table_schema = kcu.table_schema
-            WHERE
-                tc.constraint_type = 'UNIQUE'
-        ),
-        indexes AS (
-            SELECT
-                n.nspname AS table_schema,
-                t.relname AS table_name,
-                a.attname AS column_name,
-                TRUE AS is_indexed
-            FROM
-                pg_class t,
-                pg_class i,
-                pg_index ix,
-                pg_attribute a,
-                pg_namespace n
-            WHERE
-                t.oid = ix.indrelid
-                AND i.oid = ix.indexrelid
-                AND a.attrelid = t.oid
-                AND a.attnum = ANY(ix.indkey)
-                AND t.relnamespace = n.oid
-                AND n.nspname = %s
-        ),
-        column_defaults AS (
-            SELECT
-                table_schema,
-                table_name,
-                column_name,
-                column_default
-            FROM
-                information_schema.columns
-            WHERE
-                table_schema = %s
-                AND column_default IS NOT NULL
-        )
         SELECT
-            t.table_schema,
-            t.table_name,
+            c.table_schema,
+            c.table_name,
             json_agg(
                 json_build_object(
                     'name', c.column_name,
                     'type', c.data_type,
                     'nullable', c.is_nullable = 'YES',
-                    'primary_key', COALESCE(pk.is_primary_key, FALSE),
-                    'unique', COALESCE(uc.is_unique, FALSE),
-                    'index', COALESCE(idx.is_indexed, FALSE),
-                    'default', cd.column_default,
+                    'primary_key', pk.column_name IS NOT NULL,
+                    'unique', uq.column_name IS NOT NULL,
+                    'default', null,
                     'foreign_key',
-                    CASE WHEN fk.foreign_table_name IS NOT NULL THEN
-                        json_build_object(
-                            'field_name', c.column_name,
-                            'target_model', fk.foreign_table_name
-                        )
-                    ELSE NULL END
-                )
-                ORDER BY c.ordinal_position
+                        CASE
+                            WHEN fk_ref.foreign_table_name IS NOT NULL THEN
+                                json_build_object(
+                                    'field_name', c.column_name,
+                                    'target_model', fk_ref.foreign_table_name,
+                                    'referenced_field', fk_ref.foreign_column_name
+                                )
+                            ELSE NULL
+                        END
+                ) ORDER BY c.ordinal_position
             ) AS columns
         FROM
-            information_schema.tables t
-            JOIN information_schema.columns c
-                ON t.table_schema = c.table_schema
-                AND t.table_name = c.table_name
-            LEFT JOIN foreign_keys fk
-                ON t.table_schema = fk.table_schema
-                AND t.table_name = fk.table_name
-                AND c.column_name = fk.column_name
-            LEFT JOIN primary_keys pk
-                ON t.table_schema = pk.table_schema
-                AND t.table_name = pk.table_name
-                AND c.column_name = pk.column_name
-            LEFT JOIN unique_constraints uc
-                ON t.table_schema = uc.table_schema
-                AND t.table_name = uc.table_name
-                AND c.column_name = uc.column_name
-            LEFT JOIN indexes idx
-                ON t.table_schema = idx.table_schema
-                AND t.table_name = idx.table_name
-                AND c.column_name = idx.column_name
-            LEFT JOIN column_defaults cd
-                ON t.table_schema = cd.table_schema
-                AND t.table_name = cd.table_name
-                AND c.column_name = cd.column_name
+            information_schema.columns c
+        LEFT JOIN (
+            -- Primary key detection
+            SELECT
+                kcu.table_schema,
+                kcu.table_name,
+                kcu.column_name
+            FROM
+                information_schema.table_constraints tc
+            JOIN information_schema.key_column_usage kcu
+                ON tc.constraint_name = kcu.constraint_name
+                AND tc.table_schema = kcu.table_schema
+                AND tc.table_name = kcu.table_name
+            WHERE
+                tc.constraint_type = 'PRIMARY KEY'
+        ) pk ON c.table_schema = pk.table_schema
+            AND c.table_name = pk.table_name
+            AND c.column_name = pk.column_name
+        LEFT JOIN (
+            -- Unique constraint detection
+            SELECT
+                kcu.table_schema,
+                kcu.table_name,
+                kcu.column_name
+            FROM
+                information_schema.table_constraints tc
+            JOIN information_schema.key_column_usage kcu
+                ON tc.constraint_name = kcu.constraint_name
+                AND tc.table_schema = kcu.table_schema
+                AND tc.table_name = kcu.table_name
+            WHERE
+                tc.constraint_type = 'UNIQUE'
+                AND tc.constraint_name NOT IN (
+                    SELECT constraint_name
+                    FROM information_schema.table_constraints
+                    WHERE constraint_type = 'PRIMARY KEY'
+                )
+        ) uq ON c.table_schema = uq.table_schema
+            AND c.table_name = uq.table_name
+            AND c.column_name = uq.column_name
+        LEFT JOIN (
+            -- Foreign key detection
+            SELECT
+                kcu.table_schema,
+                kcu.table_name,
+                kcu.column_name,
+                ccu.table_schema AS foreign_table_schema,
+                ccu.table_name AS foreign_table_name,
+                ccu.column_name AS foreign_column_name
+            FROM
+                information_schema.table_constraints tc
+            JOIN information_schema.key_column_usage kcu
+                ON tc.constraint_name = kcu.constraint_name
+                AND tc.table_schema = kcu.table_schema
+                AND tc.table_name = kcu.table_name
+            JOIN information_schema.constraint_column_usage ccu
+                ON tc.constraint_name = ccu.constraint_name
+                AND tc.table_schema = ccu.table_schema
+            WHERE
+                tc.constraint_type = 'FOREIGN KEY'
+        ) fk_ref ON c.table_schema = fk_ref.table_schema
+            AND c.table_name = fk_ref.table_name
+            AND c.column_name = fk_ref.column_name
         WHERE
-            t.table_schema = %s
-            AND t.table_type = 'BASE TABLE'
+            c.table_schema = %s
         GROUP BY
-            t.table_schema, t.table_name
+            c.table_schema, c.table_name
         ORDER BY
-            t.table_schema, t.table_name;
+            c.table_schema, c.table_name;
         """
 
-        cur.execute(query, (schema, schema, schema))
+        cur.execute(query, (schema,))
         tables = cur.fetchall()
 
         return {
