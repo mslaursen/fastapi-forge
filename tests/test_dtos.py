@@ -3,7 +3,14 @@ from uuid import UUID
 import pytest
 from pydantic import ValidationError
 
-from fastapi_forge.dtos import Model, ModelField, ModelRelationship, ProjectSpec
+from fastapi_forge.dtos import (
+    CustomEnum,
+    CustomEnumValue,
+    Model,
+    ModelField,
+    ModelRelationship,
+    ProjectSpec,
+)
 from fastapi_forge.enums import FieldDataTypeEnum
 
 ########################
@@ -125,4 +132,46 @@ def test_project_spec_non_existing_target_model() -> None:
     assert (
         "'restaurant' has a relationship to 'non_existing', which does not exist."
         in str(exc_info.value)
+    )
+
+
+##############
+# CustomEnum #
+##############
+
+
+def test_custom_enum_not_unique_values() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        CustomEnum(
+            name="MyEnum",
+            values=[
+                CustomEnumValue(name="HELLO", value="hello"),
+                CustomEnumValue(name="HI", value="hello"),
+            ],
+        )
+    assert "Enum 'MyEnum' has duplicate values." in str(exc_info.value)
+
+
+def test_custom_enum_not_unique_names() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        CustomEnum(
+            name="MyEnum",
+            values=[
+                CustomEnumValue(name="HELLO", value="hello"),
+                CustomEnumValue(name="HELLO", value="hi"),
+            ],
+        )
+    assert "Enum 'MyEnum' has duplicate names." in str(exc_info.value)
+
+
+def test_custom_enum_valid() -> None:
+    enum = CustomEnum(
+        name="MyEnum",
+        values=[
+            CustomEnumValue(name="FoO", value="foo"),
+            CustomEnumValue(name="BAR", value="bar"),
+        ],
+    )
+    assert enum.class_definition == (
+        'class MyEnum(StrEnum):\n    FoO = "foo"\n    BAR = "bar"'
     )

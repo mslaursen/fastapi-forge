@@ -15,6 +15,10 @@ from fastapi_forge.string_utils import camel_to_snake_hyphen, snake_to_camel
 
 BoundedStr = Annotated[str, Field(..., min_length=1, max_length=100)]
 SnakeCaseStr = Annotated[BoundedStr, Field(..., pattern=r"^[a-z][a-z0-9_]*$")]
+PascalCaseStr = Annotated[
+    BoundedStr,
+    Field(..., pattern=r"^[A-Z][a-zA-Z0-9]*$"),
+]
 ModelName = SnakeCaseStr
 FieldName = SnakeCaseStr
 BackPopulates = Annotated[str, Field(..., pattern=r"^[a-z][a-z0-9_]*$")]
@@ -34,6 +38,51 @@ class ModelFieldMetadata(_Base):
     is_created_at_timestamp: bool = False
     is_updated_at_timestamp: bool = False
     is_foreign_key: bool = False
+
+
+class CustomEnumValue(_Base):
+    """Represents a single name/value pair in a custom enum."""
+
+    name: Annotated[
+        BoundedStr,
+        Field(
+            ...,
+            pattern=r"^[a-zA-Z][a-zA-Z0-9_]*$",
+        ),
+    ]
+    value: BoundedStr
+
+
+class CustomEnum(_Base):
+    """Represents a custom PostgreSQL ENUM type."""
+
+    name: PascalCaseStr
+    values: Annotated[list[CustomEnumValue], Field(..., min_length=1)]
+
+    @model_validator(mode="after")
+    def _validate_enum(self) -> Self:
+        names = [v.name for v in self.values]
+        values = [v.value for v in self.values]
+
+        if len(names) != len(set(names)):
+            raise ValueError(f"Enum '{self.name}' has duplicate names.")
+        if len(values) != len(set(values)):
+            raise ValueError(f"Enum '{self.name}' has duplicate values.")
+        return self
+
+    @computed_field
+    @property
+    def class_definition(self) -> str:
+        """Returns a string representing the Python Enum class definition."""
+        lines: list[str] = []
+        lines.extend([f"class {self.name}(StrEnum):"])
+
+        value_lines: list[str] = []
+        for v in self.values:
+            value_lines.extend([f'    {v.name} = "{v.value}"'])
+
+        lines.extend(value_lines)
+        return "\n".join(lines)
 
 
 class ModelField(_Base):
