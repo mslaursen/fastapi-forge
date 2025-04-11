@@ -5,7 +5,7 @@ from nicegui import ui
 from pydantic import ValidationError
 
 from fastapi_forge.dtos import ModelField, ModelFieldMetadata
-from fastapi_forge.enums import FieldDataType
+from fastapi_forge.enums import FieldDataTypeEnum
 from fastapi_forge.frontend.notifications import notify_validation_error
 from fastapi_forge.frontend.state import state
 from fastapi_forge.jinja_utils import generate_field
@@ -38,7 +38,7 @@ class BaseFieldModal(ui.dialog, ABC):
                         "outlined dense"
                     )
                     self.field_type = ui.select(
-                        list(FieldDataType),
+                        list(FieldDataTypeEnum),
                         label="Field Type",
                         on_change=self._toggle_metadata_visibility,
                     ).props("outlined dense")
@@ -84,7 +84,7 @@ class BaseFieldModal(ui.dialog, ABC):
                 self._build_action_buttons()
 
     def _toggle_metadata_visibility(self):
-        self.show_metadata = self.field_type.value == FieldDataType.DATETIME
+        self.show_metadata = self.field_type.value == FieldDataTypeEnum.DATETIME
 
     def _add_kwarg_row(self, key: str = "", value: str = "") -> None:
         with (
@@ -254,7 +254,7 @@ class UpdateFieldModal(BaseFieldModal):
             self.default_value.value = field.default_value or ""
             self.created_at.value = field.metadata.is_created_at_timestamp
             self.updated_at.value = field.metadata.is_updated_at_timestamp
-            self.show_metadata = field.type == FieldDataType.DATETIME
+            self.show_metadata = field.type == FieldDataTypeEnum.DATETIME
             self.extra_kwargs = field.extra_kwargs.copy() if field.extra_kwargs else {}
             self.kwargs_container.clear()
 

@@ -1,5 +1,5 @@
 from fastapi_forge.dtos import Model, ModelField
-from fastapi_forge.enums import FieldDataType
+from fastapi_forge.enums import FieldDataTypeEnum
 from fastapi_forge.jinja import render_model_to_model
 
 
@@ -13,13 +13,13 @@ def test_render_model() -> None:
         fields=[
             ModelField(
                 name="id",
-                type=FieldDataType.UUID,
+                type=FieldDataTypeEnum.UUID,
                 primary_key=True,
                 unique=True,
             ),
             ModelField(
                 name="updated_at",
-                type=FieldDataType.DATETIME,
+                type=FieldDataTypeEnum.DATETIME,
                 default_value="datetime.now(timezone.utc)",
                 extra_kwargs={
                     "onupdate": "datetime.now(timezone.utc)",

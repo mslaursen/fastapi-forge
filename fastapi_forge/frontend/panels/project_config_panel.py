@@ -10,7 +10,7 @@ from fastapi_forge.dtos import (
     ModelFieldMetadata,
     ModelMetadata,
 )
-from fastapi_forge.enums import FieldDataType
+from fastapi_forge.enums import FieldDataTypeEnum
 from fastapi_forge.forge import build_project
 from fastapi_forge.frontend.constants import DEFAULT_AUTH_USER_FIELDS
 from fastapi_forge.frontend.notifications import notify_validation_error
@@ -176,7 +176,7 @@ class ProjectConfigPanel(ui.right_drawer):
                     fields=[
                         ModelField(
                             name="id",
-                            type=FieldDataType.UUID,
+                            type=FieldDataTypeEnum.UUID,
                             primary_key=True,
                             unique=True,
                             index=True,
@@ -184,13 +184,13 @@ class ProjectConfigPanel(ui.right_drawer):
                         *DEFAULT_AUTH_USER_FIELDS,
                         ModelField(
                             name="created_at",
-                            type=FieldDataType.DATETIME,
+                            type=FieldDataTypeEnum.DATETIME,
                             default_value="datetime.now(timezone.utc)",
                             metadata=ModelFieldMetadata(is_created_at_timestamp=True),
                         ),
                         ModelField(
                             name="updated_at",
-                            type=FieldDataType.DATETIME,
+                            type=FieldDataTypeEnum.DATETIME,
                             default_value="datetime.now(timezone.utc)",
                             extra_kwargs={"onupdate": "datetime.now(timezone.utc)"},
                             metadata=ModelFieldMetadata(is_updated_at_timestamp=True),
