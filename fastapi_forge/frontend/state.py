@@ -9,7 +9,7 @@ from fastapi_forge.dtos import (
     ModelRelationship,
     ProjectSpec,
 )
-from fastapi_forge.enums import FieldDataType
+from fastapi_forge.enums import FieldDataTypeEnum
 from fastapi_forge.frontend.notifications import (
     notify_model_exists,
     notify_something_went_wrong,
@@ -124,7 +124,7 @@ class ProjectState(BaseModel):
             fields=[
                 ModelField(
                     name="id",
-                    type=FieldDataType.UUID,
+                    type=FieldDataTypeEnum.UUID,
                     primary_key=True,
                     nullable=False,
                     unique=True,

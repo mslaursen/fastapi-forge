@@ -2,7 +2,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel
 
-from fastapi_forge.enums import FieldDataType
+from fastapi_forge.enums import FieldDataTypeEnum
 
 
 class DataTypeInfo(BaseModel):
@@ -17,14 +17,14 @@ class DataTypeInfo(BaseModel):
 
 class DataTypeInfoRegistry:
     def __init__(self):
-        self._registry: dict[FieldDataType, DataTypeInfo] = {}
+        self._registry: dict[FieldDataTypeEnum, DataTypeInfo] = {}
 
-    def register(self, field_data_type: FieldDataType, data_type: DataTypeInfo):
+    def register(self, field_data_type: FieldDataTypeEnum, data_type: DataTypeInfo):
         if field_data_type in self._registry:
             raise ValueError(f"Data type '{field_data_type}' is already registered.")
         self._registry[field_data_type] = data_type
 
-    def get(self, field_data_type: FieldDataType) -> DataTypeInfo:
+    def get(self, field_data_type: FieldDataTypeEnum) -> DataTypeInfo:
         if field_data_type not in self._registry:
             raise ValueError(f"Data type '{field_data_type}' not found.")
         return self._registry[field_data_type]
@@ -38,7 +38,7 @@ faker_placeholder = "factory.Faker({placeholder})"
 
 
 registry.register(
-    FieldDataType.STRING,
+    FieldDataTypeEnum.STRING,
     DataTypeInfo(
         sqlalchemy_type="String",
         sqlalchemy_prefix=True,
@@ -51,7 +51,7 @@ registry.register(
 
 
 registry.register(
-    FieldDataType.FLOAT,
+    FieldDataTypeEnum.FLOAT,
     DataTypeInfo(
         sqlalchemy_type="Float",
         sqlalchemy_prefix=True,
@@ -65,7 +65,7 @@ registry.register(
 )
 
 registry.register(
-    FieldDataType.BOOLEAN,
+    FieldDataTypeEnum.BOOLEAN,
     DataTypeInfo(
         sqlalchemy_type="Boolean",
         sqlalchemy_prefix=True,
@@ -77,7 +77,7 @@ registry.register(
 )
 
 registry.register(
-    FieldDataType.DATETIME,
+    FieldDataTypeEnum.DATETIME,
     DataTypeInfo(
         sqlalchemy_type="DateTime(timezone=True)",
         sqlalchemy_prefix=True,
@@ -90,7 +90,7 @@ registry.register(
 )
 
 registry.register(
-    FieldDataType.UUID,
+    FieldDataTypeEnum.UUID,
     DataTypeInfo(
         sqlalchemy_type="UUID(as_uuid=True)",
         sqlalchemy_prefix=True,
@@ -102,7 +102,7 @@ registry.register(
 )
 
 registry.register(
-    FieldDataType.JSONB,
+    FieldDataTypeEnum.JSONB,
     DataTypeInfo(
         sqlalchemy_type="JSONB",
         sqlalchemy_prefix=False,
@@ -114,7 +114,7 @@ registry.register(
 )
 
 registry.register(
-    FieldDataType.INTEGER,
+    FieldDataTypeEnum.INTEGER,
     DataTypeInfo(
         sqlalchemy_type="Integer",
         sqlalchemy_prefix=True,

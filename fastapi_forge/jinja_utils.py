@@ -1,5 +1,5 @@
 from fastapi_forge.dtos import ModelField, ModelRelationship
-from fastapi_forge.enums import FieldDataType
+from fastapi_forge.enums import FieldDataTypeEnum
 
 
 def _gen_field(
@@ -12,7 +12,7 @@ def _gen_field(
     ]
 
     if field.metadata.is_foreign_key and target:
-        args.append(f'sa.ForeignKey("{target + ".id"}", ondelete="CASCADE")')
+        args.append(f'sa.ForeignKey("{target + ".id"}", ondelete="{field.on_delete}")')
     if field.primary_key:
         args.append("primary_key=True")
     if field.unique:
@@ -25,8 +25,8 @@ def _gen_field(
         for k, v in field.extra_kwargs.items():
             args.append(f"{k}={v}")
 
-    if not isinstance(field.type, FieldDataType):
-        field.type = FieldDataType(field.type)
+    if not isinstance(field.type, FieldDataTypeEnum):
+        field.type = FieldDataTypeEnum(field.type)
 
     return f"""
     {field.name}: Mapped[{field.type_info.python_type}{" | None" if field.nullable else ""}] = mapped_column(
