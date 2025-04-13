@@ -3,6 +3,7 @@ from pathlib import Path
 from nicegui import ui
 from pydantic import ValidationError
 
+from fastapi_forge.data_type_registry import enum_registry
 from fastapi_forge.frontend import ModelCreate, ModelRow
 from fastapi_forge.frontend.constants import SELECTED_MODEL_TEXT_COLOR
 from fastapi_forge.frontend.notifications import notify_validation_error
@@ -23,6 +24,7 @@ class ModelPanel(ui.left_drawer):
         with self, ui.column().classes("items-align content-start w-full"):
             ModelCreate()
             self._render_models()
+            ui.button(text="YO", on_click=lambda: print(enum_registry))
 
             ui.button(
                 "Export",

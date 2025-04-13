@@ -481,6 +481,7 @@ if __name__ == "__main__":
             ),
             ModelField(
                 name="my_enum",
+                type=FieldDataTypeEnum.ENUM,
                 type_enum=enum0,
             ),
         ],

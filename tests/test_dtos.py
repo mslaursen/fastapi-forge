@@ -84,17 +84,13 @@ def test_factory_field_value(
     assert model_field.type_info.faker_field_value == expected_factory_value
 
 
-def test_type_not_set() -> None:
+def test_type_missing_type_enum() -> None:
     with pytest.raises(ValidationError) as exc_info:
-        ModelField(
-            name="test",
-        )
-    assert "Exactly one of the fields 'type' or 'type_enum' has to be set." in str(
-        exc_info.value
-    )
+        ModelField(name="test", type=FieldDataTypeEnum.ENUM)
+    assert "has field type 'ENUM'" in str(exc_info.value)
 
 
-def test_type_both_set() -> None:
+def test_type_incorrect_type() -> None:
     with pytest.raises(ValidationError) as exc_info:
         ModelField(
             name="test",
@@ -109,9 +105,7 @@ def test_type_both_set() -> None:
                 ],
             ),
         )
-    assert "Exactly one of the fields 'type' or 'type_enum' has to be set." in str(
-        exc_info.value
-    )
+    assert "but is not field type 'ENUM'" in str(exc_info.value)
 
 
 ###############################

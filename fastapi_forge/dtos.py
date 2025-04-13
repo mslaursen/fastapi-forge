@@ -62,6 +62,7 @@ class CustomEnum(_Base):
 
     def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
+        # dynamically register in the enum registry on instantiation
         enum_repr = f"enums.{self.name}"
         enum_registry.register(
             self.name,
@@ -104,8 +105,7 @@ class ModelField(_Base):
     """Represents a field in a model with validation and computed properties."""
 
     name: FieldName
-    # one of `type` or `type_enum` HAS to be set
-    type: FieldDataTypeEnum | None = None
+    type: FieldDataTypeEnum
     type_enum: CustomEnum | None = None
     primary_key: bool = False
     nullable: bool = False
@@ -125,19 +125,26 @@ class ModelField(_Base):
     @computed_field
     @property
     def type_info(self) -> DataTypeInfo:
-        if self.type:
-            return registry.get(self.type)
         if self.type_enum:
             return enum_registry.get(self.type_enum.name)
-
-        msg = f"Neither `type` nor `type_enum` was set for model '{self.name}'"
-        raise ValueError(msg)
+        return registry.get(self.type)
 
     @model_validator(mode="after")
     def _validate_type(self) -> Self:
-        if sum([self.type is None, self.type_enum is None]) != 1:
-            msg = "Exactly one of the fields 'type' or 'type_enum' has to be set."
+        if self.type == FieldDataTypeEnum.ENUM and self.type_enum is None:
+            msg = (
+                f"ModelField '{self.name}' has field type 'ENUM', "
+                "but is missing 'type_enum'."
+            )
             raise ValueError(msg)
+
+        if self.type_enum and self.type != FieldDataTypeEnum.ENUM:
+            msg = (
+                f"ModelField '{self.name}' has 'type_enum' set, "
+                "but is not field type 'ENUM'."
+            )
+            raise ValueError(msg)
+
         return self
 
     @model_validator(mode="after")

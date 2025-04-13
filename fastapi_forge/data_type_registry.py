@@ -58,12 +58,17 @@ class DataTypeInfoEnumRegistry:
     def all(self) -> list[DataTypeInfo]:
         return list(self._registry.values())
 
+    def __repr__(self) -> str:
+        return str(list(self._registry.values()))
 
-registry = DataTypeInfoRegistry()
+
+# enums are dynamically registered when a `CustomEnum` model is instantiated
+# and should not be registered manually
 enum_registry = DataTypeInfoEnumRegistry()
 
-faker_placeholder = "factory.Faker({placeholder})"
 
+registry = DataTypeInfoRegistry()
+faker_placeholder = "factory.Faker({placeholder})"
 
 registry.register(
     FieldDataTypeEnum.STRING,
