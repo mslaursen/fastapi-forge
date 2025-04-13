@@ -46,11 +46,12 @@
 
 *More to come!* 
 
+## UI for designing your API projects
 ![UI Interface](https://github.com/user-attachments/assets/4037f7c5-68ac-48e5-8a4e-1a6a6f1f4072) 
-*The FastAPI-Forge UI for designing your API projects*
 
+## Generated project example
 ![Generated Project Structure](https://github.com/user-attachments/assets/cc546f56-abd5-4eb1-b469-5940f0558255)
-*Example of a complete generated FastAPI project with all components*
+
 
 
 ## ✅ Requirements
