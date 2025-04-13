@@ -1,25 +1,63 @@
-# FastAPI-Forge  
-🚀 Build FastAPI Projects — Fast, Scalable, and Hassle-Free!  
+# 🚀 FastAPI-Forge  
+⚡ UI Based FastAPI Project Generator  
 
-FastAPI-Forge lets you define your database models through a UI, letting you select additional optional services, and then generates a full working project for you, with tests and endpoints.
-The generated project follows best practices, in an easy-to-work with and scalable architecture. It will contain SQLAlchemy models of the database models you've defined in the UI, along with implementations of your selected services.
+✨ *Define your database models through a UI, select services, and get a complete production-ready containerized project with tests and endpoints!*  
 
----
+## 🔥 Features  
+
+
+### 🖌️ UI Power  
+- 🖥️ [NiceGUI](https://github.com/zauberzeug/nicegui)-based interface for project design  
+- 📊 Visual model creation and configuration  
+- ⚙️ One-click project generation  
+
+### ⚡ Auto-Generated Components
+- 🗄️ [SQLAlchemy](https://github.com/sqlalchemy/sqlalchemy) Models  
+- 📦 [Pydantic](https://github.com/pydantic/pydantic) Schemas  
+- 🌐 RESTful Endpoints (CRUD + more)  
+- � Comprehensive Test Suite (pytest)  
+- 🏗️ DAOs (Database Access Objects)  
+- 🏭 [Factory Boy](https://github.com/FactoryBoy/factory_boy) Test Factories  
+- 🐳 [Docker Compose](https://github.com/docker/compose) Setup  
+
+### 🎛️ Advanced Features  
+- 🎚️ Custom Enum support as data types  
+- 📥 YAML project import/export  
+- 🐘 Convert existing databases into FastAPI projects via connection string! 
+    - Basically lets you quickly create an API for any database.
+
+### 🔄 CI/CD Automation  
+- ⚙️ GitHub Workflows for automated testing and linting  
+  - 🧪 Runs pytest suite 
+  - ✨ Executes code formatting checks
+  - ✅ Ensures code quality before merging  
+
+## 🧩 Optional Integrations  
+
+| Category       | Technologies                          |
+|----------------|---------------------------------------|
+| Messaging      | RabbitMQ                              |
+| Caching        | Redis                                 |
+| Task Queues    | Celery, [TaskIQ](https://github.com/taskiq-python/taskiq)                        |
+| Auth           | JWT Authentication                    |
+| Monitoring     | Prometheus                            |
+| Storage        | S3                                    |
+| Migrations     | Alembic                               |
+
+*More to come!* 
 
 ## ✅ Requirements
 - Python 3.12+
 - UV
 - Docker and Docker Compose (for running the generated project)
----
 
-## 🚀 Installation
+
+## 🚀 Quick Start 
 Install FastAPI-Forge:
 
 ```bash
 pip install fastapi-forge
 ```
-
----
 
 ## 🛠 Usage
 Start the project generation process:
@@ -35,13 +73,12 @@ fastapi-forge start
 To start the generated project and its dependencies in Docker:
 
 ```bash
-make up
+make up # Builds your project, and runs additional services
 ```
 
 - The project will run using Docker Compose, simplifying your development environment.  
 - Access the SwaggerUI/OpenAPI docs at: `http://localhost:8000/docs`.  
 
----
 
 ## ⚙️ Command Options
 Customize your project generation with these options:
@@ -73,7 +110,6 @@ Load a YAML config and skip the UI:
 fastapi-forge start --from-yaml=~/Documents/project-config.yaml --no-ui
 ```
 
----
 
 ## 🧰 Using the Makefile
 The generated project includes a `Makefile` to simplify common dev tasks:
