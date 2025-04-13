@@ -3,6 +3,7 @@ from uuid import UUID
 import pytest
 from pydantic import ValidationError
 
+from fastapi_forge.constants import TAB
 from fastapi_forge.dtos import (
     CustomEnum,
     CustomEnumValue,
@@ -83,6 +84,36 @@ def test_factory_field_value(
     assert model_field.type_info.faker_field_value == expected_factory_value
 
 
+def test_type_not_set() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        ModelField(
+            name="test",
+        )
+    assert "Exactly one of the fields 'type' or 'type_enum' has to be set." in str(
+        exc_info.value
+    )
+
+
+def test_type_both_set() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        ModelField(
+            name="test",
+            type=FieldDataTypeEnum.STRING,
+            type_enum=CustomEnum(
+                name="Test",
+                values=[
+                    CustomEnumValue(
+                        name="key",
+                        value="value",
+                    )
+                ],
+            ),
+        )
+    assert "Exactly one of the fields 'type' or 'type_enum' has to be set." in str(
+        exc_info.value
+    )
+
+
 ###############################
 # ModelRelationship DTO tests #
 ###############################
@@ -140,18 +171,6 @@ def test_project_spec_non_existing_target_model() -> None:
 ##############
 
 
-def test_custom_enum_not_unique_values() -> None:
-    with pytest.raises(ValidationError) as exc_info:
-        CustomEnum(
-            name="MyEnum",
-            values=[
-                CustomEnumValue(name="HELLO", value="hello"),
-                CustomEnumValue(name="HI", value="hello"),
-            ],
-        )
-    assert "Enum 'MyEnum' has duplicate values." in str(exc_info.value)
-
-
 def test_custom_enum_not_unique_names() -> None:
     with pytest.raises(ValidationError) as exc_info:
         CustomEnum(
@@ -164,14 +183,32 @@ def test_custom_enum_not_unique_names() -> None:
     assert "Enum 'MyEnum' has duplicate names." in str(exc_info.value)
 
 
+def test_custom_enum_no_values() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        CustomEnum(
+            name="MyEnum",
+            values=[],
+        )
+    assert "List should have at least 1 item after validation, not 0" in str(
+        exc_info.value
+    )
+
+
 def test_custom_enum_valid() -> None:
     enum = CustomEnum(
         name="MyEnum",
         values=[
             CustomEnumValue(name="FoO", value="foo"),
             CustomEnumValue(name="BAR", value="bar"),
+            CustomEnumValue(name="BAZ", value="auto()"),
         ],
     )
-    assert enum.class_definition == (
-        'class MyEnum(StrEnum):\n    FoO = "foo"\n    BAR = "bar"'
+    expected_definition = (
+        "class MyEnum(StrEnum):\n"
+        f'{TAB}"""MyEnum Enum."""\n'
+        "\n"
+        f'{TAB}FoO = "foo"\n'
+        f'{TAB}BAR = "bar"\n'
+        f"{TAB}BAZ = auto()"
     )
+    assert enum.class_definition == expected_definition

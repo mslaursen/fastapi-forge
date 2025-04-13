@@ -1,5 +1,4 @@
 from fastapi_forge.dtos import ModelField, ModelRelationship
-from fastapi_forge.enums import FieldDataTypeEnum
 
 
 def _gen_field(
@@ -24,9 +23,6 @@ def _gen_field(
     if field.extra_kwargs:
         for k, v in field.extra_kwargs.items():
             args.append(f"{k}={v}")
-
-    if not isinstance(field.type, FieldDataTypeEnum):
-        field.type = FieldDataTypeEnum(field.type)
 
     return f"""
     {field.name}: Mapped[{field.type_info.python_type}{" | None" if field.nullable else ""}] = mapped_column(

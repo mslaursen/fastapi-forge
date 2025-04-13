@@ -3,10 +3,10 @@ from typing import Any
 from jinja2 import Environment
 
 from fastapi_forge.dtos import (
+    CustomEnum,
+    CustomEnumValue,
     Model,
     ModelField,
-    ModelMetadata,
-    ModelRelationship,
 )
 from fastapi_forge.enums import FieldDataTypeEnum
 from fastapi_forge.jinja_utils import generate_field, generate_relationship
@@ -22,6 +22,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from uuid import UUID
 from typing import Any, Annotated
 from datetime import datetime, timezone,  timedelta
+from src import enums
 
 
 {% set unique_relationships = model.relationships | unique(attribute='target') %}
@@ -354,8 +355,16 @@ async def test_delete_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> N
     assert db_{{ model.name }} is None
 """
 
+enums_template = """
+from enum import StrEnum, auto
 
-def _render(model: Model, template_name: str, **kwargs: Any) -> str:
+{% for enum in enums %}
+{{ enum.class_definition }}
+{% endfor %}
+"""
+
+
+def _render_model(model: Model, template_name: str, **kwargs: Any) -> str:
     template = env.from_string(template_name)
     return template.render(
         model=model,
@@ -363,130 +372,192 @@ def _render(model: Model, template_name: str, **kwargs: Any) -> str:
     )
 
 
+def _render_custom_enums(
+    custom_enums: list[CustomEnum], template_name: str, **kwargs: Any
+) -> str:
+    template = env.from_string(template_name)
+    return template.render(
+        enums=custom_enums,
+        **kwargs,
+    )
+
+
 def render_model_to_model(model: Model) -> str:
-    return _render(
+    return _render_model(
         model,
         model_template,
     )
 
 
 def render_model_to_dto(model: Model) -> str:
-    return _render(
+    return _render_model(
         model,
         dto_template,
     )
 
 
 def render_model_to_dao(model: Model) -> str:
-    return _render(
+    return _render_model(
         model,
         dao_template,
     )
 
 
 def render_model_to_routers(model: Model) -> str:
-    return _render(
+    return _render_model(
         model,
         routers_template,
     )
 
 
 def render_model_to_post_test(model: Model) -> str:
-    return _render(
+    return _render_model(
         model,
         test_template_post,
     )
 
 
 def render_model_to_get_test(model: Model) -> str:
-    return _render(
+    return _render_model(
         model,
         test_template_get,
     )
 
 
 def render_model_to_get_id_test(model: Model) -> str:
-    return _render(
+    return _render_model(
         model,
         test_template_get_id,
     )
 
 
 def render_model_to_patch_test(model: Model) -> str:
-    return _render(
+    return _render_model(
         model,
         test_template_patch,
     )
 
 
 def render_model_to_delete_test(model: Model) -> str:
-    return _render(
+    return _render_model(
         model,
         test_template_delete,
     )
 
 
+def render_custom_enums_to_enums(custom_enums: list[CustomEnum]) -> str:
+    return _render_custom_enums(custom_enums, enums_template)
+
+
 if __name__ == "__main__":
-    models = [
-        Model(
-            name="auth_user",
-            metadata=ModelMetadata(is_auth_model=True),
-            fields=[
-                ModelField(
-                    name="id",
-                    type=FieldDataTypeEnum.UUID,
-                    primary_key=True,
-                    nullable=False,
-                    unique=True,
-                    index=True,
-                ),
-                ModelField(
-                    name="email",
-                    type=FieldDataTypeEnum.STRING,
-                    primary_key=False,
-                    nullable=False,
-                    unique=True,
-                    index=True,
-                ),
-                ModelField(
-                    name="password",
-                    type=FieldDataTypeEnum.STRING,
-                    primary_key=False,
-                    nullable=False,
-                    unique=True,
-                    index=True,
-                ),
-                ModelField(
-                    name="timestamp",
-                    type=FieldDataTypeEnum.DATETIME,
-                ),
-            ],
-            relationships=[
-                ModelRelationship(
-                    field_name="yo_id",
-                    target_model="yo",
-                )
-            ],
-        )
-    ]
+    enum0 = CustomEnum(
+        name="MyEnum0",
+        values=[
+            CustomEnumValue(name="FoO", value="foo"),
+            CustomEnumValue(name="BAR", value="bar"),
+        ],
+    )
+    # enum1 = CustomEnum(
+    #     name="MyEnum1",
+    #     values=[
+    #         CustomEnumValue(name="FoO", value="foo"),
+    #         CustomEnumValue(name="BAR", value="bar"),
+    #     ],
+    # )
 
-    render_funcs = [
-        render_model_to_model,
-        # render_model_to_dto,
-        # render_model_to_dao,
-        # render_model_to_routers,
-        # render_model_to_post_test,
-        # render_model_to_get_test,
-        # render_model_to_get_id_test,
-        # render_model_to_patch_test,
-        # render_model_to_delete_test,
-    ]
+    model = Model(
+        name="test",
+        fields=[
+            ModelField(
+                name="id",
+                type=FieldDataTypeEnum.UUID,
+                primary_key=True,
+                unique=True,
+                index=True,
+            ),
+            ModelField(
+                name="test",
+                type=FieldDataTypeEnum.STRING,
+            ),
+            ModelField(
+                name="my_enum",
+                type_enum=enum0,
+            ),
+        ],
+    )
+    print(render_model_to_model(model))
 
-    for fn in render_funcs:
-        print()
-        print("=" * 80)
-        print(fn.__name__)
-        print("=" * 80)
-        print()
+    # models = [
+    #     Model(
+    #         name="auth_user",
+    #         metadata=ModelMetadata(is_auth_model=True),
+    #         fields=[
+    #             ModelField(
+    #                 name="id",
+    #                 type=FieldDataTypeEnum.UUID,
+    #                 primary_key=True,
+    #                 unique=True,
+    #                 index=True,
+    #             ),
+    #             ModelField(
+    #                 name="email",
+    #                 type=FieldDataTypeEnum.STRING,
+    #                 unique=True,
+    #                 index=True,
+    #             ),
+    #             ModelField(
+    #                 name="password",
+    #                 type=FieldDataTypeEnum.STRING,
+    #                 unique=True,
+    #                 index=True,
+    #             ),
+    #             # ModelField(
+    #             #     name="test_enum",
+    #             #     type=enum,
+    #             # ),
+    #             ModelField(
+    #                 name="timestamp",
+    #                 type=FieldDataTypeEnum.DATETIME,
+    #             ),
+    #         ],
+    #         relationships=[
+    #             ModelRelationship(
+    #                 field_name="yo_id",
+    #                 target_model="yo",
+    #             )
+    #         ],
+    #     )
+    # ]
 
-        print(fn(models[0]))
+    # print(render_model_to_model(model))
+
+    # render_funcs = [
+    #     render_model_to_model,
+    #     render_model_to_dto,
+    #     render_model_to_dao,
+    #     render_model_to_routers,
+    #     render_model_to_post_test,
+    #     render_model_to_get_test,
+    #     render_model_to_get_id_test,
+    #     render_model_to_patch_test,
+    #     render_model_to_delete_test,
+    # ]
+
+    # for fn in render_funcs:
+    #     print()
+    #     print("=" * 80)
+    #     print(fn.__name__)
+    #     print("=" * 80)
+    #     print()
+
+    #     print(fn(model))
+
+    # enum = (
+    #     CustomEnum(
+    #         name="MyEnum",
+    #         values=[
+    #             CustomEnumValue(name="FoO", value="foo"),
+    #             CustomEnumValue(name="BAR", value="bar"),
+    #         ],
+    #     ),
+    # )

@@ -9,7 +9,8 @@ from pydantic import (
     model_validator,
 )
 
-from fastapi_forge.data_type_registry import DataTypeInfo, registry
+from fastapi_forge.constants import TAB
+from fastapi_forge.data_type_registry import DataTypeInfo, enum_registry, registry
 from fastapi_forge.enums import FieldDataTypeEnum, OnDeleteEnum
 from fastapi_forge.string_utils import camel_to_snake_hyphen, snake_to_camel
 
@@ -59,15 +60,27 @@ class CustomEnum(_Base):
     name: PascalCaseStr
     values: Annotated[list[CustomEnumValue], Field(..., min_length=1)]
 
+    def __init__(self, **kwargs: Any):
+        super().__init__(**kwargs)
+        enum_repr = f"enums.{self.name}"
+        enum_registry.register(
+            self.name,
+            DataTypeInfo(
+                sqlalchemy_type=f"Enum({enum_repr})",
+                sqlalchemy_prefix=True,
+                python_type=enum_repr,
+                faker_field_value="",
+                value="",
+                test_value="",
+            ),
+        )
+
     @model_validator(mode="after")
     def _validate_enum(self) -> Self:
         names = [v.name for v in self.values]
-        values = [v.value for v in self.values]
 
         if len(names) != len(set(names)):
             raise ValueError(f"Enum '{self.name}' has duplicate names.")
-        if len(values) != len(set(values)):
-            raise ValueError(f"Enum '{self.name}' has duplicate values.")
         return self
 
     @computed_field
@@ -76,10 +89,12 @@ class CustomEnum(_Base):
         """Returns a string representing the Python Enum class definition."""
         lines: list[str] = []
         lines.extend([f"class {self.name}(StrEnum):"])
+        lines.extend([f'{TAB}"""{self.name} Enum."""\n'])
 
         value_lines: list[str] = []
         for v in self.values:
-            value_lines.extend([f'    {v.name} = "{v.value}"'])
+            value_repr = v.value if v.value == "auto()" else f'"{v.value}"'
+            value_lines.extend([f"{TAB}{v.name} = {value_repr}"])
 
         lines.extend(value_lines)
         return "\n".join(lines)
@@ -89,7 +104,9 @@ class ModelField(_Base):
     """Represents a field in a model with validation and computed properties."""
 
     name: FieldName
-    type: FieldDataTypeEnum
+    # one of `type` or `type_enum` HAS to be set
+    type: FieldDataTypeEnum | None = None
+    type_enum: CustomEnum | None = None
     primary_key: bool = False
     nullable: bool = False
     unique: bool = False
@@ -108,7 +125,20 @@ class ModelField(_Base):
     @computed_field
     @property
     def type_info(self) -> DataTypeInfo:
-        return registry.get(self.type)
+        if self.type:
+            return registry.get(self.type)
+        if self.type_enum:
+            return enum_registry.get(self.type_enum.name)
+
+        msg = f"Neither `type` nor `type_enum` was set for model '{self.name}'"
+        raise ValueError(msg)
+
+    @model_validator(mode="after")
+    def _validate_type(self) -> Self:
+        if sum([self.type is None, self.type_enum is None]) != 1:
+            msg = "Exactly one of the fields 'type' or 'type_enum' has to be set."
+            raise ValueError(msg)
+        return self
 
     @model_validator(mode="after")
     def _validate(self) -> Self:
@@ -326,6 +356,7 @@ class ProjectSpec(_Base):
     use_rabbitmq: bool = False
     use_taskiq: bool = False
     models: list[Model] = []
+    custom_enums: list[CustomEnum] = []
 
     @model_validator(mode="after")
     def _validate_models(self) -> Self:
@@ -333,6 +364,11 @@ class ProjectSpec(_Base):
         model_names_set = set(model_names)
         if len(model_names) != len(model_names_set):
             msg = "Model names must be unique."
+            raise ValueError(msg)
+
+        enum_names = [enum.name for enum in self.custom_enums]
+        if len(enum_names) != len(set(enum_names)):
+            msg = "Enum names must be unique."
             raise ValueError(msg)
 
         if self.use_alembic and not self.use_postgres:
@@ -371,6 +407,7 @@ class ProjectSpec(_Base):
                     "TaskIQ is enabled, but the following are missing and required "
                     f"for its operation: {', '.join(missing)}."
                 )
+
         return self
 
     @model_validator(mode="after")

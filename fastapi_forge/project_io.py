@@ -18,6 +18,7 @@ from fastapi_forge.dtos import (
 )
 from fastapi_forge.enums import FieldDataTypeEnum, HTTPMethodEnum
 from fastapi_forge.jinja import (
+    render_custom_enums_to_enums,
     render_model_to_dao,
     render_model_to_delete_test,
     render_model_to_dto,
@@ -423,10 +424,19 @@ class ProjectBuilder:
 
         await asyncio.gather(*tasks)
 
+    async def _write_enums(self) -> None:
+        path = self.src_dir / "enums.py"
+        content = render_custom_enums_to_enums(self.project_spec.custom_enums)
+        await _write_file(path, content)
+
     async def build_artifacts(self) -> None:
         await self._init_project_directories()
 
         tasks = []
+
+        if self.project_spec.custom_enums:
+            tasks.append(self._write_enums())
+
         for model in self.project_spec.models:
             tasks.append(self._write_artifact("models", model, render_model_to_model))
 

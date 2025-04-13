@@ -7,6 +7,12 @@ project:
   use_rabbitmq: true
   use_taskiq: true
 
+  custom_enums:
+    - name: MyEnum
+      values:
+        - name: a
+          value: auto()
+
   models:
     - name: auth_user
       fields:

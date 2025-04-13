@@ -19,7 +19,11 @@ class DataTypeInfoRegistry:
     def __init__(self):
         self._registry: dict[FieldDataTypeEnum, DataTypeInfo] = {}
 
-    def register(self, field_data_type: FieldDataTypeEnum, data_type: DataTypeInfo):
+    def register(
+        self,
+        field_data_type: FieldDataTypeEnum,
+        data_type: DataTypeInfo,
+    ):
         if field_data_type in self._registry:
             raise ValueError(f"Data type '{field_data_type}' is already registered.")
         self._registry[field_data_type] = data_type
@@ -33,7 +37,31 @@ class DataTypeInfoRegistry:
         return list(self._registry.values())
 
 
+class DataTypeInfoEnumRegistry:
+    def __init__(self):
+        self._registry: dict[str, DataTypeInfo] = {}
+
+    def register(
+        self,
+        enum_name: str,
+        data_type: DataTypeInfo,
+    ):
+        if enum_name in self._registry:
+            raise ValueError(f"Enum '{enum_name}' is already registered.")
+        self._registry[enum_name] = data_type
+
+    def get(self, enum_name: str) -> DataTypeInfo:
+        if enum_name not in self._registry:
+            raise ValueError(f"Enum '{enum_name}' not found.")
+        return self._registry[enum_name]
+
+    def all(self) -> list[DataTypeInfo]:
+        return list(self._registry.values())
+
+
 registry = DataTypeInfoRegistry()
+enum_registry = DataTypeInfoEnumRegistry()
+
 faker_placeholder = "factory.Faker({placeholder})"
 
 
