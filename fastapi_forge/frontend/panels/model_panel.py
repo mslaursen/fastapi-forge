@@ -3,12 +3,12 @@ from pathlib import Path
 from nicegui import ui
 from pydantic import ValidationError
 
-from fastapi_forge.data_type_registry import enum_registry
 from fastapi_forge.frontend import ModelCreate, ModelRow
 from fastapi_forge.frontend.constants import SELECTED_MODEL_TEXT_COLOR
 from fastapi_forge.frontend.notifications import notify_validation_error
 from fastapi_forge.frontend.state import state
 from fastapi_forge.project_io import ProjectExporter
+from fastapi_forge.type_info_registry import enum_registry
 
 
 class ModelPanel(ui.left_drawer):

@@ -10,9 +10,9 @@ from pydantic import (
 )
 
 from fastapi_forge.constants import TAB
-from fastapi_forge.data_type_registry import DataTypeInfo, enum_registry, registry
 from fastapi_forge.enums import FieldDataTypeEnum, OnDeleteEnum
 from fastapi_forge.string_utils import camel_to_snake_hyphen, snake_to_camel
+from fastapi_forge.type_info_registry import TypeInfo, enum_registry, registry
 
 BoundedStr = Annotated[str, Field(..., min_length=1, max_length=100)]
 SnakeCaseStr = Annotated[BoundedStr, Field(..., pattern=r"^[a-z][a-z0-9_]*$")]
@@ -66,7 +66,7 @@ class CustomEnum(_Base):
         enum_repr = f"enums.{self.name}"
         enum_registry.register(
             self.name,
-            DataTypeInfo(
+            TypeInfo(
                 sqlalchemy_type=f"Enum({enum_repr})",
                 sqlalchemy_prefix=True,
                 python_type=enum_repr,
@@ -124,7 +124,7 @@ class ModelField(_Base):
 
     @computed_field
     @property
-    def type_info(self) -> DataTypeInfo:
+    def type_info(self) -> TypeInfo:
         if self.type_enum:
             return enum_registry.get(self.type_enum.name)
         return registry.get(self.type)
