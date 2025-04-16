@@ -4,6 +4,7 @@ from nicegui import ui
 from pydantic import BaseModel, ValidationError
 
 from fastapi_forge.dtos import (
+    CustomEnum,
     Model,
     ModelField,
     ModelRelationship,
@@ -25,11 +26,21 @@ class ProjectState(BaseModel):
     selected_field: ModelField | None = None
     selected_relation: ModelRelationship | None = None
 
+    custom_enums: list[CustomEnum] = []
+    selected_enum: CustomEnum | None = None
+
     render_models_fn: Callable | None = None
     render_model_editor_fn: Callable | None = None
     render_actions_fn: Callable | None = None
     select_model_fn: Callable[[Model], None] | None = None
     deselect_model_fn: Callable | None = None
+
+    render_enums_fn: Callable | None = None
+
+    render_content_fn: Callable | None = None
+
+    show_models: bool = True
+    show_enums: bool = False
 
     project_name: str = ""
     use_postgres: bool = False
@@ -38,6 +49,21 @@ class ProjectState(BaseModel):
     use_redis: bool = False
     use_rabbitmq: bool = False
     use_taskiq: bool = False
+
+    def switch_show(
+        self,
+        show_models: bool = False,
+        show_enums: bool = False,
+    ) -> None:
+        if sum([show_models, show_enums]) != 1:
+            msg = "One flag has to be True."
+            raise ValueError(msg)
+
+        self.show_models = show_models
+        self.show_enums = show_enums
+
+        if self.render_content_fn:
+            self.render_content_fn.refresh()
 
     def initialize_from_project(self, project: ProjectSpec) -> None:
         """Initialize state from an existing project specification."""
@@ -49,6 +75,7 @@ class ProjectState(BaseModel):
         self.use_rabbitmq = project.use_rabbitmq
         self.use_taskiq = project.use_taskiq
         self.models = project.models.copy()
+        self.custom_enums = project.custom_enums.copy()
 
         self._trigger_ui_refresh()
 
@@ -66,6 +93,9 @@ class ProjectState(BaseModel):
             self._trigger_ui_refresh()
         except ValidationError as exc:
             notify_validation_error(exc)
+
+    def add_enum(self, enum_name: str) -> None:
+        print(enum_name)
 
     def delete_model(self, model: Model) -> None:
         """Remove a model from the project."""
@@ -103,6 +133,15 @@ class ProjectState(BaseModel):
         self.selected_model = model
         self.select_model_fn(model)  # type: ignore
         self._trigger_ui_refresh()
+
+    def select_enum(self, enum: CustomEnum) -> None:
+        print(enum)
+
+    def delete_enum(self, enum: CustomEnum) -> None:
+        print(enum)
+
+    def update_enum_name(self, enum: CustomEnum, _: str) -> None:
+        print(enum)
 
     def get_project_spec(self) -> ProjectSpec:
         """Generate a ProjectSpec from the current state."""

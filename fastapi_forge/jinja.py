@@ -457,13 +457,6 @@ if __name__ == "__main__":
             CustomEnumValue(name="BAR", value="bar"),
         ],
     )
-    # enum1 = CustomEnum(
-    #     name="MyEnum1",
-    #     values=[
-    #         CustomEnumValue(name="FoO", value="foo"),
-    #         CustomEnumValue(name="BAR", value="bar"),
-    #     ],
-    # )
 
     model = Model(
         name="test",
@@ -487,78 +480,3 @@ if __name__ == "__main__":
         ],
     )
     print(render_model_to_model(model))
-
-    # models = [
-    #     Model(
-    #         name="auth_user",
-    #         metadata=ModelMetadata(is_auth_model=True),
-    #         fields=[
-    #             ModelField(
-    #                 name="id",
-    #                 type=FieldDataTypeEnum.UUID,
-    #                 primary_key=True,
-    #                 unique=True,
-    #                 index=True,
-    #             ),
-    #             ModelField(
-    #                 name="email",
-    #                 type=FieldDataTypeEnum.STRING,
-    #                 unique=True,
-    #                 index=True,
-    #             ),
-    #             ModelField(
-    #                 name="password",
-    #                 type=FieldDataTypeEnum.STRING,
-    #                 unique=True,
-    #                 index=True,
-    #             ),
-    #             # ModelField(
-    #             #     name="test_enum",
-    #             #     type=enum,
-    #             # ),
-    #             ModelField(
-    #                 name="timestamp",
-    #                 type=FieldDataTypeEnum.DATETIME,
-    #             ),
-    #         ],
-    #         relationships=[
-    #             ModelRelationship(
-    #                 field_name="yo_id",
-    #                 target_model="yo",
-    #             )
-    #         ],
-    #     )
-    # ]
-
-    # print(render_model_to_model(model))
-
-    # render_funcs = [
-    #     render_model_to_model,
-    #     render_model_to_dto,
-    #     render_model_to_dao,
-    #     render_model_to_routers,
-    #     render_model_to_post_test,
-    #     render_model_to_get_test,
-    #     render_model_to_get_id_test,
-    #     render_model_to_patch_test,
-    #     render_model_to_delete_test,
-    # ]
-
-    # for fn in render_funcs:
-    #     print()
-    #     print("=" * 80)
-    #     print(fn.__name__)
-    #     print("=" * 80)
-    #     print()
-
-    #     print(fn(model))
-
-    # enum = (
-    #     CustomEnum(
-    #         name="MyEnum",
-    #         values=[
-    #             CustomEnumValue(name="FoO", value="foo"),
-    #             CustomEnumValue(name="BAR", value="bar"),
-    #         ],
-    #     ),
-    # )

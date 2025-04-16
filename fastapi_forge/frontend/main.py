@@ -2,12 +2,19 @@ import asyncio
 
 from nicegui import native, ui
 
-from fastapi_forge.dtos import ProjectSpec
+from fastapi_forge.dtos import (
+    CustomEnum,
+    CustomEnumValue,
+    Model,
+    ModelField,
+    ProjectSpec,
+)
+from fastapi_forge.enums import FieldDataTypeEnum
 from fastapi_forge.forge import build_project
 from fastapi_forge.frontend import (
     Header,
+    LeftPanel,
     ModelEditorPanel,
-    ModelPanel,
     ProjectConfigPanel,
 )
 from fastapi_forge.frontend.state import state
@@ -30,7 +37,7 @@ def create_ui_components() -> None:
             "shadow-2xl dark:shadow-none min-w-[700px] max-w-[800px]"
         )
 
-    ModelPanel().classes("shadow-xl dark:shadow-none")
+    LeftPanel().classes("shadow-xl dark:shadow-none")
     ProjectConfigPanel().classes("shadow-xl dark:shadow-none")
 
 
@@ -44,6 +51,7 @@ def run_ui(reload: bool) -> None:
 
 
 def init(
+    *,
     reload: bool = False,
     no_ui: bool = False,
     project_spec: ProjectSpec | None = None,
@@ -61,4 +69,30 @@ def init(
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    init(reload=True)
+    project_spec = ProjectSpec(
+        project_name="reload",
+        models=[
+            Model(
+                name="test_model",
+                fields=[
+                    ModelField(
+                        name="id",
+                        primary_key=True,
+                        type=FieldDataTypeEnum.UUID,
+                    ),
+                ],
+            ),
+        ],
+        custom_enums=[
+            CustomEnum(
+                name="MyEnum",
+                values=[
+                    CustomEnumValue(
+                        name="FOO",
+                        value="auto()",
+                    ),
+                ],
+            )
+        ],
+    )
+    init(reload=True, project_spec=project_spec)

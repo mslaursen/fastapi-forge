@@ -14,6 +14,13 @@ def notify_model_exists(model_name: str) -> None:
     )
 
 
+def notify_enum_exists(model_name: str) -> None:
+    ui.notify(
+        f"Model '{model_name}' already exists.",
+        type="negative",
+    )
+
+
 def notify_field_exists(field_name: str, model_name: str) -> None:
     ui.notify(
         f"Model' {model_name}' already has field '{field_name}'.",
