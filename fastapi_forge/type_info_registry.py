@@ -56,6 +56,9 @@ class TypeInfoRegistry(BaseRegistry[FieldDataTypeEnum]):
 class EnumTypeInfoRegistry(BaseRegistry[EnumName]):
     """Register Enum type info by EnumName: TypeInfo."""
 
+    def clear(self) -> None:
+        self._registry.clear()
+
 
 # enums are dynamically registered when a `CustomEnum` model is instantiated
 # and should not be registered manually

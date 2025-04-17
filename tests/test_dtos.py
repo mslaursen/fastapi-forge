@@ -177,17 +177,6 @@ def test_custom_enum_not_unique_names() -> None:
     assert "Enum 'MyEnum' has duplicate names." in str(exc_info.value)
 
 
-def test_custom_enum_no_values() -> None:
-    with pytest.raises(ValidationError) as exc_info:
-        CustomEnum(
-            name="MyEnum",
-            values=[],
-        )
-    assert "List should have at least 1 item after validation, not 0" in str(
-        exc_info.value
-    )
-
-
 def test_custom_enum_valid() -> None:
     enum = CustomEnum(
         name="MyEnum",

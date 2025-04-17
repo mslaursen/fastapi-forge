@@ -27,6 +27,13 @@ ProjectName = Annotated[
     BoundedStr,
     Field(..., pattern=r"^[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9])?$"),
 ]
+EnumStr = Annotated[
+    BoundedStr,
+    Field(
+        ...,
+        pattern=r"^[a-zA-Z][a-zA-Z0-9_]*$",
+    ),
+]
 
 
 class _Base(BaseModel):
@@ -44,21 +51,15 @@ class ModelFieldMetadata(_Base):
 class CustomEnumValue(_Base):
     """Represents a single name/value pair in a custom enum."""
 
-    name: Annotated[
-        BoundedStr,
-        Field(
-            ...,
-            pattern=r"^[a-zA-Z][a-zA-Z0-9_]*$",
-        ),
-    ]
+    name: EnumStr
     value: BoundedStr
 
 
 class CustomEnum(_Base):
     """Represents a custom PostgreSQL ENUM type."""
 
-    name: PascalCaseStr
-    values: Annotated[list[CustomEnumValue], Field(..., min_length=1)]
+    name: EnumStr
+    values: list[CustomEnumValue] = []
 
     def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)

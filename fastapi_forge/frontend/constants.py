@@ -26,6 +26,23 @@ FIELD_COLUMNS: list[dict[str, Any]] = [
     {"name": "index", "label": "Index", "field": "index", "align": "center"},
 ]
 
+ENUM_COLUMNS: list[dict[str, Any]] = [
+    {
+        "name": "name",
+        "label": "Name",
+        "field": "name",
+        "required": True,
+        "align": "left",
+    },
+    {
+        "name": "value",
+        "label": "Value",
+        "field": "value",
+        "required": True,
+        "align": "left",
+    },
+]
+
 RELATIONSHIP_COLUMNS: list[dict[str, Any]] = [
     {
         "name": "field_name",

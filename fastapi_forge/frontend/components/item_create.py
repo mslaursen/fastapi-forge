@@ -32,18 +32,17 @@ class _RowCreate(ui.row):
                 )
             )
             self.add_button = (
-                ui.button(icon="add", on_click=self._add_model)
+                ui.button(icon="add", on_click=self._add_item)
                 .classes("self-center")
                 .tooltip(self.button_tooltip)
             )
 
-    def _add_model(self) -> None:
+    def _add_item(self) -> None:
         if not self.item_input.value:
             return
         value: str = self.item_input.value
         item_name = value.strip()
         if item_name:
-            state.add_model(item_name)
             self.on_add_item(item_name)
             self.item_input.value = ""
 
