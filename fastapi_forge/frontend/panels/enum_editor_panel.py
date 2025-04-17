@@ -29,8 +29,7 @@ class EnumEditorPanel(ui.card):
                 ui.dialog() as modal,
                 ui.card().classes("no-shadow border-[1px]"),
             ):
-                code = state.selected_enum.class_definition
-                ui.code(code).classes("w-full")
+                ui.code(state.selected_enum.class_definition).classes("w-full")
                 modal.open()
 
     def _build(self) -> None:
@@ -58,6 +57,12 @@ class EnumEditorPanel(ui.card):
                     # on_select=lambda e: self._on_select_value(e.selection),
                 ).classes("w-full no-shadow border-[1px]")
 
+    def refresh(self) -> None:
+        if state.selected_enum is None:
+            return
+        self.table.rows = [value.model_dump() for value in state.selected_enum.values]
+
     def set_selected_enum(self, enum: CustomEnum) -> None:
+        self.refresh()
         self.enum_name_display.text = enum.name
         self.visible = True

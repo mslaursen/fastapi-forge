@@ -21,5 +21,5 @@ class ItemEditorPanel:
                 )
             if state.show_enums:
                 EnumEditorPanel().classes(
-                    "shadow-2xl dark:shadow-none min-w-[700px] max-w-[800px]"
+                    "shadow-2xl dark:shadow-none min-w-[500px] max-w-[600px]"
                 )
