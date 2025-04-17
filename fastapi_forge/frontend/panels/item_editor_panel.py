@@ -7,7 +7,7 @@ from fastapi_forge.frontend.state import state
 class ItemEditorPanel:
     def __init__(self):
         self._build()
-        state.display_item_editor = self._display_item_editor_panel
+        state.display_item_editor_fn = self._display_item_editor_panel
 
     def _build(self) -> None:
         self._display_item_editor_panel()

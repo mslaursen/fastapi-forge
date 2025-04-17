@@ -42,11 +42,7 @@ class EnumEditorPanel(ui.card):
                         on_click=self._show_code_preview,
                     ).tooltip("Preview Python enum code")
 
-                with ui.button(icon="add").classes("self-end"), ui.menu():
-                    ui.menu_item(
-                        "Value",
-                        # on_click=lambda: self.add_value_modal.open(),
-                    )
+                ui.button(icon="add").classes("self-end").tooltip("Add Value")
 
             with ui.expansion("Values", value=True).classes("w-full"):
                 self.table = ui.table(

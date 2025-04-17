@@ -38,7 +38,7 @@ class ProjectState(BaseModel):
     deselect_model_fn: Callable | None = None
 
     render_content_fn: Callable | None = None
-    display_item_editor: Callable | None = None
+    display_item_editor_fn: Callable | None = None
 
     show_models: bool = True
     show_enums: bool = False
@@ -67,7 +67,7 @@ class ProjectState(BaseModel):
             self.render_content_fn.refresh()
 
         self._deselect_content()
-        self.display_item_editor.refresh()
+        self.display_item_editor_fn.refresh()
 
     def initialize_from_project(self, project: ProjectSpec) -> None:
         """Initialize state from an existing project specification."""
