@@ -161,7 +161,6 @@ class ProjectState(BaseModel):
 
     def delete_enum(self, enum: CustomEnum) -> None:
         """Remove an enum from the project."""
-        # TODO: figure out what to do with models that used this enum
         self.custom_enums.remove(enum)
         self._deselect_content()
         self._trigger_ui_refresh()

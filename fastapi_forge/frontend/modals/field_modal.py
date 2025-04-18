@@ -112,8 +112,8 @@ class BaseFieldModal(ui.dialog, ABC):
 
     def _handle_type_change(self) -> None:
         self.show_metadata = self.field_type.value == FieldDataTypeEnum.DATETIME
-        self.show_enum_selector = self.field_type.value == FieldDataTypeEnum.Enum
-        self.show_enum_defaults = self.field_type.value == FieldDataTypeEnum.Enum
+        self.show_enum_selector = self.field_type.value == FieldDataTypeEnum.ENUM
+        self.show_enum_defaults = self.field_type.value == FieldDataTypeEnum.ENUM
 
         if self.show_enum_selector:
             self.enum_selector.options = [e.name for e in state.custom_enums]
@@ -347,7 +347,7 @@ class UpdateFieldModal(BaseFieldModal):
         self.nullable.value = field.nullable
         self.unique.value = field.unique
         self.index.value = field.index
-        if field.type == FieldDataTypeEnum.Enum and field.type_enum:
+        if field.type == FieldDataTypeEnum.ENUM and field.type_enum:
             self.enum_selector.value = field.type_enum
             self.enum_selector.update()
             if field.default_value:
@@ -359,7 +359,7 @@ class UpdateFieldModal(BaseFieldModal):
         self.created_at.value = field.metadata.is_created_at_timestamp
         self.updated_at.value = field.metadata.is_updated_at_timestamp
         self.show_metadata = field.type == FieldDataTypeEnum.DATETIME
-        self.show_enum_selector = field.type == FieldDataTypeEnum.Enum
+        self.show_enum_selector = field.type == FieldDataTypeEnum.ENUM
         self.extra_kwargs = field.extra_kwargs.copy() if field.extra_kwargs else {}
         self.kwargs_container.clear()
 
