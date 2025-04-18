@@ -56,6 +56,7 @@ from fastapi import Depends
 from uuid import UUID
 from typing import Annotated, Any
 from src.dtos import BaseOrmModel
+from src import enums
 
 
 class {{ model.name_cc }}DTO(BaseOrmModel):

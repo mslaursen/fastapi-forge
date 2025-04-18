@@ -65,15 +65,16 @@ class CustomEnum(_Base):
         super().__init__(**kwargs)
         # dynamically register in the enum registry on instantiation
         enum_repr = f"enums.{self.name}"
+        enum_value_repr = f"{enum_repr}.{self.values[0].name}"
         enum_registry.register(
             self.name,
             TypeInfo(
                 sqlalchemy_type=f"Enum({enum_repr})",
                 sqlalchemy_prefix=True,
                 python_type=enum_repr,
-                faker_field_value="",
-                value="",
-                test_value="",
+                faker_field_value=enum_value_repr,
+                value=enum_value_repr,
+                test_value=enum_value_repr,
             ),
         )
 

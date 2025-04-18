@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import (
     AsyncSession,
 )
 from src.db import Base
+from src import enums
 import factory
 from typing import Any
 from datetime import datetime, timezone,  timedelta
