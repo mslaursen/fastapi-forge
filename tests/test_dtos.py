@@ -86,7 +86,7 @@ def test_factory_field_value(
 
 def test_type_missing_type_enum() -> None:
     with pytest.raises(ValidationError) as exc_info:
-        ModelField(name="test", type=FieldDataTypeEnum.Enum)
+        ModelField(name="test", type=FieldDataTypeEnum.ENUM)
     assert "has field type 'ENUM'" in str(exc_info.value)
 
 
