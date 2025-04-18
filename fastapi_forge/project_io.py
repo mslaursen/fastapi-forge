@@ -198,14 +198,14 @@ class ProjectLoader:
             except Exception as exc:
                 raise exc
 
-    def load_project(self) -> ProjectSpec:
+    def load(self) -> ProjectSpec:
         return ProjectSpec(**self._load_project_to_dict())
 
     @classmethod
-    def load_project_from_db(
-        cls, connection_string: str, schema: str = "public"
+    def load_from_conn_string(
+        cls, conn_string: str, schema: str = "public"
     ) -> ProjectSpec:
-        db_info = _inspect_postgres_schema(connection_string, schema)
+        db_info = _inspect_postgres_schema(conn_string, schema)
         db_schema: dict[str, Any] = db_info["schema_data"]
         db_name: str = db_info["database_name"]
 
