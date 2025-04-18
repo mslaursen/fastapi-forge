@@ -19,7 +19,10 @@ def _gen_field(
     if field.index:
         args.append("index=True")
     if field.default_value:
-        args.append(f"default={field.default_value}")
+        if field.type_enum:
+            args.append(f"default=enums.{field.type_enum}.{field.default_value}")
+        else:
+            args.append(f"default={field.default_value}")
     if field.extra_kwargs:
         for k, v in field.extra_kwargs.items():
             args.append(f"{k}={v}")

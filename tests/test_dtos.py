@@ -86,24 +86,25 @@ def test_factory_field_value(
 
 def test_type_missing_type_enum() -> None:
     with pytest.raises(ValidationError) as exc_info:
-        ModelField(name="test", type=FieldDataTypeEnum.ENUM)
+        ModelField(name="test", type=FieldDataTypeEnum.Enum)
     assert "has field type 'ENUM'" in str(exc_info.value)
 
 
 def test_type_incorrect_type() -> None:
+    enum = CustomEnum(
+        name="Test",
+        values=[
+            CustomEnumValue(
+                name="key",
+                value="value",
+            )
+        ],
+    )
     with pytest.raises(ValidationError) as exc_info:
         ModelField(
             name="test",
             type=FieldDataTypeEnum.STRING,
-            type_enum=CustomEnum(
-                name="Test",
-                values=[
-                    CustomEnumValue(
-                        name="key",
-                        value="value",
-                    )
-                ],
-            ),
+            type_enum=enum.name,
         )
     assert "but is not field type 'ENUM'" in str(exc_info.value)
 

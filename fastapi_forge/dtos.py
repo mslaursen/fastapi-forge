@@ -107,7 +107,7 @@ class ModelField(_Base):
 
     name: FieldName
     type: FieldDataTypeEnum
-    type_enum: CustomEnum | None = None
+    type_enum: EnumStr | None = None
     primary_key: bool = False
     nullable: bool = False
     unique: bool = False
@@ -127,24 +127,27 @@ class ModelField(_Base):
     @property
     def type_info(self) -> TypeInfo:
         if self.type_enum:
-            return enum_registry.get(self.type_enum.name)
+            return enum_registry.get(self.type_enum)
         return registry.get(self.type)
 
     @model_validator(mode="after")
     def _validate_type(self) -> Self:
-        if self.type == FieldDataTypeEnum.ENUM and self.type_enum is None:
+        if self.type == FieldDataTypeEnum.Enum and self.type_enum is None:
             msg = (
                 f"ModelField '{self.name}' has field type 'ENUM', "
                 "but is missing 'type_enum'."
             )
             raise ValueError(msg)
 
-        if self.type_enum and self.type != FieldDataTypeEnum.ENUM:
+        if self.type_enum and self.type != FieldDataTypeEnum.Enum:
             msg = (
                 f"ModelField '{self.name}' has 'type_enum' set, "
                 "but is not field type 'ENUM'."
             )
             raise ValueError(msg)
+
+        # if self.type_enum and self.default_value:
+        #     self.default_value = f"enums.{self.type_enum.name}.{self.default_value}"
 
         return self
 
@@ -270,10 +273,10 @@ class Model(_Base):
         if sum(field.primary_key for field in self.fields) != 1:
             raise ValueError(f"Model '{self.name}' must have exactly one primary key.")
 
-        unque_relationships = [
+        unique_relationships = [
             relationship.field_name for relationship in self.relationships
         ]
-        if len(unque_relationships) != len(set(unque_relationships)):
+        if len(unique_relationships) != len(set(unique_relationships)):
             raise ValueError(
                 f"Model '{self.name}' contains duplicate relationship field names.",
             )

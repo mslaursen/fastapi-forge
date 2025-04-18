@@ -42,6 +42,9 @@ class BaseRegistry[T: Hashable]:
     def all(self) -> list[TypeInfo]:
         return list(self._registry.values())
 
+    def clear(self) -> None:
+        self._registry.clear()
+
     def __contains__(self, key: Any) -> bool:
         return key in self._registry
 
@@ -55,9 +58,6 @@ class TypeInfoRegistry(BaseRegistry[FieldDataTypeEnum]):
 
 class EnumTypeInfoRegistry(BaseRegistry[EnumName]):
     """Register Enum type info by EnumName: TypeInfo."""
-
-    def clear(self) -> None:
-        self._registry.clear()
 
 
 # enums are dynamically registered when a `CustomEnum` model is instantiated

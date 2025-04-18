@@ -1,6 +1,5 @@
 from collections.abc import Callable
 
-from nicegui import ui
 from pydantic import BaseModel, ValidationError
 
 from fastapi_forge.dtos import (
@@ -87,7 +86,6 @@ class ProjectState(BaseModel):
 
     def add_model(self, model_name: str) -> None:
         """Add a new model to the project."""
-
         if self._model_exists(model_name):
             notify_model_exists(model_name)
             return

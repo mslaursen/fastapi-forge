@@ -10,7 +10,7 @@ class FieldDataTypeEnum(StrEnum):
     DATETIME = "DateTime"
     UUID = "UUID"
     JSONB = "JSONB"
-    ENUM = "ENUM"
+    Enum = "Enum"
 
     @classmethod
     @lru_cache

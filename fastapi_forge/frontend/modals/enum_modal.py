@@ -32,6 +32,8 @@ class BaseEnumValueModal(ui.dialog, ABC):
                 )
                 self.value_value = (
                     ui.input(label="Value").props("outlined dense").classes("w-full")
+                ).tooltip(
+                    "Set to auto(), or any string value without including quotes."
                 )
 
             with ui.row().classes("w-full justify-end p-4 border-t gap-2"):
