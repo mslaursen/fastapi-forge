@@ -191,6 +191,7 @@ class BaseFieldModal(ui.dialog, ABC):
                 preview_field = ModelField(
                     name=self.field_name.value,
                     type=self.field_type.value,
+                    type_enum=self.enum_selector.value,
                     primary_key=self.primary_key.value,
                     nullable=self.nullable.value,
                     unique=self.unique.value,
