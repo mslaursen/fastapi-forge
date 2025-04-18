@@ -2,7 +2,7 @@ from enum import StrEnum
 from functools import lru_cache
 
 
-class FieldDataType(StrEnum):
+class FieldDataTypeEnum(StrEnum):
     STRING = "String"
     INTEGER = "Integer"
     FLOAT = "Float"
@@ -10,6 +10,7 @@ class FieldDataType(StrEnum):
     DATETIME = "DateTime"
     UUID = "UUID"
     JSONB = "JSONB"
+    ENUM = "Enum"
 
     @classmethod
     @lru_cache
@@ -50,11 +51,11 @@ class FieldDataType(StrEnum):
         }
 
     @classmethod
-    def get_custom_types(cls) -> dict[str, "FieldDataType"]:
+    def get_custom_types(cls) -> dict[str, "FieldDataTypeEnum"]:
         return {}
 
     @classmethod
-    def from_db_type(cls, db_type: str) -> "FieldDataType":
+    def from_db_type(cls, db_type: str) -> "FieldDataTypeEnum":
         db_type = db_type.lower()
 
         custom_types = cls.get_custom_types()
@@ -71,7 +72,12 @@ class FieldDataType(StrEnum):
         )
 
 
-class HTTPMethod(StrEnum):
+class OnDeleteEnum(StrEnum):
+    CASCADE = "CASCADE"
+    SET_NULL = "SET NULL"
+
+
+class HTTPMethodEnum(StrEnum):
     GET = "get"
     GET_ID = "get_id"
     POST = "post"

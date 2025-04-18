@@ -9,18 +9,30 @@ from pydantic import (
     model_validator,
 )
 
-from fastapi_forge.data_type_registry import DataTypeInfo, registry
-from fastapi_forge.enums import FieldDataType
+from fastapi_forge.constants import TAB
+from fastapi_forge.enums import FieldDataTypeEnum, OnDeleteEnum
 from fastapi_forge.string_utils import camel_to_snake_hyphen, snake_to_camel
+from fastapi_forge.type_info_registry import TypeInfo, enum_registry, registry
 
 BoundedStr = Annotated[str, Field(..., min_length=1, max_length=100)]
 SnakeCaseStr = Annotated[BoundedStr, Field(..., pattern=r"^[a-z][a-z0-9_]*$")]
+PascalCaseStr = Annotated[
+    BoundedStr,
+    Field(..., pattern=r"^[A-Z][a-zA-Z0-9]*$"),
+]
 ModelName = SnakeCaseStr
 FieldName = SnakeCaseStr
 BackPopulates = Annotated[str, Field(..., pattern=r"^[a-z][a-z0-9_]*$")]
 ProjectName = Annotated[
     BoundedStr,
     Field(..., pattern=r"^[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9])?$"),
+]
+EnumStr = Annotated[
+    BoundedStr,
+    Field(
+        ...,
+        pattern=r"^[a-zA-Z][a-zA-Z0-9_]*$",
+    ),
 ]
 
 
@@ -36,15 +48,72 @@ class ModelFieldMetadata(_Base):
     is_foreign_key: bool = False
 
 
+class CustomEnumValue(_Base):
+    """Represents a single name/value pair in a custom enum."""
+
+    name: EnumStr
+    value: BoundedStr
+
+
+class CustomEnum(_Base):
+    """Represents a custom PostgreSQL ENUM type."""
+
+    name: EnumStr
+    values: list[CustomEnumValue] = []
+
+    def __init__(self, **kwargs: Any):
+        super().__init__(**kwargs)
+        # dynamically register in the enum registry on instantiation
+        enum_repr = f"enums.{self.name}"
+        enum_value_repr = f"{enum_repr}.{self.values[0].name}"
+        enum_registry.register(
+            self.name,
+            TypeInfo(
+                sqlalchemy_type=f"Enum({enum_repr})",
+                sqlalchemy_prefix=True,
+                python_type=enum_repr,
+                faker_field_value=enum_value_repr,
+                value=enum_value_repr,
+                test_value=enum_value_repr,
+            ),
+        )
+
+    @model_validator(mode="after")
+    def _validate_enum(self) -> Self:
+        names = [v.name for v in self.values]
+
+        if len(names) != len(set(names)):
+            raise ValueError(f"Enum '{self.name}' has duplicate names.")
+        return self
+
+    @computed_field
+    @property
+    def class_definition(self) -> str:
+        """Returns a string representing the Python Enum class definition."""
+        lines: list[str] = []
+        lines.extend([f"class {self.name}(StrEnum):"])
+        lines.extend([f'{TAB}"""{self.name} Enum."""\n'])
+
+        value_lines: list[str] = []
+        for v in self.values:
+            value_repr = v.value if v.value == "auto()" else f'"{v.value}"'
+            value_lines.extend([f"{TAB}{v.name} = {value_repr}"])
+
+        lines.extend(value_lines)
+        return "\n".join(lines)
+
+
 class ModelField(_Base):
     """Represents a field in a model with validation and computed properties."""
 
     name: FieldName
-    type: FieldDataType
+    type: FieldDataTypeEnum
+    type_enum: EnumStr | None = None
     primary_key: bool = False
     nullable: bool = False
     unique: bool = False
     index: bool = False
+    on_delete: OnDeleteEnum = OnDeleteEnum.CASCADE
     default_value: str | None = None
     extra_kwargs: dict[str, Any] | None = None
     metadata: ModelFieldMetadata = ModelFieldMetadata()
@@ -57,8 +126,31 @@ class ModelField(_Base):
 
     @computed_field
     @property
-    def type_info(self) -> DataTypeInfo:
+    def type_info(self) -> TypeInfo:
+        if self.type_enum:
+            return enum_registry.get(self.type_enum)
         return registry.get(self.type)
+
+    @model_validator(mode="after")
+    def _validate_type(self) -> Self:
+        if self.type == FieldDataTypeEnum.ENUM and self.type_enum is None:
+            msg = (
+                f"ModelField '{self.name}' has field type 'ENUM', "
+                "but is missing 'type_enum'."
+            )
+            raise ValueError(msg)
+
+        if self.type_enum and self.type != FieldDataTypeEnum.ENUM:
+            msg = (
+                f"ModelField '{self.name}' has 'type_enum' set, "
+                "but is not field type 'ENUM'."
+            )
+            raise ValueError(msg)
+
+        # if self.type_enum and self.default_value:
+        #     self.default_value = f"enums.{self.type_enum.name}.{self.default_value}"
+
+        return self
 
     @model_validator(mode="after")
     def _validate(self) -> Self:
@@ -73,13 +165,13 @@ class ModelField(_Base):
         metadata = self.metadata
         if (
             metadata.is_created_at_timestamp or metadata.is_updated_at_timestamp
-        ) and self.type != FieldDataType.DATETIME:
+        ) and self.type != FieldDataTypeEnum.DATETIME:
             msg = "Create/update timestamp fields must be of type DateTime."
             raise ValueError(
                 msg,
             )
 
-        if metadata.is_foreign_key and self.type != FieldDataType.UUID:
+        if metadata.is_foreign_key and self.type != FieldDataTypeEnum.UUID:
             msg = "Foreign Keys must be of type UUID."
             raise ValueError(msg)
 
@@ -99,6 +191,7 @@ class ModelRelationship(_Base):
     field_name: FieldName
     target_model: ModelName
     back_populates: BackPopulates | None = None
+    on_delete: OnDeleteEnum = OnDeleteEnum.CASCADE
 
     nullable: bool = False
     unique: bool = False
@@ -181,10 +274,10 @@ class Model(_Base):
         if sum(field.primary_key for field in self.fields) != 1:
             raise ValueError(f"Model '{self.name}' must have exactly one primary key.")
 
-        unque_relationships = [
+        unique_relationships = [
             relationship.field_name for relationship in self.relationships
         ]
-        if len(unque_relationships) != len(set(unque_relationships)):
+        if len(unique_relationships) != len(set(unique_relationships)):
             raise ValueError(
                 f"Model '{self.name}' contains duplicate relationship field names.",
             )
@@ -252,7 +345,7 @@ class Model(_Base):
             preview_model.fields.append(
                 ModelField(
                     name=relation.field_name,
-                    type=FieldDataType.UUID,
+                    type=FieldDataTypeEnum.UUID,
                     primary_key=False,
                     nullable=relation.nullable,
                     unique=relation.unique,
@@ -275,6 +368,7 @@ class ProjectSpec(_Base):
     use_rabbitmq: bool = False
     use_taskiq: bool = False
     models: list[Model] = []
+    custom_enums: list[CustomEnum] = []
 
     @model_validator(mode="after")
     def _validate_models(self) -> Self:
@@ -282,6 +376,11 @@ class ProjectSpec(_Base):
         model_names_set = set(model_names)
         if len(model_names) != len(model_names_set):
             msg = "Model names must be unique."
+            raise ValueError(msg)
+
+        enum_names = [enum.name for enum in self.custom_enums]
+        if len(enum_names) != len(set(enum_names)):
+            msg = "Enum names must be unique."
             raise ValueError(msg)
 
         if self.use_alembic and not self.use_postgres:
@@ -320,6 +419,7 @@ class ProjectSpec(_Base):
                     "TaskIQ is enabled, but the following are missing and required "
                     f"for its operation: {', '.join(missing)}."
                 )
+
         return self
 
     def get_auth_model(self) -> Model | None:

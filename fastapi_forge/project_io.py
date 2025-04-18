@@ -16,8 +16,9 @@ from fastapi_forge.dtos import (
     ModelRelationship,
     ProjectSpec,
 )
-from fastapi_forge.enums import FieldDataType, HTTPMethod
+from fastapi_forge.enums import FieldDataTypeEnum, HTTPMethodEnum
 from fastapi_forge.jinja import (
+    render_custom_enums_to_enums,
     render_model_to_dao,
     render_model_to_delete_test,
     render_model_to_dto,
@@ -197,17 +198,11 @@ class ProjectLoader:
             except Exception as exc:
                 raise exc
 
-    def load_project_spec(self) -> ProjectSpec:
-        project_dict = self._load_project_to_dict()
-        models = [Model(**model) for model in project_dict.get("models", []) or []]
-        project_dict.pop("models")
-        return ProjectSpec(**project_dict, models=models)
-
-    def load_project_input(self) -> ProjectSpec:
+    def load_project(self) -> ProjectSpec:
         return ProjectSpec(**self._load_project_to_dict())
 
     @classmethod
-    def load_project_spec_from_db(
+    def load_project_from_db(
         cls, connection_string: str, schema: str = "public"
     ) -> ProjectSpec:
         db_info = _inspect_postgres_schema(connection_string, schema)
@@ -232,13 +227,13 @@ class ProjectLoader:
                         # converts into fields as well - to avoid duplicate field
                         continue
 
-                data_type = FieldDataType.from_db_type(column.pop("type"))
+                data_type = FieldDataTypeEnum.from_db_type(column.pop("type"))
                 column["type"] = data_type
                 default = None
                 extra_kwargs = None
 
                 metadata = ModelFieldMetadata()
-                if data_type == FieldDataType.DATETIME:
+                if data_type == FieldDataTypeEnum.DATETIME:
                     column_name = column["name"]
                     default_timestamp = column.get("default") == "CURRENT_TIMESTAMP"
                     if default_timestamp:
@@ -295,12 +290,12 @@ class ProjectExporter:
         )
 
 
-TEST_RENDERERS: dict[HTTPMethod, Callable[[Model], str]] = {
-    HTTPMethod.GET: render_model_to_get_test,
-    HTTPMethod.GET_ID: render_model_to_get_id_test,
-    HTTPMethod.POST: render_model_to_post_test,
-    HTTPMethod.PATCH: render_model_to_patch_test,
-    HTTPMethod.DELETE: render_model_to_delete_test,
+TEST_RENDERERS: dict[HTTPMethodEnum, Callable[[Model], str]] = {
+    HTTPMethodEnum.GET: render_model_to_get_test,
+    HTTPMethodEnum.GET_ID: render_model_to_get_id_test,
+    HTTPMethodEnum.POST: render_model_to_post_test,
+    HTTPMethodEnum.PATCH: render_model_to_patch_test,
+    HTTPMethodEnum.DELETE: render_model_to_delete_test,
 }
 
 
@@ -327,11 +322,12 @@ class ProjectBuilder:
                 model.fields.append(
                     ModelField(
                         name=relation.field_name,
-                        type=FieldDataType.UUID,
+                        type=FieldDataTypeEnum.UUID,
                         primary_key=False,
                         nullable=relation.nullable,
                         unique=relation.unique,
                         index=relation.index,
+                        on_delete=relation.on_delete,
                         metadata=ModelFieldMetadata(is_foreign_key=True),
                     ),
                 )
@@ -372,7 +368,7 @@ class ProjectBuilder:
 
         tasks = []
         for method, render_func in TEST_RENDERERS.items():
-            method_suffix = "id" if method == HTTPMethod.GET_ID else ""
+            method_suffix = "id" if method == HTTPMethodEnum.GET_ID else ""
             file_name = (
                 f"test_{method.value.replace('_id', '')}"
                 f"_{camel_to_snake(model.name)}"
@@ -383,10 +379,19 @@ class ProjectBuilder:
 
         await asyncio.gather(*tasks)
 
+    async def _write_enums(self) -> None:
+        path = self.src_dir / "enums.py"
+        content = render_custom_enums_to_enums(self.project_spec.custom_enums)
+        await _write_file(path, content)
+
     async def build_artifacts(self) -> None:
         await self._init_project_directories()
 
         tasks = []
+
+        if self.project_spec.custom_enums:
+            tasks.append(self._write_enums())
+
         for model in self.project_spec.models:
             tasks.append(self._write_artifact("models", model, render_model_to_model))
 

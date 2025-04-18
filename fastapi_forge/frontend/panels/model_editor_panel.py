@@ -3,8 +3,13 @@ from typing import Any
 from nicegui import ui
 from pydantic import ValidationError
 
-from fastapi_forge.dtos import Model, ModelField, ModelFieldMetadata, ModelRelationship
-from fastapi_forge.enums import FieldDataType
+from fastapi_forge.dtos import (
+    Model,
+    ModelField,
+    ModelFieldMetadata,
+    ModelRelationship,
+)
+from fastapi_forge.enums import FieldDataTypeEnum, OnDeleteEnum
 from fastapi_forge.frontend.constants import (
     DEFAULT_AUTH_USER_FIELDS,
     FIELD_COLUMNS,
@@ -81,8 +86,8 @@ class ModelEditorPanel(ui.card):
             if state.render_model_editor_fn:
                 state.render_model_editor_fn()
 
-        if state.render_models_fn:
-            state.render_models_fn()
+        if state.render_content_fn:
+            state.render_content_fn()
         self._render_action_group.refresh()
 
         if model.metadata.is_auth_model:
@@ -312,6 +317,7 @@ class ModelEditorPanel(ui.card):
         nullable: bool,
         index: bool,
         unique: bool,
+        on_delete: OnDeleteEnum,
         back_populates: str | None = None,
     ) -> None:
         if not state.selected_model:
@@ -337,6 +343,7 @@ class ModelEditorPanel(ui.card):
                 nullable=nullable,
                 index=index,
                 unique=unique,
+                on_delete=on_delete,
             )
         except ValidationError as exc:
             notify_validation_error(exc)
@@ -392,6 +399,7 @@ class ModelEditorPanel(ui.card):
         nullable: bool,
         unique: bool,
         index: bool,
+        type_enum: str | None = None,
         default_value: str | None = None,
         extra_kwargs: dict[str, Any] | None = None,
         metadata: ModelFieldMetadata | None = None,
@@ -403,10 +411,15 @@ class ModelEditorPanel(ui.card):
             notify_field_exists(name, state.selected_model.name)
             return
 
+        field_type = FieldDataTypeEnum(type)
+        if type_enum and field_type != FieldDataTypeEnum.ENUM:
+            type_enum = None
+
         try:
             field_input = ModelField(
                 name=name,
-                type=FieldDataType(type),
+                type=field_type,
+                type_enum=type_enum,
                 primary_key=primary_key,
                 nullable=nullable,
                 unique=unique,
@@ -417,9 +430,6 @@ class ModelEditorPanel(ui.card):
 
             if metadata:
                 field_input.metadata = metadata
-
-            if state.selected_model is None:
-                return
 
             state.selected_model.fields.append(field_input)
             self._refresh_table(state.selected_model.fields)
@@ -490,6 +500,7 @@ class ModelEditorPanel(ui.card):
         unique: bool,
         index: bool,
         metadata: ModelFieldMetadata,
+        type_enum: str | None = None,
         default_value: str | None = None,
         extra_kwargs: dict[str, Any] | None = None,
     ) -> None:
@@ -511,10 +522,15 @@ class ModelEditorPanel(ui.card):
             notify_field_exists(name, state.selected_model.name)
             return
 
+        field_type = FieldDataTypeEnum(type)
+        if type_enum and field_type != FieldDataTypeEnum.ENUM:
+            type_enum = None
+
         try:
             field_input = ModelField(
                 name=name,
-                type=FieldDataType(type),
+                type=field_type,
+                type_enum=type_enum,
                 primary_key=primary_key,
                 nullable=nullable,
                 unique=unique,
@@ -538,6 +554,7 @@ class ModelEditorPanel(ui.card):
         nullable: bool = False,
         index: bool = False,
         unique: bool = False,
+        on_delete: OnDeleteEnum = OnDeleteEnum.CASCADE,
         back_populates: str | None = None,
     ) -> None:
         if not state.selected_model or not state.selected_relation:
@@ -565,6 +582,7 @@ class ModelEditorPanel(ui.card):
                 nullable=nullable,
                 index=index,
                 unique=unique,
+                on_delete=on_delete,
             )
         except ValidationError as exc:
             notify_validation_error(exc)

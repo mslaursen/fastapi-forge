@@ -1,9 +1,10 @@
 from typing import Any
 
 from fastapi_forge.dtos import ModelField
-from fastapi_forge.enums import FieldDataType
+from fastapi_forge.enums import FieldDataTypeEnum
 
 SELECTED_MODEL_TEXT_COLOR = "text-black-500 dark:text-amber-300"
+SELECTED_ENUM_TEXT_COLOR = "text-black-500 dark:text-amber-300"
 
 FIELD_COLUMNS: list[dict[str, Any]] = [
     {
@@ -25,6 +26,23 @@ FIELD_COLUMNS: list[dict[str, Any]] = [
     {"name": "index", "label": "Index", "field": "index", "align": "center"},
 ]
 
+ENUM_COLUMNS: list[dict[str, Any]] = [
+    {
+        "name": "name",
+        "label": "Name",
+        "field": "name",
+        "required": True,
+        "align": "left",
+    },
+    {
+        "name": "value",
+        "label": "Value",
+        "field": "value",
+        "required": True,
+        "align": "left",
+    },
+]
+
 RELATIONSHIP_COLUMNS: list[dict[str, Any]] = [
     {
         "name": "field_name",
@@ -40,9 +58,9 @@ RELATIONSHIP_COLUMNS: list[dict[str, Any]] = [
         "align": "left",
     },
     {
-        "name": "back_populates",
-        "label": "Back Populates",
-        "field": "back_populates",
+        "name": "on_delete",
+        "label": "On Delete",
+        "field": "on_delete",
         "align": "left",
     },
     {"name": "nullable", "label": "Nullable", "field": "nullable", "align": "center"},
@@ -54,12 +72,12 @@ RELATIONSHIP_COLUMNS: list[dict[str, Any]] = [
 DEFAULT_AUTH_USER_FIELDS: list[ModelField] = [
     ModelField(
         name="email",
-        type=FieldDataType.STRING,
+        type=FieldDataTypeEnum.STRING,
         unique=True,
         index=True,
     ),
     ModelField(
         name="password",
-        type=FieldDataType.STRING,
+        type=FieldDataTypeEnum.STRING,
     ),
 ]

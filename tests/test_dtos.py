@@ -3,8 +3,16 @@ from uuid import UUID
 import pytest
 from pydantic import ValidationError
 
-from fastapi_forge.dtos import Model, ModelField, ModelRelationship, ProjectSpec
-from fastapi_forge.enums import FieldDataType
+from fastapi_forge.constants import TAB
+from fastapi_forge.dtos import (
+    CustomEnum,
+    CustomEnumValue,
+    Model,
+    ModelField,
+    ModelRelationship,
+    ProjectSpec,
+)
+from fastapi_forge.enums import FieldDataTypeEnum
 
 ########################
 # ModelField DTO tests #
@@ -14,7 +22,7 @@ from fastapi_forge.enums import FieldDataType
 def test_primary_key_defaults_to_unique() -> None:
     model_field = ModelField(
         name="id",
-        type=FieldDataType.UUID,
+        type=FieldDataTypeEnum.UUID,
         primary_key=True,
         unique=False,
     )
@@ -26,7 +34,7 @@ def test_primary_key_cannot_be_nullable() -> None:
     with pytest.raises(ValidationError) as exc_info:
         ModelField(
             name="id",
-            type=FieldDataType.UUID,
+            type=FieldDataTypeEnum.UUID,
             primary_key=True,
             nullable=True,
         )
@@ -50,7 +58,7 @@ def test_invalid_field_name(invalid_name: str) -> None:
     with pytest.raises(ValidationError) as exc_info:
         ModelField(
             name=invalid_name,
-            type=FieldDataType.STRING,
+            type=FieldDataTypeEnum.STRING,
         )
     assert "String should match pattern '^[a-z][a-z0-9_]*$'" in str(exc_info.value)
 
@@ -58,22 +66,47 @@ def test_invalid_field_name(invalid_name: str) -> None:
 @pytest.mark.parametrize(
     "data_type, expected_factory_value",
     [
-        (FieldDataType.STRING, 'factory.Faker("text")'),
-        (FieldDataType.INTEGER, 'factory.Faker("random_int")'),
+        (FieldDataTypeEnum.STRING, 'factory.Faker("text")'),
+        (FieldDataTypeEnum.INTEGER, 'factory.Faker("random_int")'),
         (
-            FieldDataType.FLOAT,
+            FieldDataTypeEnum.FLOAT,
             'factory.Faker("pyfloat", positive=True, min_value=0.1, max_value=100)',
         ),
-        (FieldDataType.BOOLEAN, 'factory.Faker("boolean")'),
-        (FieldDataType.DATETIME, 'factory.Faker("date_time")'),
+        (FieldDataTypeEnum.BOOLEAN, 'factory.Faker("boolean")'),
+        (FieldDataTypeEnum.DATETIME, 'factory.Faker("date_time")'),
     ],
 )
 def test_factory_field_value(
-    data_type: FieldDataType,
+    data_type: FieldDataTypeEnum,
     expected_factory_value: str | None,
 ) -> None:
     model_field = ModelField(name="name", type=data_type)
     assert model_field.type_info.faker_field_value == expected_factory_value
+
+
+def test_type_missing_type_enum() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        ModelField(name="test", type=FieldDataTypeEnum.ENUM)
+    assert "has field type 'ENUM'" in str(exc_info.value)
+
+
+def test_type_incorrect_type() -> None:
+    enum = CustomEnum(
+        name="Test",
+        values=[
+            CustomEnumValue(
+                name="key",
+                value="value",
+            )
+        ],
+    )
+    with pytest.raises(ValidationError) as exc_info:
+        ModelField(
+            name="test",
+            type=FieldDataTypeEnum.STRING,
+            type_enum=enum.name,
+        )
+    assert "but is not field type 'ENUM'" in str(exc_info.value)
 
 
 ###############################
@@ -108,7 +141,7 @@ def test_project_spec_non_existing_target_model() -> None:
     model = Model(
         name="restaurant",
         fields=[
-            ModelField(name="id", type=FieldDataType.UUID, primary_key=True),
+            ModelField(name="id", type=FieldDataTypeEnum.UUID, primary_key=True),
         ],
         relationships=[
             ModelRelationship(
@@ -126,3 +159,40 @@ def test_project_spec_non_existing_target_model() -> None:
         "'restaurant' has a relationship to 'non_existing', which does not exist."
         in str(exc_info.value)
     )
+
+
+##############
+# CustomEnum #
+##############
+
+
+def test_custom_enum_not_unique_names() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        CustomEnum(
+            name="MyEnum",
+            values=[
+                CustomEnumValue(name="HELLO", value="hello"),
+                CustomEnumValue(name="HELLO", value="hi"),
+            ],
+        )
+    assert "Enum 'MyEnum' has duplicate names." in str(exc_info.value)
+
+
+def test_custom_enum_valid() -> None:
+    enum = CustomEnum(
+        name="MyEnum",
+        values=[
+            CustomEnumValue(name="FoO", value="foo"),
+            CustomEnumValue(name="BAR", value="bar"),
+            CustomEnumValue(name="BAZ", value="auto()"),
+        ],
+    )
+    expected_definition = (
+        "class MyEnum(StrEnum):\n"
+        f'{TAB}"""MyEnum Enum."""\n'
+        "\n"
+        f'{TAB}FoO = "foo"\n'
+        f'{TAB}BAR = "bar"\n'
+        f"{TAB}BAZ = auto()"
+    )
+    assert enum.class_definition == expected_definition
