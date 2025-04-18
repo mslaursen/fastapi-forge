@@ -2,14 +2,21 @@ import asyncio
 
 from nicegui import native, ui
 
-from fastapi_forge.dtos import ProjectSpec
+from fastapi_forge.dtos import (
+    CustomEnum,
+    CustomEnumValue,
+    Model,
+    ModelField,
+    ProjectSpec,
+)
+from fastapi_forge.enums import FieldDataTypeEnum
 from fastapi_forge.forge import build_project
 from fastapi_forge.frontend import (
     Header,
-    ModelEditorPanel,
-    ModelPanel,
+    LeftPanel,
     ProjectConfigPanel,
 )
+from fastapi_forge.frontend.panels.item_editor_panel import ItemEditorPanel
 from fastapi_forge.frontend.state import state
 
 
@@ -25,12 +32,9 @@ def setup_ui() -> None:
 
 def create_ui_components() -> None:
     """Create all UI components"""
-    with ui.column().classes("w-full h-full items-center justify-center mt-4"):
-        ModelEditorPanel().classes(
-            "shadow-2xl dark:shadow-none min-w-[700px] max-w-[800px]"
-        )
+    ItemEditorPanel()
 
-    ModelPanel().classes("shadow-xl dark:shadow-none")
+    LeftPanel().classes("shadow-xl dark:shadow-none")
     ProjectConfigPanel().classes("shadow-xl dark:shadow-none")
 
 
@@ -44,6 +48,7 @@ def run_ui(reload: bool) -> None:
 
 
 def init(
+    *,
     reload: bool = False,
     no_ui: bool = False,
     project_spec: ProjectSpec | None = None,
@@ -61,4 +66,30 @@ def init(
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    init(reload=True)
+    project_spec = ProjectSpec(
+        project_name="reload",
+        models=[
+            Model(
+                name="test_model",
+                fields=[
+                    ModelField(
+                        name="id",
+                        primary_key=True,
+                        type=FieldDataTypeEnum.UUID,
+                    ),
+                ],
+            ),
+        ],
+        custom_enums=[
+            CustomEnum(
+                name="MyEnum",
+                values=[
+                    CustomEnumValue(
+                        name="FOO",
+                        value="auto()",
+                    ),
+                ],
+            )
+        ],
+    )
+    init(reload=True, project_spec=project_spec)

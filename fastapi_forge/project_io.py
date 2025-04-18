@@ -18,6 +18,7 @@ from fastapi_forge.dtos import (
 )
 from fastapi_forge.enums import FieldDataTypeEnum, HTTPMethodEnum
 from fastapi_forge.jinja import (
+    render_custom_enums_to_enums,
     render_model_to_dao,
     render_model_to_delete_test,
     render_model_to_dto,
@@ -236,17 +237,11 @@ class ProjectLoader:
             except Exception as exc:
                 raise exc
 
-    def load_project_spec(self) -> ProjectSpec:
-        project_dict = self._load_project_to_dict()
-        models = [Model(**model) for model in project_dict.get("models", []) or []]
-        project_dict.pop("models")
-        return ProjectSpec(**project_dict, models=models)
-
-    def load_project_input(self) -> ProjectSpec:
+    def load_project(self) -> ProjectSpec:
         return ProjectSpec(**self._load_project_to_dict())
 
     @classmethod
-    def load_project_spec_from_db(
+    def load_project_from_db(
         cls, connection_string: str, schema: str = "public"
     ) -> ProjectSpec:
         db_info = _inspect_postgres_schema(connection_string, schema)
@@ -423,10 +418,19 @@ class ProjectBuilder:
 
         await asyncio.gather(*tasks)
 
+    async def _write_enums(self) -> None:
+        path = self.src_dir / "enums.py"
+        content = render_custom_enums_to_enums(self.project_spec.custom_enums)
+        await _write_file(path, content)
+
     async def build_artifacts(self) -> None:
         await self._init_project_directories()
 
         tasks = []
+
+        if self.project_spec.custom_enums:
+            tasks.append(self._write_enums())
+
         for model in self.project_spec.models:
             tasks.append(self._write_artifact("models", model, render_model_to_model))
 

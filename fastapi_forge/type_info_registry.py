@@ -1,11 +1,17 @@
+from collections.abc import Hashable
+from typing import Annotated, Any
 from uuid import uuid4
 
-from pydantic import BaseModel
+from pydantic import Field
+from pydantic.dataclasses import dataclass
 
 from fastapi_forge.enums import FieldDataTypeEnum
 
+EnumName = Annotated[str, Field(...)]
 
-class DataTypeInfo(BaseModel):
+
+@dataclass
+class TypeInfo:
     sqlalchemy_type: str
     sqlalchemy_prefix: bool
     python_type: str
@@ -15,31 +21,56 @@ class DataTypeInfo(BaseModel):
     test_func: str = ""
 
 
-class DataTypeInfoRegistry:
-    def __init__(self):
-        self._registry: dict[FieldDataTypeEnum, DataTypeInfo] = {}
+class BaseRegistry[T: Hashable]:
+    """Base registry class for type information."""
 
-    def register(self, field_data_type: FieldDataTypeEnum, data_type: DataTypeInfo):
-        if field_data_type in self._registry:
-            raise ValueError(f"Data type '{field_data_type}' is already registered.")
-        self._registry[field_data_type] = data_type
+    def __init__(self) -> None:
+        self._registry: dict[T, TypeInfo] = {}
 
-    def get(self, field_data_type: FieldDataTypeEnum) -> DataTypeInfo:
-        if field_data_type not in self._registry:
-            raise ValueError(f"Data type '{field_data_type}' not found.")
-        return self._registry[field_data_type]
+    def register(self, key: T, data_type: TypeInfo) -> None:
+        if key in self:
+            raise KeyError(
+                f"{self.__class__.__name__}: Key '{key}' is already registered."
+            )
+        self._registry[key] = data_type
 
-    def all(self) -> list[DataTypeInfo]:
+    def get(self, key: T) -> TypeInfo:
+        if key not in self:
+            raise KeyError(f"Key '{key}' not found.")
+        return self._registry[key]
+
+    def all(self) -> list[TypeInfo]:
         return list(self._registry.values())
 
+    def clear(self) -> None:
+        self._registry.clear()
 
-registry = DataTypeInfoRegistry()
+    def __contains__(self, key: Any) -> bool:
+        return key in self._registry
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self._registry})"
+
+
+class TypeInfoRegistry(BaseRegistry[FieldDataTypeEnum]):
+    """Register type info by FieldDataTypeEnum: TypeInfo."""
+
+
+class EnumTypeInfoRegistry(BaseRegistry[EnumName]):
+    """Register Enum type info by EnumName: TypeInfo."""
+
+
+# enums are dynamically registered when a `CustomEnum` model is instantiated
+# and should not be registered manually
+enum_registry = EnumTypeInfoRegistry()
+
+
+registry = TypeInfoRegistry()
 faker_placeholder = "factory.Faker({placeholder})"
-
 
 registry.register(
     FieldDataTypeEnum.STRING,
-    DataTypeInfo(
+    TypeInfo(
         sqlalchemy_type="String",
         sqlalchemy_prefix=True,
         python_type="str",
@@ -52,7 +83,7 @@ registry.register(
 
 registry.register(
     FieldDataTypeEnum.FLOAT,
-    DataTypeInfo(
+    TypeInfo(
         sqlalchemy_type="Float",
         sqlalchemy_prefix=True,
         python_type="float",
@@ -66,7 +97,7 @@ registry.register(
 
 registry.register(
     FieldDataTypeEnum.BOOLEAN,
-    DataTypeInfo(
+    TypeInfo(
         sqlalchemy_type="Boolean",
         sqlalchemy_prefix=True,
         python_type="bool",
@@ -78,7 +109,7 @@ registry.register(
 
 registry.register(
     FieldDataTypeEnum.DATETIME,
-    DataTypeInfo(
+    TypeInfo(
         sqlalchemy_type="DateTime(timezone=True)",
         sqlalchemy_prefix=True,
         python_type="datetime",
@@ -91,7 +122,7 @@ registry.register(
 
 registry.register(
     FieldDataTypeEnum.UUID,
-    DataTypeInfo(
+    TypeInfo(
         sqlalchemy_type="UUID(as_uuid=True)",
         sqlalchemy_prefix=True,
         python_type="UUID",
@@ -103,7 +134,7 @@ registry.register(
 
 registry.register(
     FieldDataTypeEnum.JSONB,
-    DataTypeInfo(
+    TypeInfo(
         sqlalchemy_type="JSONB",
         sqlalchemy_prefix=False,
         python_type="dict[str, Any]",
@@ -115,7 +146,7 @@ registry.register(
 
 registry.register(
     FieldDataTypeEnum.INTEGER,
-    DataTypeInfo(
+    TypeInfo(
         sqlalchemy_type="Integer",
         sqlalchemy_prefix=True,
         python_type="int",

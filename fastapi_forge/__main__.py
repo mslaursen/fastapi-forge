@@ -53,15 +53,16 @@ def start(
         yaml_path = Path(from_yaml).expanduser().resolve()
         if not yaml_path.is_file():
             raise click.FileError(f"YAML file not found: {yaml_path}")
-        project_spec = ProjectLoader(project_path=yaml_path).load_project_input()
+        project_spec = ProjectLoader(project_path=yaml_path).load_project()
     elif db_url:
-        project_spec = ProjectLoader.load_project_spec_from_db(
+        project_spec = ProjectLoader.load_project_from_db(
             connection_string=db_url,
         )
     elif use_example:
         base_path = Path(__file__).parent / "example-projects"
         path = base_path / "game_zone.yaml"
-        project_spec = ProjectLoader(project_path=path).load_project_input()
+
+        project_spec = ProjectLoader(project_path=path).load_project()
 
     init(project_spec=project_spec, no_ui=no_ui)
 

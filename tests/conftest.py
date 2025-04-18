@@ -1,9 +1,8 @@
 import pytest
 
-from fastapi_forge.dtos import Model
+from fastapi_forge.type_info_registry import enum_registry
 
 
-@pytest.fixture
-def models() -> list[Model]:
-    """Return a list of Model instances."""
-    return []
+@pytest.fixture(autouse=True)
+def clear_enum_registry() -> None:
+    enum_registry.clear()

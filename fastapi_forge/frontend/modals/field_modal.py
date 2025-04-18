@@ -17,6 +17,10 @@ class BaseFieldModal(ui.dialog, ABC):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.extra_kwargs = {}
+        self.show_enum_selector: bool = False
+        self.show_metadata: bool = False
+        self.show_enum_defaults: bool = False
+        self.on("hide", lambda: self.reset())
         self._build()
 
     @abstractmethod
@@ -40,10 +44,25 @@ class BaseFieldModal(ui.dialog, ABC):
                     self.field_type = ui.select(
                         list(FieldDataTypeEnum),
                         label="Field Type",
-                        on_change=self._toggle_metadata_visibility,
+                        on_change=self._handle_type_change,
                     ).props("outlined dense")
-                    self.default_value = ui.input(label="Default Value").props(
-                        "outlined dense"
+                    self.default_value_container = ui.column().classes("w-full")
+                    with self.default_value_container:
+                        self.default_value_input = (
+                            ui.input(label="Default Value")
+                            .props("outlined dense")
+                            .classes("w-full")
+                        )
+
+                    self.enum_selector = (
+                        ui.select(
+                            [e.name for e in state.custom_enums],
+                            label="Select Enum",
+                            on_change=lambda: self._handle_type_change(),
+                        )
+                        .props("outlined dense")
+                        .classes("w-full")
+                        .bind_visibility_from(self, "show_enum_selector")
                     )
 
                 with ui.row().classes("w-full justify-between gap-4"):
@@ -83,8 +102,42 @@ class BaseFieldModal(ui.dialog, ABC):
             with ui.row().classes("w-full justify-end p-4 border-t gap-2"):
                 self._build_action_buttons()
 
-    def _toggle_metadata_visibility(self):
+    def _get_current_enum_values(self) -> list[str]:
+        if not self.enum_selector.value:
+            return []
+        selected_enum = next(
+            (e for e in state.custom_enums if e.name == self.enum_selector.value), None
+        )
+        return [v.name for v in selected_enum.values] if selected_enum else []
+
+    def _handle_type_change(self) -> None:
         self.show_metadata = self.field_type.value == FieldDataTypeEnum.DATETIME
+        self.show_enum_selector = self.field_type.value == FieldDataTypeEnum.Enum
+        self.show_enum_defaults = self.field_type.value == FieldDataTypeEnum.Enum
+
+        if self.show_enum_selector:
+            self.enum_selector.options = [e.name for e in state.custom_enums]
+            self.enum_selector.update()
+
+        if self.show_enum_defaults:
+            self.default_value_container.clear()
+            with self.default_value_container:
+                self.default_value_select = (
+                    ui.select(
+                        self._get_current_enum_values(),
+                        label="Default Value",
+                    )
+                    .props("outlined dense")
+                    .classes("w-full")
+                )
+        else:
+            self.default_value_container.clear()
+            with self.default_value_container:
+                self.default_value_input = (
+                    ui.input(label="Default Value")
+                    .props("outlined dense")
+                    .classes("w-full")
+                )
 
     def _add_kwarg_row(self, key: str = "", value: str = "") -> None:
         with (
@@ -128,6 +181,12 @@ class BaseFieldModal(ui.dialog, ABC):
             ui.notify("Select a field type first", type="warning")
             return
         try:
+            default_value = (
+                self.default_value_select.value
+                if self.show_enum_defaults
+                else self.default_value_input.value
+            ) or None
+
             with ui.dialog() as modal, ui.card().classes("no-shadow border-[1px]"):
                 preview_field = ModelField(
                     name=self.field_name.value,
@@ -136,7 +195,7 @@ class BaseFieldModal(ui.dialog, ABC):
                     nullable=self.nullable.value,
                     unique=self.unique.value,
                     index=self.index.value,
-                    default_value=self.default_value.value or None,
+                    default_value=default_value,
                     extra_kwargs=self.extra_kwargs or None,
                     metadata=ModelFieldMetadata(
                         is_created_at_timestamp=(
@@ -156,14 +215,20 @@ class BaseFieldModal(ui.dialog, ABC):
     def reset(self) -> None:
         self.field_name.value = ""
         self.field_type.value = None
+        self.enum_selector.value = None
         self.primary_key.value = False
         self.nullable.value = False
         self.unique.value = False
         self.index.value = False
-        self.default_value.value = ""
+        if hasattr(self, "default_value_input"):
+            self.default_value_input.value = ""
+        if hasattr(self, "default_value_select"):
+            self.default_value_select.value = None
         self.created_at.value = False
         self.updated_at.value = False
         self.show_metadata = False
+        self.show_enum_selector = False
+        self.show_enum_defaults = False
         self.extra_kwargs = {}
         self.kwargs_container.clear()
 
@@ -174,7 +239,6 @@ class AddFieldModal(BaseFieldModal):
     def __init__(self, on_add_field: Callable):
         super().__init__()
         self.on_add_field = on_add_field
-        self.show_metadata = False
 
     def _build_action_buttons(self) -> None:
         ui.button("Cancel", on_click=self.close)
@@ -183,11 +247,24 @@ class AddFieldModal(BaseFieldModal):
             on_click=lambda: self.on_add_field(
                 name=self.field_name.value,
                 type=self.field_type.value,
+                type_enum=next(
+                    (
+                        e.name
+                        for e in state.custom_enums
+                        if e.name == self.enum_selector.value
+                    ),
+                    None,
+                ),
                 primary_key=self.primary_key.value,
                 nullable=self.nullable.value,
                 unique=self.unique.value,
                 index=self.index.value,
-                default_value=self.default_value.value or None,
+                default_value=(
+                    self.default_value_select.value
+                    if self.show_enum_defaults
+                    else self.default_value_input.value
+                )
+                or None,
                 extra_kwargs=self.extra_kwargs or None,
                 metadata=ModelFieldMetadata(
                     is_created_at_timestamp=(
@@ -208,7 +285,6 @@ class UpdateFieldModal(BaseFieldModal):
     def __init__(self, on_update_field: Callable):
         super().__init__()
         self.on_update_field = on_update_field
-        self.show_metadata = False
 
     def _build_action_buttons(self) -> None:
         ui.button("Cancel", on_click=self.close)
@@ -224,11 +300,28 @@ class UpdateFieldModal(BaseFieldModal):
         self.on_update_field(
             name=self.field_name.value,
             type=self.field_type.value,
+            type_enum=(
+                next(
+                    (
+                        e.name
+                        for e in state.custom_enums
+                        if e.name == self.enum_selector.value
+                    ),
+                    None,
+                )
+                if self.show_enum_selector
+                else None
+            ),
             primary_key=self.primary_key.value,
             nullable=self.nullable.value,
             unique=self.unique.value,
             index=self.index.value,
-            default_value=self.default_value.value or None,
+            default_value=(
+                self.default_value_select.value
+                if self.show_enum_defaults
+                else self.default_value_input.value
+            )
+            or None,
             extra_kwargs=self.extra_kwargs or None,
             metadata=ModelFieldMetadata(
                 is_created_at_timestamp=(
@@ -244,23 +337,38 @@ class UpdateFieldModal(BaseFieldModal):
 
     def _set_field(self, field: ModelField) -> None:
         state.selected_field = field
-        if field:
-            self.field_name.value = field.name
-            self.field_type.value = field.type
-            self.primary_key.value = field.primary_key
-            self.nullable.value = field.nullable
-            self.unique.value = field.unique
-            self.index.value = field.index
-            self.default_value.value = field.default_value or ""
-            self.created_at.value = field.metadata.is_created_at_timestamp
-            self.updated_at.value = field.metadata.is_updated_at_timestamp
-            self.show_metadata = field.type == FieldDataTypeEnum.DATETIME
-            self.extra_kwargs = field.extra_kwargs.copy() if field.extra_kwargs else {}
-            self.kwargs_container.clear()
+        if not field:
+            return
 
-            if field.extra_kwargs:
-                for key, value in field.extra_kwargs.items():
-                    self._add_kwarg_row(key, str(value))
+        self.field_name.value = field.name
+        self.field_type.value = field.type
+        self.primary_key.value = field.primary_key
+        self.nullable.value = field.nullable
+        self.unique.value = field.unique
+        self.index.value = field.index
+        if field.type == FieldDataTypeEnum.Enum and field.type_enum:
+            self.enum_selector.value = field.type_enum
+            self.enum_selector.update()
+            if field.default_value:
+                self.default_value_select.value = field.default_value
+                self.default_value_select.update()
+        elif field.default_value:
+            self.default_value_input.value = field.default_value
+            self.default_value_input.update()
+        self.created_at.value = field.metadata.is_created_at_timestamp
+        self.updated_at.value = field.metadata.is_updated_at_timestamp
+        self.show_metadata = field.type == FieldDataTypeEnum.DATETIME
+        self.show_enum_selector = field.type == FieldDataTypeEnum.Enum
+        self.extra_kwargs = field.extra_kwargs.copy() if field.extra_kwargs else {}
+        self.kwargs_container.clear()
+
+        if field.extra_kwargs:
+            for key, value in field.extra_kwargs.items():
+                self._add_kwarg_row(key, str(value))
+
+        if field.type_enum and self.show_enum_selector:
+            self.enum_selector.value = field.type_enum
+            self.enum_selector.update()
 
     def open(self, field: ModelField | None = None) -> None:
         if field:
