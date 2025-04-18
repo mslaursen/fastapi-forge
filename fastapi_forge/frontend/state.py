@@ -87,8 +87,6 @@ class ProjectState(BaseModel):
 
     def add_model(self, model_name: str) -> None:
         """Add a new model to the project."""
-        if not self._validate_ui_callbacks():
-            return
 
         if self._model_exists(model_name):
             notify_model_exists(model_name)
@@ -130,7 +128,7 @@ class ProjectState(BaseModel):
 
     def select_model(self, model: Model) -> None:
         """Set the currently selected model."""
-        if self.selected_model == model or not self._validate_ui_callbacks():
+        if self.selected_model == model:
             return
 
         self.selected_model = model
@@ -145,9 +143,6 @@ class ProjectState(BaseModel):
         )
 
     def add_enum(self, enum_name: str) -> None:
-        if not self._validate_ui_callbacks():
-            return
-
         if self._enum_exists(enum_name):
             notify_enum_exists(enum_name)
             return
@@ -159,7 +154,7 @@ class ProjectState(BaseModel):
             notify_validation_error(exc)
 
     def select_enum(self, enum: CustomEnum) -> None:
-        if self.selected_enum == enum or not self._validate_ui_callbacks():
+        if self.selected_enum == enum:
             return
 
         self.selected_enum = enum
@@ -239,25 +234,12 @@ class ProjectState(BaseModel):
         """Check if a model with the given name already exists."""
         return any(model.name == name for model in self.models if model != exclude)
 
-    def _validate_ui_callbacks(self) -> bool:
-        """Verify required UI callbacks are set."""
-        if not all(
-            [
-                self.render_content_fn,
-                self.select_model_fn,
-                self.select_enum_fn,
-            ]
-        ):
-            notify_something_went_wrong()
-            return False
-        return True
-
     def _validate_model_operation(self, model: Model) -> bool:
         """Validate conditions for model operations."""
         if model not in self.models or not all(
             [self.deselect_model_fn, self.render_content_fn]
         ):
-            ui.notify("Something went wrong...", type="warning")
+            notify_something_went_wrong()
             return False
         return True
 
