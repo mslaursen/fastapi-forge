@@ -420,9 +420,6 @@ class ModelEditorPanel(ui.card):
             if metadata:
                 field_input.metadata = metadata
 
-            if state.selected_model is None:
-                return
-
             state.selected_model.fields.append(field_input)
             self._refresh_table(state.selected_model.fields)
 

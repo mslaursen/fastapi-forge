@@ -5,6 +5,7 @@ from pydantic import BaseModel, ValidationError
 
 from fastapi_forge.dtos import (
     CustomEnum,
+    CustomEnumValue,
     Model,
     ModelField,
     ModelRelationship,
@@ -29,6 +30,7 @@ class ProjectState(BaseModel):
 
     custom_enums: list[CustomEnum] = []
     selected_enum: CustomEnum | None = None
+    selected_enum_value: CustomEnumValue | None = None
     select_enum_fn: Callable[[CustomEnum], None] | None = None
     deselect_enum_fn: Callable | None = None
 
@@ -243,7 +245,7 @@ class ProjectState(BaseModel):
             [
                 self.render_content_fn,
                 self.select_model_fn,
-                # self.select_enum_fn,
+                self.select_enum_fn,
             ]
         ):
             notify_something_went_wrong()

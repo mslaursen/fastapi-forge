@@ -28,6 +28,13 @@ def notify_field_exists(field_name: str, model_name: str) -> None:
     )
 
 
+def notify_enum_value_exists(value_name: str, enum_name: str) -> None:
+    ui.notify(
+        f"Enum' {enum_name}' already has value '{value_name}'.",
+        type="negative",
+    )
+
+
 def notify_something_went_wrong() -> None:
     ui.notify(
         "Something went wrong...",

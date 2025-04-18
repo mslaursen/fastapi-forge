@@ -61,7 +61,7 @@ class EnumCreate(_RowCreate):
     def __init__(self):
         super().__init__(
             input_placeholder="Enum name",
-            input_tooltip="",
-            button_tooltip="",
+            input_tooltip="Enums can be used as data types for model fields.",
+            button_tooltip="Add Enum",
             on_add_item=state.add_enum,
         )
