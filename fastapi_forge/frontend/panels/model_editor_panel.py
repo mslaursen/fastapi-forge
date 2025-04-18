@@ -412,7 +412,7 @@ class ModelEditorPanel(ui.card):
             return
 
         field_type = FieldDataTypeEnum(type)
-        if type_enum and field_type != FieldDataTypeEnum.Enum:
+        if type_enum and field_type != FieldDataTypeEnum.ENUM:
             type_enum = None
 
         try:
@@ -523,7 +523,7 @@ class ModelEditorPanel(ui.card):
             return
 
         field_type = FieldDataTypeEnum(type)
-        if type_enum and field_type != FieldDataTypeEnum.Enum:
+        if type_enum and field_type != FieldDataTypeEnum.ENUM:
             type_enum = None
 
         try:

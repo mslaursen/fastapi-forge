@@ -133,14 +133,14 @@ class ModelField(_Base):
 
     @model_validator(mode="after")
     def _validate_type(self) -> Self:
-        if self.type == FieldDataTypeEnum.Enum and self.type_enum is None:
+        if self.type == FieldDataTypeEnum.ENUM and self.type_enum is None:
             msg = (
                 f"ModelField '{self.name}' has field type 'ENUM', "
                 "but is missing 'type_enum'."
             )
             raise ValueError(msg)
 
-        if self.type_enum and self.type != FieldDataTypeEnum.Enum:
+        if self.type_enum and self.type != FieldDataTypeEnum.ENUM:
             msg = (
                 f"ModelField '{self.name}' has 'type_enum' set, "
                 "but is not field type 'ENUM'."
