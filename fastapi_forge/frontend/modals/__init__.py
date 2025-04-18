@@ -3,3 +3,7 @@ from fastapi_forge.frontend.modals.relation_modal import (
     AddRelationModal,
     UpdateRelationModal,
 )
+from fastapi_forge.frontend.modals.enum_modal import (
+    AddEnumValueModal,
+    UpdateEnumValueModal,
+)

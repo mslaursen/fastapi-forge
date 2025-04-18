@@ -3,7 +3,15 @@ from uuid import UUID
 import pytest
 from pydantic import ValidationError
 
-from fastapi_forge.dtos import Model, ModelField, ModelRelationship, ProjectSpec
+from fastapi_forge.constants import TAB
+from fastapi_forge.dtos import (
+    CustomEnum,
+    CustomEnumValue,
+    Model,
+    ModelField,
+    ModelRelationship,
+    ProjectSpec,
+)
 from fastapi_forge.enums import FieldDataTypeEnum
 
 ########################
@@ -76,6 +84,31 @@ def test_factory_field_value(
     assert model_field.type_info.faker_field_value == expected_factory_value
 
 
+def test_type_missing_type_enum() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        ModelField(name="test", type=FieldDataTypeEnum.Enum)
+    assert "has field type 'ENUM'" in str(exc_info.value)
+
+
+def test_type_incorrect_type() -> None:
+    enum = CustomEnum(
+        name="Test",
+        values=[
+            CustomEnumValue(
+                name="key",
+                value="value",
+            )
+        ],
+    )
+    with pytest.raises(ValidationError) as exc_info:
+        ModelField(
+            name="test",
+            type=FieldDataTypeEnum.STRING,
+            type_enum=enum.name,
+        )
+    assert "but is not field type 'ENUM'" in str(exc_info.value)
+
+
 ###############################
 # ModelRelationship DTO tests #
 ###############################
@@ -126,3 +159,40 @@ def test_project_spec_non_existing_target_model() -> None:
         "'restaurant' has a relationship to 'non_existing', which does not exist."
         in str(exc_info.value)
     )
+
+
+##############
+# CustomEnum #
+##############
+
+
+def test_custom_enum_not_unique_names() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        CustomEnum(
+            name="MyEnum",
+            values=[
+                CustomEnumValue(name="HELLO", value="hello"),
+                CustomEnumValue(name="HELLO", value="hi"),
+            ],
+        )
+    assert "Enum 'MyEnum' has duplicate names." in str(exc_info.value)
+
+
+def test_custom_enum_valid() -> None:
+    enum = CustomEnum(
+        name="MyEnum",
+        values=[
+            CustomEnumValue(name="FoO", value="foo"),
+            CustomEnumValue(name="BAR", value="bar"),
+            CustomEnumValue(name="BAZ", value="auto()"),
+        ],
+    )
+    expected_definition = (
+        "class MyEnum(StrEnum):\n"
+        f'{TAB}"""MyEnum Enum."""\n'
+        "\n"
+        f'{TAB}FoO = "foo"\n'
+        f'{TAB}BAR = "bar"\n'
+        f"{TAB}BAZ = auto()"
+    )
+    assert enum.class_definition == expected_definition

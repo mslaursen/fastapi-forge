@@ -4,6 +4,7 @@ from fastapi_forge.dtos import ModelField
 from fastapi_forge.enums import FieldDataTypeEnum
 
 SELECTED_MODEL_TEXT_COLOR = "text-black-500 dark:text-amber-300"
+SELECTED_ENUM_TEXT_COLOR = "text-black-500 dark:text-amber-300"
 
 FIELD_COLUMNS: list[dict[str, Any]] = [
     {
@@ -23,6 +24,23 @@ FIELD_COLUMNS: list[dict[str, Any]] = [
     {"name": "nullable", "label": "Nullable", "field": "nullable", "align": "center"},
     {"name": "unique", "label": "Unique", "field": "unique", "align": "center"},
     {"name": "index", "label": "Index", "field": "index", "align": "center"},
+]
+
+ENUM_COLUMNS: list[dict[str, Any]] = [
+    {
+        "name": "name",
+        "label": "Name",
+        "field": "name",
+        "required": True,
+        "align": "left",
+    },
+    {
+        "name": "value",
+        "label": "Value",
+        "field": "value",
+        "required": True,
+        "align": "left",
+    },
 ]
 
 RELATIONSHIP_COLUMNS: list[dict[str, Any]] = [
