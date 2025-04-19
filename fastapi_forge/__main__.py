@@ -35,10 +35,10 @@ def start(
     use_example: bool = False,
     no_ui: bool = False,
     from_yaml: str | None = None,
-    db_url: str | None = None,
+    conn_string: str | None = None,
 ) -> None:
     """Start the FastAPI Forge server and generate a new project."""
-    option_count = sum([use_example, bool(from_yaml), bool(db_url)])
+    option_count = sum([use_example, bool(from_yaml), bool(conn_string)])
     if option_count > 1:
         msg = "Only one of '--use-example', '--from-yaml', or '--conn-string' can be used."
         raise click.UsageError(msg)
@@ -54,9 +54,9 @@ def start(
         if not yaml_path.is_file():
             raise click.FileError(f"YAML file not found: {yaml_path}")
         project_spec = ProjectLoader(project_path=yaml_path).load()
-    elif db_url:
+    elif conn_string:
         project_spec = ProjectLoader.load_from_conn_string(
-            conn_string=db_url,
+            conn_string=conn_string,
         )
     elif use_example:
         base_path = Path(__file__).parent / "example-projects"

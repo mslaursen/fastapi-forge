@@ -5,11 +5,13 @@ from typing import Any
 from urllib.parse import urlparse
 
 import aiofiles
-import click
 import psycopg2
 import yaml
+from pydantic import ValidationError
 
 from fastapi_forge.dtos import (
+    CustomEnum,
+    CustomEnumValue,
     Model,
     ModelField,
     ModelFieldMetadata,
@@ -30,28 +32,84 @@ from fastapi_forge.jinja import (
     render_model_to_routers,
 )
 from fastapi_forge.logger import logger
-from fastapi_forge.string_utils import camel_to_snake
+from fastapi_forge.string_utils import camel_to_snake, snake_to_camel
 
 
-def _inspect_postgres_schema(
-    connection_string: str, schema: str = "public"
-) -> dict[str, Any]:
-    logger.info(f"Querying database schema from: {connection_string}")
-    try:
-        parsed = urlparse(connection_string)
-        if parsed.scheme != "postgresql":
-            msg = "Connection string must start with 'postgresql://'"
-            raise ValueError(msg)
+def _validate_connection_string(connection_string: str) -> str:
+    parsed = urlparse(connection_string)
+    if parsed.scheme != "postgresql":
+        msg = "Connection string must start with 'postgresql://'"
+        raise ValueError(msg)
 
-        db_name = parsed.path[1:]
-        if not db_name:
-            msg = "Database name not found in connection string"
-            raise ValueError(msg)
+    db_name = parsed.path[1:]
+    if not db_name:
+        msg = "Database name not found in connection string"
+        raise ValueError(msg)
+    return db_name
 
-        conn = psycopg2.connect(connection_string)
-        cur = conn.cursor()
 
-        query = """
+def _fetch_enums(cursor, schema: str) -> dict[str, list[str]]:
+    cursor.execute(
+        """
+        SELECT t.typname AS enum_name,
+               array_agg(e.enumlabel ORDER BY e.enumsortorder) AS enum_values
+        FROM pg_catalog.pg_type t
+        JOIN pg_catalog.pg_enum e ON t.oid = e.enumtypid
+        WHERE t.typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = %s)
+        GROUP BY t.typname;
+    """,
+        (schema,),
+    )
+    return dict(cursor.fetchall())
+
+
+def _fetch_enum_columns(cursor, schema: str) -> list[tuple]:
+    cursor.execute(
+        """
+        SELECT
+            c.table_schema,
+            c.table_name,
+            c.column_name,
+            format_type(a.atttypid, a.atttypmod) AS data_type,
+            t.typname AS enum_type
+        FROM pg_catalog.pg_attribute a
+        JOIN pg_catalog.pg_class cl ON a.attrelid = cl.oid
+        JOIN pg_catalog.pg_namespace n ON cl.relnamespace = n.oid
+        JOIN pg_catalog.pg_type t ON a.atttypid = t.oid
+        JOIN information_schema.columns c ON
+            c.table_schema = n.nspname AND
+            c.table_name = cl.relname AND
+            c.column_name = a.attname
+        WHERE n.nspname = %s AND
+              t.typtype = 'e' AND
+              a.attnum > 0 AND
+              NOT a.attisdropped
+        ORDER BY c.table_schema, c.table_name, c.column_name;
+    """,
+        (schema,),
+    )
+    return cursor.fetchall()
+
+
+def _build_enum_usage(enum_columns: list[tuple]) -> dict[str, list[dict[str, Any]]]:
+    usage = {}
+    for schema, table, column, data_type, enum_type in enum_columns:
+        if enum_type not in usage:
+            usage[enum_type] = []
+        usage[enum_type].append(
+            {
+                "schema": schema,
+                "table": table,
+                "column": column,
+                "data_type": data_type,
+            }
+        )
+    return usage
+
+
+def _fetch_schema_tables(cursor, schema: str) -> list[tuple]:
+    cursor.execute(
+        """
         SELECT
             c.table_schema,
             c.table_name,
@@ -64,69 +122,48 @@ def _inspect_postgres_schema(
                     'unique', uq.column_name IS NOT NULL,
                     'default', null,
                     'foreign_key',
-                        CASE
-                            WHEN fk_ref.foreign_table_name IS NOT NULL THEN
-                                json_build_object(
-                                    'field_name', c.column_name,
-                                    'target_model', fk_ref.foreign_table_name,
-                                    'referenced_field', fk_ref.foreign_column_name
-                                )
-                            ELSE NULL
-                        END
+                        CASE WHEN fk_ref.foreign_table_name IS NOT NULL THEN
+                            json_build_object(
+                                'field_name', c.column_name,
+                                'target_model', fk_ref.foreign_table_name,
+                                'referenced_field', fk_ref.foreign_column_name
+                            )
+                        ELSE NULL END
                 ) ORDER BY c.ordinal_position
             ) AS columns
-        FROM
-            information_schema.columns c
+        FROM information_schema.columns c
         LEFT JOIN (
-            -- Primary key detection
-            SELECT
-                kcu.table_schema,
-                kcu.table_name,
-                kcu.column_name
-            FROM
-                information_schema.table_constraints tc
+            SELECT kcu.table_schema, kcu.table_name, kcu.column_name
+            FROM information_schema.table_constraints tc
             JOIN information_schema.key_column_usage kcu
                 ON tc.constraint_name = kcu.constraint_name
                 AND tc.table_schema = kcu.table_schema
                 AND tc.table_name = kcu.table_name
-            WHERE
-                tc.constraint_type = 'PRIMARY KEY'
-        ) pk ON c.table_schema = pk.table_schema
-            AND c.table_name = pk.table_name
+            WHERE tc.constraint_type = 'PRIMARY KEY'
+        ) pk ON c.table_schema = pk.table_schema AND c.table_name = pk.table_name
             AND c.column_name = pk.column_name
         LEFT JOIN (
-            -- Unique constraint detection
-            SELECT
-                kcu.table_schema,
-                kcu.table_name,
-                kcu.column_name
-            FROM
-                information_schema.table_constraints tc
+            SELECT kcu.table_schema, kcu.table_name, kcu.column_name
+            FROM information_schema.table_constraints tc
             JOIN information_schema.key_column_usage kcu
                 ON tc.constraint_name = kcu.constraint_name
                 AND tc.table_schema = kcu.table_schema
                 AND tc.table_name = kcu.table_name
-            WHERE
-                tc.constraint_type = 'UNIQUE'
-                AND tc.constraint_name NOT IN (
-                    SELECT constraint_name
-                    FROM information_schema.table_constraints
-                    WHERE constraint_type = 'PRIMARY KEY'
-                )
+            WHERE tc.constraint_type = 'UNIQUE'
+              AND tc.constraint_name NOT IN (
+                  SELECT constraint_name
+                  FROM information_schema.table_constraints
+                  WHERE constraint_type = 'PRIMARY KEY'
+              )
         ) uq ON c.table_schema = uq.table_schema
             AND c.table_name = uq.table_name
             AND c.column_name = uq.column_name
         LEFT JOIN (
-            -- Foreign key detection
-            SELECT
-                kcu.table_schema,
-                kcu.table_name,
-                kcu.column_name,
-                ccu.table_schema AS foreign_table_schema,
-                ccu.table_name AS foreign_table_name,
-                ccu.column_name AS foreign_column_name
-            FROM
-                information_schema.table_constraints tc
+            SELECT kcu.table_schema, kcu.table_name, kcu.column_name,
+                   ccu.table_schema AS foreign_table_schema,
+                   ccu.table_name AS foreign_table_name,
+                   ccu.column_name AS foreign_column_name
+            FROM information_schema.table_constraints tc
             JOIN information_schema.key_column_usage kcu
                 ON tc.constraint_name = kcu.constraint_name
                 AND tc.table_schema = kcu.table_schema
@@ -134,36 +171,56 @@ def _inspect_postgres_schema(
             JOIN information_schema.constraint_column_usage ccu
                 ON tc.constraint_name = ccu.constraint_name
                 AND tc.table_schema = ccu.table_schema
-            WHERE
-                tc.constraint_type = 'FOREIGN KEY'
+            WHERE tc.constraint_type = 'FOREIGN KEY'
         ) fk_ref ON c.table_schema = fk_ref.table_schema
-            AND c.table_name = fk_ref.table_name
-            AND c.column_name = fk_ref.column_name
-        WHERE
-            c.table_schema = %s
-        GROUP BY
-            c.table_schema, c.table_name
-        ORDER BY
-            c.table_schema, c.table_name;
-        """
+            AND c.table_name = fk_ref.table_name AND c.column_name = fk_ref.column_name
+        WHERE c.table_schema = %s
+        GROUP BY c.table_schema, c.table_name
+        ORDER BY c.table_schema, c.table_name;
+    """,
+        (schema,),
+    )
+    return cursor.fetchall()
 
-        cur.execute(query, (schema,))
-        tables = cur.fetchall()
 
-        return {
-            "database_name": db_name,
-            "schema_data": {
-                f"{table_schema}.{table_name}": columns
-                for table_schema, table_name, columns in tables
-            },
-        }
+def _process_column_defaults(column: dict[str, Any], data_type: Any) -> tuple:
+    default = None
+    extra_kwargs = None
+
+    if data_type == FieldDataTypeEnum.DATETIME:
+        column_name = column["name"]
+        if column.get("default") == "CURRENT_TIMESTAMP":
+            default = "datetime.now(timezone.utc)"
+            if "update" in column_name:
+                extra_kwargs = {"onupdate": "datetime.now(timezone.utc)"}
+
+    return default, extra_kwargs
+
+
+def _inspect_postgres_schema(
+    connection_string: str, schema: str = "public"
+) -> dict[str, Any]:
+    logger.info(f"Querying database schema from: {connection_string}")
+    try:
+        db_name = _validate_connection_string(connection_string)
+        with psycopg2.connect(connection_string) as conn, conn.cursor() as cur:
+            enums = _fetch_enums(cur, schema)
+            enum_columns = _fetch_enum_columns(cur, schema)
+            enum_usage = _build_enum_usage(enum_columns)
+            tables = _fetch_schema_tables(cur, schema)
+
+            return {
+                "database_name": db_name,
+                "schema_data": {
+                    f"{table_schema}.{table_name}": columns
+                    for table_schema, table_name, columns in tables
+                },
+                "enums": enums,
+                "enum_usage": enum_usage,
+            }
 
     except psycopg2.Error as e:
-        raise click.ClickException(f"Database error: {e}") from e
-    finally:
-        if "conn" in locals():
-            cur.close()
-            conn.close()
+        raise ValueError(f"Database error: {e}") from e
 
 
 async def _write_file(path: Path, content: str) -> None:
@@ -171,102 +228,114 @@ async def _write_file(path: Path, content: str) -> None:
         async with aiofiles.open(path, "w") as file:
             await file.write(content)
         logger.info(f"Created file: {path}")
-    except OSError as exc:
-        logger.error(f"Failed to write file {path}: {exc}")
+    except OSError:
+        logger.error(f"Failed to write file {path}")
         raise
 
 
 class ProjectLoader:
-    """Load project from YAML file."""
-
-    def __init__(
-        self,
-        project_path: Path,
-    ) -> None:
+    def __init__(self, project_path: Path) -> None:
         self.project_path = project_path
         logger.info(f"Loading project from: {project_path}")
 
     def _load_project_to_dict(self) -> dict[str, Any]:
         if not self.project_path.exists():
             raise FileNotFoundError(
-                f"Project config file not found: {self.project_path}",
+                f"Project config file not found: {self.project_path}"
             )
 
         with self.project_path.open() as stream:
-            try:
-                return yaml.safe_load(stream)["project"]
-            except Exception as exc:
-                raise exc
+            return yaml.safe_load(stream)["project"]
 
-    def load(self) -> ProjectSpec:
+    def load(self) -> Any:
         return ProjectSpec(**self._load_project_to_dict())
 
     @classmethod
-    def load_from_conn_string(
-        cls, conn_string: str, schema: str = "public"
-    ) -> ProjectSpec:
+    def load_from_conn_string(cls, conn_string: str, schema: str = "public") -> Any:
         db_info = _inspect_postgres_schema(conn_string, schema)
-        db_schema: dict[str, Any] = db_info["schema_data"]
-        db_name: str = db_info["database_name"]
+        db_schema = db_info["schema_data"]
+        db_name = db_info["database_name"]
+        db_enums = db_info["enums"]
+        db_enum_usage = db_info["enum_usage"]
+
+        enum_column_lookup = {
+            f"{col_info['schema']}.{col_info['table']}.{col_info['column']}": enum_type
+            for enum_type, columns in db_enum_usage.items()
+            for col_info in columns
+        }
 
         models = []
         for table_name_full, columns_data in db_schema.items():
             _, table_name = table_name_full.split(".")
-            columns_data: list[dict[str, Any]]
 
-            fields: list[ModelField] = []
-            relationships: list[ModelRelationship] = []
+            fields = []
+            relationships = []
             for column in columns_data:
-                if "foreign_key" in column:
-                    foreign_key = column.pop("foreign_key")
-                    if foreign_key is not None:
-                        relationship = ModelRelationship(**foreign_key)
-                        relationships.append(relationship)
+                if column.get("foreign_key"):
+                    relationships.append(ModelRelationship(**column["foreign_key"]))
+                    continue
 
-                        # continue, since relationships automatically
-                        # converts into fields as well - to avoid duplicate field
-                        continue
+                column_key = f"{table_name_full}.{column['name']}"
+                enum_type = enum_column_lookup.get(column_key)
+                data_type = (
+                    FieldDataTypeEnum.ENUM
+                    if enum_type
+                    else FieldDataTypeEnum.from_db_type(column["type"])
+                )
 
-                data_type = FieldDataTypeEnum.from_db_type(column.pop("type"))
+                if enum_type:
+                    column["type_enum"] = snake_to_camel(enum_type)
+
                 column["type"] = data_type
-                default = None
-                extra_kwargs = None
+                column["default_value"], column["extra_kwargs"] = (
+                    _process_column_defaults(column, data_type)
+                )
 
-                metadata = ModelFieldMetadata()
-                if data_type == FieldDataTypeEnum.DATETIME:
-                    column_name = column["name"]
-                    default_timestamp = column.get("default") == "CURRENT_TIMESTAMP"
-                    if default_timestamp:
-                        if "create" in column_name:
-                            metadata.is_created_at_timestamp = True
-                            default = "datetime.now(timezone.utc)"
-                        elif "update" in column_name:
-                            metadata.is_updated_at_timestamp = True
-                            default = "datetime.now(timezone.utc)"
-                            extra_kwargs = {"onupdate": "datetime.now(timezone.utc)"}
-
-                # temporary until any primary key name is supported
-                if column["primary_key"] is True:
+                if column["primary_key"]:
                     column["name"] = "id"
 
-                field = ModelField(
-                    **column,
-                    metadata=metadata,
-                    default_value=default,
-                    extra_kwargs=extra_kwargs,
-                )
-                fields.append(field)
+                fields.append(ModelField(**column))
 
-            model = Model(
-                name=table_name,
-                fields=fields,
-                relationships=relationships,
+            models.append(
+                Model(name=table_name, fields=fields, relationships=relationships)
             )
-            models.append(model)
+
+        custom_enums = []
+        for enum_name, enum_values in db_enums.items():
+            enum_name_processed = snake_to_camel(enum_name)
+
+            custom_enum_values = []
+            for value_name in enum_values:
+                try:
+                    custom_enum_value = CustomEnumValue(
+                        name=value_name,
+                        value="auto()",
+                    )
+                    custom_enum_values.append(custom_enum_value)
+                except ValidationError:
+                    err_msg = (
+                        f"Validation error for CustomEnum '{enum_name_processed}', "
+                        f"having name labels: {enum_values}"
+                    )
+                    logger.error(err_msg)
+                    # to avoid errors where an enum column may be not nullable
+                    custom_enum_values = [
+                        CustomEnumValue(
+                            name="placeholder",
+                            value="placeholder",
+                        )
+                    ]
+                    break
+
+            custom_enum = CustomEnum(
+                name=enum_name_processed, values=custom_enum_values
+            )
+            custom_enums.append(custom_enum)
 
         return ProjectSpec(
             project_name=db_name,
             models=models,
+            custom_enums=custom_enums,
             use_postgres=True,
         )
 

@@ -166,11 +166,14 @@ class BaseDAO[
     ) -> None:
         """Update a record by ID."""
 
+        update_dict = update_dto.model_dump(exclude_none=True)
+        if not update_dict:
+            return
         query = (
             sa.update(self.model)
             .where(self.model.id == id)
             .values(
-                **update_dto.model_dump(exclude_none=True),
+                **update_dict,
             )
         )
         await self.session.execute(query)

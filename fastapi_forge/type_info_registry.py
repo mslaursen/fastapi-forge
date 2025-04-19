@@ -1,6 +1,5 @@
 from collections.abc import Hashable
 from typing import Annotated, Any
-from uuid import uuid4
 
 from pydantic import Field
 from pydantic.dataclasses import dataclass
@@ -15,10 +14,11 @@ class TypeInfo:
     sqlalchemy_type: str
     sqlalchemy_prefix: bool
     python_type: str
-    faker_field_value: str
-    value: str
-    test_value: str
-    test_func: str = ""
+    faker_field_value: str | None = None
+    value: str | None = None
+    test_value: str | None = None
+    test_func: str | None = None
+    encapsulate_assert: str | None = None
 
 
 class BaseRegistry[T: Hashable]:
@@ -126,9 +126,10 @@ registry.register(
         sqlalchemy_type="UUID(as_uuid=True)",
         sqlalchemy_prefix=True,
         python_type="UUID",
-        faker_field_value=str(uuid4()),
-        value=str(uuid4()),
-        test_value=str(uuid4()),
+        faker_field_value="str(uuid4())",
+        value="str(uuid4())",
+        test_value="str(uuid4())",
+        encapsulate_assert="UUID",
     ),
 )
 

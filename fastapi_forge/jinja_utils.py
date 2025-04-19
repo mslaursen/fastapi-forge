@@ -58,16 +58,18 @@ def generate_field(
     return _gen_field(field=field, target=target)
 
 
-def generate_relationship(relation: ModelRelationship) -> str:
+def generate_relationship(
+    relation: ModelRelationship, is_self_reference: bool = False
+) -> str:
     args = []
-    args.append(f'"{relation.target}"')
     args.append(f"foreign_keys=[{relation.field_name}]")
     if relation.back_populates:
         args.append(f'back_populates="{relation.back_populates}"')
     args.append("uselist=False")
 
+    target_repr = relation.target if not is_self_reference else f'"{relation.target}"'
     return f"""
-    {relation.field_name_no_id}: Mapped[{relation.target}] = relationship(
+    {relation.field_name_no_id}: Mapped[{target_repr}] = relationship(
         {",\n        ".join(args)}
     )
     """.strip()
