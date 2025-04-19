@@ -47,7 +47,7 @@
 *Much more to come!* 
 
 ## UI for designing your API projects
-![UI Interface](https://github.com/user-attachments/assets/4037f7c5-68ac-48e5-8a4e-1a6a6f1f4072) 
+![UI Interface](https://github.com/user-attachments/assets/48e3c768-0909-4229-8aae-391ce66f82d5) 
 
 ## Generated project example
 ![Generated Project Structure](https://github.com/user-attachments/assets/cc546f56-abd5-4eb1-b469-5940f0558255)
