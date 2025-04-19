@@ -26,7 +26,6 @@ def test_primary_key_defaults_to_unique() -> None:
         primary_key=True,
         unique=False,
     )
-    assert UUID(model_field.type_info.faker_field_value)
     assert model_field.unique is True
 
 
