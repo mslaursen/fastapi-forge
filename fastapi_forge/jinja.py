@@ -4,7 +4,6 @@ from jinja2 import Environment
 
 from fastapi_forge.dtos import (
     CustomEnum,
-    CustomEnumValue,
     Model,
     ModelField,
 )
@@ -26,7 +25,7 @@ from src import enums
 
 
 {% set unique_relationships = model.relationships | unique(attribute='target') %}
-{% for relation in unique_relationships -%}
+{% for relation in unique_relationships if relation.target != model.name_cc -%}
 from src.models.{{ relation.target_model }}_models import {{ relation.target }}
 {% endfor %}
 
@@ -43,7 +42,7 @@ class {{ model.name_cc }}(Base):
     {% endfor %}
 
     {% for relation in model.relationships -%}
-    {{ relation | generate_relationship }}
+    {{ relation | generate_relationship(model.name_cc == relation.target) }}
     {% endfor %}
 """
 
@@ -182,8 +181,10 @@ test_template_post = """
 import pytest
 from tests import factories
 from src.daos import AllDAOs
+from src import enums
 from httpx import AsyncClient
 from datetime import datetime, timezone,  timedelta
+from uuid import uuid4
 
 
 from typing import Any
@@ -200,11 +201,11 @@ async def test_post_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> Non
     {%- endfor %}
 
     input_json = {
-        {%- for field in model.fields  if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or field.primary_key) -%}
-        {%- if not field.primary_key and field.name.endswith('_id') -%}
+        {%- for field in model.fields  if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or field.primary_key or not field.type_info.test_value) -%}
+        {%- if not field.primary_key and field.name.endswith('_id') and field.metadata.is_foreign_key -%}
         "{{ field.name }}": str({{ field.name | replace('_id', '.id') }}),
         {%- elif not field.primary_key %}
-        "{{ field.name }}": {{ field.type_info.test_value }}{{ field.type_info.test_func }},
+        "{{ field.name }}": {{ field.type_info.test_value }}{{ field.type_info.test_func if field.type_info.test_func else '' }},
         {%- endif %}
         {%- endfor %}
     }
@@ -216,11 +217,19 @@ async def test_post_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> Non
     db_{{ model.name }} = await daos.{{ model.name }}.filter_first(id=response_data["id"])
 
     assert db_{{ model.name }} is not None
-    {%- for field in model.fields  if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or field.primary_key) %}
-    {%- if not field.primary_key and field.name.endswith('_id') %}
-    assert db_{{ model.name }}.{{ field.name }} == UUID(input_json["{{ field.name }}"])
+    {%- for field in model.fields if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or field.primary_key or not field.type_info.test_value) %}
+    {%- if not field.primary_key and field.metadata.is_foreign_key %}
+        {%- if field.type_info.encapsulate_assert %}
+    assert db_{{ model.name }}.{{ field.name }} == {{ field.type_info.encapsulate_assert }}(input_json["{{ field.name }}"])
+        {%- else %}
+    assert db_{{ model.name }}.{{ field.name }} == input_json["{{ field.name }}"]
+        {%- endif %}
     {%- elif not field.primary_key %}
-    assert db_{{ model.name }}.{{ field.name }}{{ field.type_info.test_func }} == input_json["{{ field.name }}"]
+        {%- if field.type_info.encapsulate_assert %}
+    assert db_{{ model.name }}.{{ field.name }}{{ field.type_info.test_func if field.type_info.test_func else '' }} == {{ field.type_info.encapsulate_assert }}(input_json["{{ field.name }}"])
+        {%- else %}
+    assert db_{{ model.name }}.{{ field.name }}{{ field.type_info.test_func if field.type_info.test_func else '' }} == input_json["{{ field.name }}"]
+        {%- endif %}
     {%- endif %}
     {%- endfor %}
 """
@@ -278,7 +287,7 @@ async def test_get_{{ model.name }}_by_id(client: AsyncClient,) -> None:
     {%- if not field.primary_key and field.name.endswith('_id') %}
     assert response_data["{{ field.name }}"] == str({{ model.name }}.{{ field.name }})
     {%- elif not field.primary_key %}
-    assert response_data["{{ field.name }}"] == {{ model.name }}.{{ field.name }}{{ field.type_info.test_func }}
+    assert response_data["{{ field.name }}"] == {{ model.name }}.{{ field.name }}{{ field.type_info.test_func if field.type_info.test_func else '' }}
     {%- endif %}
     {%- endfor %}
 """
@@ -287,8 +296,10 @@ test_template_patch = """
 import pytest
 from tests import factories
 from src.daos import AllDAOs
+from src import enums
 from httpx import AsyncClient
 from datetime import datetime, timezone,  timedelta
+from uuid import uuid4
 
 
 from typing import Any
@@ -306,11 +317,11 @@ async def test_patch_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> No
     {{ model.name }} = await factories.{{ model.name_cc }}Factory.create()
 
     input_json = {
-        {%- for field in model.fields  if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or field.primary_key) -%}
-        {%- if not field.primary_key and field.name.endswith('_id') -%}
+        {%- for field in model.fields  if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or field.primary_key or not field.type_info.test_value) -%}
+        {%- if not field.primary_key and field.name.endswith('_id') and field.metadata.is_foreign_key -%}
         "{{ field.name }}": str({{ field.name | replace('_id', '.id') }}),
         {% elif not field.primary_key %}
-        "{{ field.name }}": {{ field.type_info.test_value }}{{ field.type_info.test_func }},
+        "{{ field.name }}": {{ field.type_info.test_value }}{{ field.type_info.test_func if field.type_info.test_func else '' }},
         {%- endif %}
         {%- endfor %}
     }
@@ -321,11 +332,19 @@ async def test_patch_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> No
     db_{{ model.name }} = await daos.{{ model.name }}.filter_first(id={{ model.name }}.id)
 
     assert db_{{ model.name }} is not None
-    {%- for field in model.fields  if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or field.primary_key) %}
-    {%- if not field.primary_key and field.name.endswith('_id') %}
+    {%- for field in model.fields if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or field.primary_key or not field.type_info.test_value) %}
+    {%- if not field.primary_key and field.metadata.is_foreign_key %}
+        {%- if field.type_info.encapsulate_assert %}
+    assert db_{{ model.name }}.{{ field.name }} == {{ field.type_info.encapsulate_assert }}(input_json["{{ field.name }}"])
+        {%- else %}
     assert db_{{ model.name }}.{{ field.name }} == UUID(input_json["{{ field.name }}"])
+        {%- endif %}
     {%- elif not field.primary_key %}
-    assert db_{{ model.name }}.{{ field.name }}{{ field.type_info.test_func }} == input_json["{{ field.name }}"]
+        {%- if field.type_info.encapsulate_assert %}
+    assert db_{{ model.name }}.{{ field.name }}{{ field.type_info.test_func if field.type_info.test_func else '' }} == {{ field.type_info.encapsulate_assert }}(input_json["{{ field.name }}"])
+        {%- else %}
+    assert db_{{ model.name }}.{{ field.name }}{{ field.type_info.test_func if field.type_info.test_func else '' }} == input_json["{{ field.name }}"]
+        {%- endif %}
     {%- endif %}
     {%- endfor %}
 
@@ -454,8 +473,8 @@ if __name__ == "__main__":
     enum0 = CustomEnum(
         name="MyEnum0",
         values=[
-            CustomEnumValue(name="FoO", value="foo"),
-            CustomEnumValue(name="BAR", value="bar"),
+            # CustomEnumValue(name="FoO", value="foo"),
+            # CustomEnumValue(name="BAR", value="bar"),
         ],
     )
 
@@ -480,4 +499,4 @@ if __name__ == "__main__":
             ),
         ],
     )
-    print(render_model_to_model(model))
+    print(render_model_to_post_test(model))

@@ -28,23 +28,23 @@ def main() -> None:
     help="Generate a project using a custom configuration from a YAML file.",
 )
 @click.option(
-    "--db-url",
-    help="PostgreSQL connection URL (e.g., postgresql://user:password@host:port/dbname)",
+    "--conn-string",
+    help="PostgreSQL connection string (e.g., postgresql://user:password@host:port/dbname)",
 )
 def start(
     use_example: bool = False,
     no_ui: bool = False,
     from_yaml: str | None = None,
-    db_url: str | None = None,
+    conn_string: str | None = None,
 ) -> None:
     """Start the FastAPI Forge server and generate a new project."""
-    option_count = sum([use_example, bool(from_yaml), bool(db_url)])
+    option_count = sum([use_example, bool(from_yaml), bool(conn_string)])
     if option_count > 1:
-        msg = "Only one of '--use-example', '--from-yaml', or '--db-url' can be used."
+        msg = "Only one of '--use-example', '--from-yaml', or '--conn-string' can be used."
         raise click.UsageError(msg)
 
     if no_ui and option_count < 1:
-        msg = "Option '--no-ui' requires one of '--use-example', '--from-yaml', or '--db-url' to be set."
+        msg = "Option '--no-ui' requires one of '--use-example', '--from-yaml', or '--conn-string' to be set."
         raise click.UsageError(msg)
 
     project_spec = None
@@ -53,16 +53,16 @@ def start(
         yaml_path = Path(from_yaml).expanduser().resolve()
         if not yaml_path.is_file():
             raise click.FileError(f"YAML file not found: {yaml_path}")
-        project_spec = ProjectLoader(project_path=yaml_path).load_project()
-    elif db_url:
-        project_spec = ProjectLoader.load_project_from_db(
-            connection_string=db_url,
+        project_spec = ProjectLoader(project_path=yaml_path).load()
+    elif conn_string:
+        project_spec = ProjectLoader.load_from_conn_string(
+            conn_string=conn_string,
         )
     elif use_example:
         base_path = Path(__file__).parent / "example-projects"
         path = base_path / "game_zone.yaml"
 
-        project_spec = ProjectLoader(project_path=path).load_project()
+        project_spec = ProjectLoader(project_path=path).load()
 
     init(project_spec=project_spec, no_ui=no_ui)
 

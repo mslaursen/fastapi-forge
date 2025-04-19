@@ -8,6 +8,7 @@ from src import enums
 import factory
 from typing import Any
 from datetime import datetime, timezone,  timedelta
+from uuid import uuid4
 
 
 
@@ -85,8 +86,8 @@ class {{ model.name_cc }}Factory(BaseFactory[{{ model.name_cc }}]):
     class Meta:
         model = {{ model.name_cc }}
 
-    {%- for field in model.fields %}
-    {%- if "id" not in field.name %}
+    {%- for field in model.fields if field.type_info.faker_field_value %}
+    {%- if not field.primary_key and not field.metadata.is_foreign_key %}
     {{ field.name }} = {{ field.type_info.faker_field_value }}
     {%- endif %}
     {%- endfor %}
