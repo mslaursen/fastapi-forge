@@ -1,4 +1,3 @@
-from uuid import UUID
 
 import pytest
 from pydantic import ValidationError
