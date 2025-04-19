@@ -15,7 +15,7 @@
 - 🗄️ [SQLAlchemy](https://github.com/sqlalchemy/sqlalchemy) Models  
 - 📦 [Pydantic](https://github.com/pydantic/pydantic) Schemas  
 - 🌐 RESTful Endpoints (CRUD + more)  
-- � Comprehensive Test Suite (pytest)  
+- 🧪 Comprehensive Test Suite (pytest)  
 - 🏗️ DAOs (Database Access Objects)  
 - 🏭 [Factory Boy](https://github.com/FactoryBoy/factory_boy) Test Factories  
 - 🐳 [Docker Compose](https://github.com/docker/compose) Setup  
@@ -44,7 +44,7 @@
 | Storage        | S3                                    |
 | Migrations     | Alembic                               |
 
-*More to come!* 
+*Much more to come!* 
 
 ## UI for designing your API projects
 ![UI Interface](https://github.com/user-attachments/assets/4037f7c5-68ac-48e5-8a4e-1a6a6f1f4072) 
@@ -110,6 +110,13 @@ Load a custom YAML configuration (can be generated through the UI):
 
 ```bash
 fastapi-forge start --from-yaml=~/path/to/config.yaml
+```
+
+### `--conn-string`
+Load an existing Postgres database schema:
+
+```bash
+fastapi-forge start --conn-string=postgres://user:pass@localhost/db_name
 ```
 
 ### Combine Options
