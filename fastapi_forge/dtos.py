@@ -11,7 +11,11 @@ from pydantic import (
 
 from fastapi_forge.constants import TAB
 from fastapi_forge.enums import FieldDataTypeEnum, OnDeleteEnum
-from fastapi_forge.string_utils import camel_to_snake_hyphen, snake_to_camel
+from fastapi_forge.string_utils import (
+    camel_to_snake,
+    camel_to_snake_hyphen,
+    snake_to_camel,
+)
 from fastapi_forge.type_info_registry import TypeInfo, enum_registry, registry
 
 BoundedStr = Annotated[str, Field(..., min_length=1, max_length=100)]
@@ -65,11 +69,13 @@ class CustomEnum(_Base):
         super().__init__(**kwargs)
         # dynamically register in the enum registry on instantiation
         enum_repr = f"enums.{self.name}"
-        enum_value_repr = f"{enum_repr}.{self.values[0].name}"
+        enum_value_repr = (
+            None if not self.values else f"{enum_repr}.{self.values[0].name}"
+        )
         enum_registry.register(
             self.name,
             TypeInfo(
-                sqlalchemy_type=f"Enum({enum_repr})",
+                sqlalchemy_type=f'Enum({enum_repr}, name="{camel_to_snake(self.name)}")',
                 sqlalchemy_prefix=True,
                 python_type=enum_repr,
                 faker_field_value=enum_value_repr,
@@ -146,9 +152,6 @@ class ModelField(_Base):
                 "but is not field type 'ENUM'."
             )
             raise ValueError(msg)
-
-        # if self.type_enum and self.default_value:
-        #     self.default_value = f"enums.{self.type_enum.name}.{self.default_value}"
 
         return self
 
@@ -418,44 +421,6 @@ class ProjectSpec(_Base):
                 raise ValueError(
                     "TaskIQ is enabled, but the following are missing and required "
                     f"for its operation: {', '.join(missing)}."
-                )
-
-        return self
-
-    @model_validator(mode="after")
-    def _validate_circular_references(self) -> Self:
-        relationship_graph = {}
-
-        model_names = {model.name for model in self.models}
-
-        for model in self.models:
-            relationship_graph[model.name] = [
-                rel.target_model
-                for rel in model.relationships
-                if rel.target_model in model_names
-            ]
-
-        visited = set()
-        path = set()
-
-        def has_cycle(node):
-            if node in visited:
-                return False
-            visited.add(node)
-            path.add(node)
-
-            for neighbor in relationship_graph.get(node, []):
-                if neighbor in path or has_cycle(neighbor):
-                    return True
-
-            path.remove(node)
-            return False
-
-        for model_name in relationship_graph:
-            if has_cycle(model_name):
-                raise ValueError(
-                    f"Circular reference detected involving model '{model_name}'. "
-                    "Remove bidirectional relationships between models.",
                 )
 
         return self

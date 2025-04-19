@@ -16,7 +16,13 @@ class FieldDataTypeEnum(StrEnum):
     @lru_cache
     def get_type_mappings(cls) -> dict[str, list[str]]:
         return {
-            cls.STRING: ["character varying", "text", "varchar", "char"],
+            cls.STRING: [
+                "character varying",
+                "text",
+                "varchar",
+                "char",
+                "user-defined",
+            ],
             cls.INTEGER: [
                 "integer",
                 "int",
