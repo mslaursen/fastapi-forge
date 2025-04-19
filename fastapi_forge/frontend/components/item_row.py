@@ -4,6 +4,7 @@ from nicegui import ui
 from pydantic import BaseModel
 
 from fastapi_forge.dtos import CustomEnum, Model
+from fastapi_forge.frontend.constants import ITEM_ROW_TRUNCATE_LEN
 from fastapi_forge.frontend.state import state
 
 
@@ -48,11 +49,21 @@ class _ItemRow[T: BaseModel](ui.row):
                     ui.icon(self.icon, color="green", size="20px").classes(
                         "self-center"
                     )
-                self.name_label = ui.label(text=self.get_name(self.item)).classes(
-                    "self-center"
+                full_name = self.get_name(self.item)
+                truncated_name = (
+                    (full_name[:ITEM_ROW_TRUNCATE_LEN] + "...")
+                    if len(full_name) > ITEM_ROW_TRUNCATE_LEN
+                    else full_name
                 )
-            if self.color:
-                self.name_label.classes(add=self.color)
+                self.name_label = (
+                    ui.label(text=truncated_name)
+                    .classes("self-center truncate")
+                    .tooltip(
+                        full_name if len(full_name) > ITEM_ROW_TRUNCATE_LEN else None
+                    )
+                )
+                if self.color:
+                    self.name_label.classes(add=self.color)
 
             self.name_input = (
                 ui.input(value=self.get_name(self.item))
