@@ -50,18 +50,23 @@ class _ItemRow[T: BaseModel](ui.row):
                         "self-center"
                     )
                 full_name = self.get_name(self.item)
-                truncated_name = (
-                    (full_name[:ITEM_ROW_TRUNCATE_LEN] + "...")
-                    if len(full_name) > ITEM_ROW_TRUNCATE_LEN
-                    else full_name
-                )
-                self.name_label = (
-                    ui.label(text=truncated_name)
-                    .classes("self-center truncate")
-                    .tooltip(
-                        full_name if len(full_name) > ITEM_ROW_TRUNCATE_LEN else None
+
+                if len(full_name) > ITEM_ROW_TRUNCATE_LEN:
+                    truncated_name = (
+                        (full_name[:ITEM_ROW_TRUNCATE_LEN] + "...")
+                        if len(full_name) > ITEM_ROW_TRUNCATE_LEN
+                        else full_name
                     )
-                )
+                    self.name_label = (
+                        ui.label(text=truncated_name)
+                        .classes("self-center truncate")
+                        .tooltip(full_name)
+                    )
+                else:
+                    self.name_label = ui.label(text=full_name).classes(
+                        "self-center truncate"
+                    )
+
                 if self.color:
                     self.name_label.classes(add=self.color)
 
