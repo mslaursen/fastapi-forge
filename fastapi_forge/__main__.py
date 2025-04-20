@@ -29,7 +29,8 @@ def main() -> None:
 )
 @click.option(
     "--conn-string",
-    help="PostgreSQL connection string (e.g., postgresql://user:password@host:port/dbname)",
+    help="Generate a project from a PostgreSQL connection string "
+    "(e.g., postgresql://user:password@host:port/dbname)",
 )
 def start(
     use_example: bool = False,
