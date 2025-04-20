@@ -1,17 +1,19 @@
 from fastapi_forge.dtos import ModelField, ModelRelationship
+from fastapi_forge.enums import OnDeleteEnum
 
 
 def _gen_field(
     field: ModelField,
-    target: str | None = None,
+    target_data: tuple[str, OnDeleteEnum] | None = None,
 ) -> str:
     type_info = field.type_info
     args = [
         f"{'sa.' if type_info.sqlalchemy_prefix else ''}{type_info.sqlalchemy_type}"
     ]
 
-    if field.metadata.is_foreign_key and target:
-        args.append(f'sa.ForeignKey("{target + ".id"}", ondelete="{field.on_delete}")')
+    if field.metadata.is_foreign_key and target_data:
+        target_model, on_delete = target_data
+        args.append(f'sa.ForeignKey("{target_model + ".id"}", ondelete="{on_delete}")')
     if field.primary_key:
         args.append("primary_key=True")
     if field.unique:
@@ -45,17 +47,21 @@ def generate_field(
     if field.metadata.is_foreign_key and relationships is not None:
         target = next(
             (
-                relation.target_model
+                relation
                 for relation in relationships
                 if relation.field_name == field.name
             ),
             None,
         )
 
+    target_data = None
+    if target:
+        target_data = (target.target_model, target.on_delete)
+
     if relationships is not None and target is None:
         raise ValueError(f"Target was not found for Foreign Key {field.name}")
 
-    return _gen_field(field=field, target=target)
+    return _gen_field(field=field, target_data=target_data)
 
 
 def generate_relationship(

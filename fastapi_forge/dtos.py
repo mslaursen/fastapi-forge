@@ -119,7 +119,6 @@ class ModelField(_Base):
     nullable: bool = False
     unique: bool = False
     index: bool = False
-    on_delete: OnDeleteEnum = OnDeleteEnum.CASCADE
     default_value: str | None = None
     extra_kwargs: dict[str, Any] | None = None
     metadata: ModelFieldMetadata = ModelFieldMetadata()
@@ -194,8 +193,7 @@ class ModelRelationship(_Base):
     field_name: FieldName
     target_model: ModelName
     back_populates: BackPopulates | None = None
-    on_delete: OnDeleteEnum = OnDeleteEnum.CASCADE
-
+    on_delete: OnDeleteEnum
     nullable: bool = False
     unique: bool = False
     index: bool = False
