@@ -18,7 +18,7 @@ from fastapi_forge.dtos import (
     ModelRelationship,
     ProjectSpec,
 )
-from fastapi_forge.enums import FieldDataTypeEnum, HTTPMethodEnum
+from fastapi_forge.enums import FieldDataTypeEnum, HTTPMethodEnum, OnDeleteEnum
 from fastapi_forge.jinja import (
     render_custom_enums_to_enums,
     render_model_to_dao,
@@ -274,7 +274,11 @@ class ProjectLoader:
             relationships = []
             for column in columns_data:
                 if column.get("foreign_key"):
-                    relationships.append(ModelRelationship(**column["foreign_key"]))
+                    relationships.append(
+                        ModelRelationship(
+                            **column["foreign_key"], on_delete=OnDeleteEnum.CASCADE
+                        )
+                    )
                     continue
 
                 column_key = f"{table_name_full}.{column['name']}"
@@ -398,7 +402,6 @@ class ProjectBuilder:
                         nullable=relation.nullable,
                         unique=relation.unique,
                         index=relation.index,
-                        on_delete=relation.on_delete,
                         metadata=ModelFieldMetadata(is_foreign_key=True),
                     ),
                 )

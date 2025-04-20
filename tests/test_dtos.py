@@ -10,7 +10,7 @@ from fastapi_forge.dtos import (
     ModelRelationship,
     ProjectSpec,
 )
-from fastapi_forge.enums import FieldDataTypeEnum
+from fastapi_forge.enums import FieldDataTypeEnum, OnDeleteEnum
 
 ########################
 # ModelField DTO tests #
@@ -115,6 +115,7 @@ def test_fields() -> None:
     model_relationship = ModelRelationship(
         field_name="restaurant_id",
         target_model="restaurant",
+        on_delete=OnDeleteEnum.CASCADE,
     )
     assert model_relationship.target == "Restaurant"
     assert model_relationship.field_name_no_id == "restaurant"
@@ -125,6 +126,7 @@ def test_field_name_not_endswith_id() -> None:
         ModelRelationship(
             field_name="restaurant",
             target_model="restaurant",
+            on_delete=OnDeleteEnum.CASCADE,
         )
     assert "Relationship field names must end with '_id'." in str(exc_info.value)
 
@@ -144,6 +146,7 @@ def test_project_spec_non_existing_target_model() -> None:
             ModelRelationship(
                 field_name="test_id",
                 target_model="non_existing",
+                on_delete=OnDeleteEnum.CASCADE,
             ),
         ],
     )
