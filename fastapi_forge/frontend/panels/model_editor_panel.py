@@ -10,6 +10,7 @@ from fastapi_forge.dtos import (
     ModelRelationship,
 )
 from fastapi_forge.enums import FieldDataTypeEnum, OnDeleteEnum
+from fastapi_forge.frontend import validation
 from fastapi_forge.frontend.constants import (
     DEFAULT_AUTH_USER_FIELDS,
     FIELD_COLUMNS,
@@ -24,6 +25,7 @@ from fastapi_forge.frontend.modals import (
 from fastapi_forge.frontend.notifications import (
     notify_field_exists,
     notify_validation_error,
+    notify_value_error,
 )
 from fastapi_forge.frontend.state import state
 from fastapi_forge.jinja import render_model_to_model
@@ -309,20 +311,31 @@ class ModelEditorPanel(ui.card):
             self._add_field(**kwargs)
             self.add_field_modal.close()
         except ValueError as exc:
-            ui.notify(str(exc), type="negative")
+            notify_value_error(exc)
 
     def _handle_modal_add_relation(
         self,
         field_name: str,
         target_model: str,
+        on_delete: OnDeleteEnum,
         nullable: bool,
         index: bool,
         unique: bool,
-        on_delete: OnDeleteEnum,
         back_populates: str | None = None,
     ) -> None:
         if not state.selected_model:
             return
+
+        try:
+            validation.raise_if_missing_fields(
+                [
+                    ("Field Name", field_name),
+                    ("Target Model", target_model),
+                    ("On Delete", on_delete),
+                ]
+            )
+        except ValueError as exc:
+            raise exc
 
         target_model_instance = next(
             (model for model in state.models if model.name == target_model),
@@ -407,6 +420,13 @@ class ModelEditorPanel(ui.card):
     ) -> None:
         if state.selected_model is None:
             return
+
+        try:
+            validation.raise_if_missing_fields(
+                [("Field Name", name), ("Field Type", type)]
+            )
+        except ValueError as exc:
+            raise exc
 
         if self._field_name_exists(name):
             notify_field_exists(name, state.selected_model.name)
@@ -519,6 +539,13 @@ class ModelEditorPanel(ui.card):
         if name in exclude_set:
             return
 
+        try:
+            validation.raise_if_missing_fields(
+                [("Field Name", name), ("Field Type", type)]
+            )
+        except ValueError as exc:
+            raise exc
+
         if state.selected_field.name != name and self._field_name_exists(name):
             notify_field_exists(name, state.selected_model.name)
             return
@@ -560,6 +587,17 @@ class ModelEditorPanel(ui.card):
     ) -> None:
         if not state.selected_model or not state.selected_relation:
             return
+
+        try:
+            validation.raise_if_missing_fields(
+                [
+                    ("Field Name", field_name),
+                    ("Target Model", target_model),
+                    ("On Delete", on_delete),
+                ]
+            )
+        except ValueError as exc:
+            raise exc
 
         target_model_instance = next(
             (model for model in state.models if model.name == target_model),

@@ -4,6 +4,7 @@ from nicegui import ui
 from pydantic import ValidationError
 
 from fastapi_forge.dtos import CustomEnum, CustomEnumValue
+from fastapi_forge.frontend import validation
 from fastapi_forge.frontend.constants import ENUM_COLUMNS
 from fastapi_forge.frontend.modals import (
     AddEnumValueModal,
@@ -116,6 +117,11 @@ class EnumEditorPanel(ui.card):
         if state.selected_enum is None:
             return
 
+        try:
+            validation.raise_if_missing_fields([("Name", name), ("Value", value)])
+        except ValueError as exc:
+            raise exc
+
         if self._enum_value_exists(name):
             notify_enum_value_exists(name, state.selected_enum.name)
             return
@@ -134,6 +140,11 @@ class EnumEditorPanel(ui.card):
     def _handle_update_value(self, *, name: str, value: str) -> None:
         if state.selected_enum is None or state.selected_enum_value is None:
             return
+
+        try:
+            validation.raise_if_missing_fields([("Name", name), ("Value", value)])
+        except ValueError as exc:
+            raise exc
 
         if self._enum_value_exists(name):
             notify_enum_value_exists(name, state.selected_enum.name)

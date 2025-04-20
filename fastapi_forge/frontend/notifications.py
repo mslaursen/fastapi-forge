@@ -7,6 +7,10 @@ def notify_validation_error(e: ValidationError) -> None:
     ui.notify(msg, type="negative")
 
 
+def notify_value_error(e: ValueError) -> None:
+    ui.notify(str(e), type="negative")
+
+
 def notify_model_exists(model_name: str) -> None:
     ui.notify(
         f"Model '{model_name}' already exists.",

@@ -5,6 +5,7 @@ from nicegui import ui
 
 from fastapi_forge.dtos import Model, ModelRelationship
 from fastapi_forge.enums import OnDeleteEnum
+from fastapi_forge.frontend.notifications import notify_value_error
 
 
 class BaseRelationModal(ui.dialog, ABC):
@@ -74,16 +75,19 @@ class AddRelationModal(BaseRelationModal):
         )
 
     def _add_relation(self) -> None:
-        self.on_add_relation(
-            field_name=self.field_name.value,
-            target_model=self.target_model.value,
-            back_populates=self.back_populates.value or None,
-            nullable=self.nullable.value,
-            index=self.index.value,
-            unique=self.unique.value,
-            on_delete=self.on_delete.value,
-        )
-        self.close()
+        try:
+            self.on_add_relation(
+                field_name=self.field_name.value,
+                target_model=self.target_model.value,
+                back_populates=self.back_populates.value or None,
+                nullable=self.nullable.value,
+                index=self.index.value,
+                unique=self.unique.value,
+                on_delete=self.on_delete.value,
+            )
+            self.close()
+        except ValueError as exc:
+            notify_value_error(exc)
 
     def open(self, models: list[Model]) -> None:
         self.target_model.options = [model.name for model in models]
@@ -110,16 +114,19 @@ class UpdateRelationModal(BaseRelationModal):
         if not self.selected_relation:
             return
 
-        self.on_update_relation(
-            field_name=self.field_name.value,
-            target_model=self.target_model.value,
-            back_populates=self.back_populates.value,
-            nullable=self.nullable.value,
-            index=self.index.value,
-            unique=self.unique.value,
-            on_delete=self.on_delete.value,
-        )
-        self.close()
+        try:
+            self.on_update_relation(
+                field_name=self.field_name.value,
+                target_model=self.target_model.value,
+                back_populates=self.back_populates.value,
+                nullable=self.nullable.value,
+                index=self.index.value,
+                unique=self.unique.value,
+                on_delete=self.on_delete.value,
+            )
+            self.close()
+        except ValueError as exc:
+            notify_value_error(exc)
 
     def _set_relation(self, relation: ModelRelationship) -> None:
         self.selected_relation = relation

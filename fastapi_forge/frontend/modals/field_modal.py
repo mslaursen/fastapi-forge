@@ -6,7 +6,10 @@ from pydantic import ValidationError
 
 from fastapi_forge.dtos import ModelField, ModelFieldMetadata
 from fastapi_forge.enums import FieldDataTypeEnum
-from fastapi_forge.frontend.notifications import notify_validation_error
+from fastapi_forge.frontend.notifications import (
+    notify_validation_error,
+    notify_value_error,
+)
 from fastapi_forge.frontend.state import state
 from fastapi_forge.jinja_utils import generate_field
 
@@ -298,43 +301,47 @@ class UpdateFieldModal(BaseFieldModal):
         if not state.selected_field:
             return
 
-        self.on_update_field(
-            name=self.field_name.value,
-            type=self.field_type.value,
-            type_enum=(
-                next(
-                    (
-                        e.name
-                        for e in state.custom_enums
-                        if e.name == self.enum_selector.value
-                    ),
-                    None,
+        try:
+            self.on_update_field(
+                name=self.field_name.value,
+                type=self.field_type.value,
+                type_enum=(
+                    next(
+                        (
+                            e.name
+                            for e in state.custom_enums
+                            if e.name == self.enum_selector.value
+                        ),
+                        None,
+                    )
+                    if self.show_enum_selector
+                    else None
+                ),
+                primary_key=self.primary_key.value,
+                nullable=self.nullable.value,
+                unique=self.unique.value,
+                index=self.index.value,
+                default_value=(
+                    self.default_value_select.value
+                    if self.show_enum_defaults
+                    else self.default_value_input.value
                 )
-                if self.show_enum_selector
-                else None
-            ),
-            primary_key=self.primary_key.value,
-            nullable=self.nullable.value,
-            unique=self.unique.value,
-            index=self.index.value,
-            default_value=(
-                self.default_value_select.value
-                if self.show_enum_defaults
-                else self.default_value_input.value
+                or None,
+                extra_kwargs=self.extra_kwargs or None,
+                metadata=ModelFieldMetadata(
+                    is_created_at_timestamp=(
+                        self.created_at.value if self.show_metadata else False
+                    ),
+                    is_updated_at_timestamp=(
+                        self.updated_at.value if self.show_metadata else False
+                    ),
+                    is_foreign_key=False,
+                ),
             )
-            or None,
-            extra_kwargs=self.extra_kwargs or None,
-            metadata=ModelFieldMetadata(
-                is_created_at_timestamp=(
-                    self.created_at.value if self.show_metadata else False
-                ),
-                is_updated_at_timestamp=(
-                    self.updated_at.value if self.show_metadata else False
-                ),
-                is_foreign_key=False,
-            ),
-        )
-        self.close()
+            self.close()
+        except ValueError as exc:
+            notify_value_error(exc)
+            return
 
     def _set_field(self, field: ModelField) -> None:
         state.selected_field = field

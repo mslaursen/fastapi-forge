@@ -4,6 +4,7 @@ from collections.abc import Callable
 from nicegui import ui
 
 from fastapi_forge.dtos import CustomEnumValue
+from fastapi_forge.frontend.notifications import notify_value_error
 from fastapi_forge.frontend.state import state
 
 
@@ -55,11 +56,19 @@ class AddEnumValueModal(BaseEnumValueModal):
         ui.button("Cancel", on_click=self.close)
         ui.button(
             self.title,
-            on_click=lambda: self.on_add_value(
+            on_click=self._handle_add,
+        )
+
+    def _handle_add(self) -> None:
+        try:
+            self.on_add_value(
                 name=self.value_name.value,
                 value=self.value_value.value,
-            ),
-        )
+            )
+            self.close()
+        except ValueError as exc:
+            notify_value_error(exc)
+            return
 
 
 class UpdateEnumValueModal(BaseEnumValueModal):
@@ -79,12 +88,15 @@ class UpdateEnumValueModal(BaseEnumValueModal):
     def _handle_update(self) -> None:
         if not state.selected_enum_value:
             return
-
-        self.on_update_value(
-            name=self.value_name.value,
-            value=self.value_value.value,
-        )
-        self.close()
+        try:
+            self.on_update_value(
+                name=self.value_name.value,
+                value=self.value_value.value,
+            )
+            self.close()
+        except ValueError as exc:
+            notify_value_error(exc)
+            return
 
     def _set_value(self, enum_value: CustomEnumValue) -> None:
         state.selected_enum_value = enum_value
