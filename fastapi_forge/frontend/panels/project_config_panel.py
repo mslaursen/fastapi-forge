@@ -265,6 +265,14 @@ class ProjectConfigPanel(ui.right_drawer):
 
     async def _create_project(self) -> None:
         """Generate the project based on the current state."""
+        if not state.project_name:
+            ui.notify("Missing project name!", type="negative")
+            return
+
+        if not state.models:
+            ui.notify("No models to generate!", type="negative")
+            return
+
         project_path = Path(state.project_name)
 
         if project_path.exists():
@@ -282,10 +290,6 @@ class ProjectConfigPanel(ui.right_drawer):
         ongoing_notification = ui.notification("Generating project...")
 
         try:
-            if not state.models:
-                ui.notify("No models to generate!", type="negative")
-                return
-
             state.project_name = self.project_name.value
             state.use_postgres = self.use_postgres.value
             state.use_alembic = self.use_alembic.value
