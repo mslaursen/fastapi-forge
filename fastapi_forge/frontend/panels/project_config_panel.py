@@ -157,59 +157,92 @@ class ProjectConfigPanel(ui.right_drawer):
             self.use_taskiq.value = False
             state.use_taskiq = False
 
-    def _handle_builtin_auth_change(self, event: ValueChangeEventArguments) -> None:
+    async def _create_auth_model_dialog(self) -> bool:
+        dialog = ui.dialog()
+        with dialog, ui.card().classes("w-full max-w-md p-6 text-center"):
+            ui.icon("check_circle", color="green-500").classes("text-4xl self-center")
+            ui.markdown(
+                "JWT Auth needs a model with 'email' and 'password' fields. "
+                "Select any model as auth model later, or create one now (optional)."
+            ).classes("text-center")
+
+            create_model_checkbox = ui.checkbox(
+                "Create default 'auth_user' model", value=True
+            ).classes("w-full mt-4")
+
+            with ui.row().classes("w-full justify-center gap-4 mt-4"):
+                ui.button("Cancel", color="negative", on_click=dialog.close)
+                ui.button(
+                    "Enable JWT Auth",
+                    color="primary",
+                    on_click=lambda: dialog.submit(create_model_checkbox.value),
+                )
+
+        return await dialog
+
+    async def _handle_builtin_auth_change(
+        self, event: ValueChangeEventArguments
+    ) -> None:
         """Handle JWT Auth checkbox changes"""
         enabled = event.value
         state.use_builtin_auth = enabled
 
-        if enabled:
-            if any(model.name == "auth_user" for model in state.models):
-                ui.notify("The 'auth_user' model already exists.", type="negative")
-                self.use_builtin_auth.value = False
-                state.use_builtin_auth = False
+        if not enabled:
+            auth_model = state.get_auth_model()
+            if not auth_model:
                 return
+            auth_model.metadata.is_auth_model = False
+            if state.render_content_fn:
+                state.render_content_fn.refresh()
+            if state.render_actions_fn:
+                state.render_actions_fn.refresh()
+            return
 
-            try:
-                auth_user_model = Model(
-                    name="auth_user",
-                    metadata=ModelMetadata(is_auth_model=True),
-                    fields=[
-                        ModelField(
-                            name="id",
-                            type=FieldDataTypeEnum.UUID,
-                            primary_key=True,
-                            unique=True,
-                            index=True,
-                        ),
-                        *DEFAULT_AUTH_USER_FIELDS,
-                        ModelField(
-                            name="created_at",
-                            type=FieldDataTypeEnum.DATETIME,
-                            default_value="datetime.now(timezone.utc)",
-                            metadata=ModelFieldMetadata(is_created_at_timestamp=True),
-                        ),
-                        ModelField(
-                            name="updated_at",
-                            type=FieldDataTypeEnum.DATETIME,
-                            default_value="datetime.now(timezone.utc)",
-                            extra_kwargs={"onupdate": "datetime.now(timezone.utc)"},
-                            metadata=ModelFieldMetadata(is_updated_at_timestamp=True),
-                        ),
-                    ],
-                )
-                state.models.append(auth_user_model)
-                if state.render_models_fn:
-                    state.render_models_fn()
-                ui.notify("The 'auth_user' model has been created.", type="positive")
-            except ValidationError as exc:
-                notify_validation_error(exc)
-        else:
-            state.models = [
-                model for model in state.models if model.name != "auth_user"
-            ]
-            if state.render_models_fn:
-                state.render_models_fn()
-            ui.notify("The 'auth_user' model has been deleted.", type="positive")
+        create_model_dialog = await self._create_auth_model_dialog()
+
+        if not create_model_dialog:
+            return
+
+        if any(model.name == "auth_user" for model in state.models):
+            ui.notify("The 'auth_user' model already exists.", type="negative")
+            self.use_builtin_auth.value = False
+            state.use_builtin_auth = False
+            return
+
+        try:
+            auth_user_model = Model(
+                name="auth_user",
+                metadata=ModelMetadata(is_auth_model=True),
+                fields=[
+                    ModelField(
+                        name="id",
+                        type=FieldDataTypeEnum.UUID,
+                        primary_key=True,
+                        unique=True,
+                        index=True,
+                    ),
+                    *DEFAULT_AUTH_USER_FIELDS,
+                    ModelField(
+                        name="created_at",
+                        type=FieldDataTypeEnum.DATETIME,
+                        default_value="datetime.now(timezone.utc)",
+                        metadata=ModelFieldMetadata(is_created_at_timestamp=True),
+                    ),
+                    ModelField(
+                        name="updated_at",
+                        type=FieldDataTypeEnum.DATETIME,
+                        default_value="datetime.now(timezone.utc)",
+                        extra_kwargs={"onupdate": "datetime.now(timezone.utc)"},
+                        metadata=ModelFieldMetadata(is_updated_at_timestamp=True),
+                    ),
+                ],
+            )
+            state.models.append(auth_user_model)
+            if state.render_content_fn:
+                state.render_content_fn.refresh()
+            ui.notify("The 'auth_user' model has been created.", type="positive")
+        except ValidationError as exc:
+            notify_validation_error(exc)
 
     async def _warn_overwrite(self) -> bool:
         """Show a confirmation dialog if the project already exists."""

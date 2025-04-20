@@ -258,5 +258,11 @@ class ProjectState(BaseModel):
         if self.render_actions_fn:
             self.render_actions_fn.refresh()
 
+    def get_auth_model(self) -> Model | None:
+        return next(
+            (model for model in self.models if model.metadata.is_auth_model),
+            None,
+        )
+
 
 state: ProjectState = ProjectState()

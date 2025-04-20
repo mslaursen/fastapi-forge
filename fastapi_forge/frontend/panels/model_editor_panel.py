@@ -87,7 +87,8 @@ class ModelEditorPanel(ui.card):
                 state.render_model_editor_fn()
 
         if state.render_content_fn:
-            state.render_content_fn()
+            state.render_content_fn.refresh()
+
         self._render_action_group.refresh()
 
         if model.metadata.is_auth_model:
