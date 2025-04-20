@@ -247,11 +247,13 @@ class ProjectLoader:
         with self.project_path.open() as stream:
             return yaml.safe_load(stream)["project"]
 
-    def load(self) -> Any:
+    def load(self) -> ProjectSpec:
         return ProjectSpec(**self._load_project_to_dict())
 
     @classmethod
-    def load_from_conn_string(cls, conn_string: str, schema: str = "public") -> Any:
+    def load_from_conn_string(
+        cls, conn_string: str, schema: str = "public"
+    ) -> ProjectSpec:
         db_info = _inspect_postgres_schema(conn_string, schema)
         db_schema = db_info["schema_data"]
         db_name = db_info["database_name"]

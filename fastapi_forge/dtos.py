@@ -374,6 +374,33 @@ class ProjectSpec(_Base):
     custom_enums: list[CustomEnum] = []
 
     @model_validator(mode="after")
+    def _validate_enums(self) -> Self:
+        valid_enum_names = {custom_enum.name for custom_enum in self.custom_enums}
+
+        invalid_fields = [
+            (model.name, field.name, field.type_enum)
+            for model in self.models
+            for field in model.fields
+            if (
+                field.type == FieldDataTypeEnum.ENUM
+                and (field.type_enum is None or field.type_enum not in valid_enum_names)
+            )
+        ]
+
+        if invalid_fields:
+            error_lines = [
+                f"• {model_name}.{field_name} (ref: '{type_enum}')"
+                for model_name, field_name, type_enum in invalid_fields
+            ]
+            raise ValueError(
+                f"Invalid enum references ({len(invalid_fields)}):\n"
+                + "\n".join(error_lines)
+                + f"\nValid enums: {', '.join(sorted(valid_enum_names)) or 'none'}"
+            )
+
+        return self
+
+    @model_validator(mode="after")
     def _validate_models(self) -> Self:
         model_names = [model.name for model in self.models]
         model_names_set = set(model_names)
