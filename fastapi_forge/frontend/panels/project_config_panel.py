@@ -162,10 +162,10 @@ class ProjectConfigPanel(ui.right_drawer):
             self.use_taskiq.value = False
             state.use_taskiq = False
 
-    async def _create_auth_model_dialog(self) -> bool:
+    async def _auth_dialog(self) -> bool:
         dialog = ui.dialog()
         with dialog, ui.card().classes("w-full max-w-md p-6 text-center"):
-            ui.icon("check_circle", color="green-500").classes("text-4xl self-center")
+            ui.icon("security", color="green-500").classes("text-4xl self-center")
             ui.markdown(
                 "JWT Auth needs a model with 'email' and 'password' fields. "
                 "Select any model as auth model later, or create one now (optional)."
@@ -176,9 +176,9 @@ class ProjectConfigPanel(ui.right_drawer):
             ).classes("w-full mt-4")
 
             with ui.row().classes("w-full justify-center gap-4 mt-4"):
-                ui.button("Cancel", color="negative", on_click=dialog.close)
+                ui.button("Close", color="negative", on_click=dialog.close)
                 ui.button(
-                    "Enable JWT Auth",
+                    "Proceed",
                     color="primary",
                     on_click=lambda: dialog.submit(create_model_checkbox.value),
                 )
@@ -203,9 +203,9 @@ class ProjectConfigPanel(ui.right_drawer):
                 state.render_actions_fn.refresh()
             return
 
-        create_model_dialog = await self._create_auth_model_dialog()
+        proceed = await self._auth_dialog()
 
-        if not create_model_dialog:
+        if not proceed:
             return
 
         if any(model.name == "auth_user" for model in state.models):
