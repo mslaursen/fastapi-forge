@@ -5,6 +5,8 @@ from nicegui.events import ValueChangeEventArguments
 from pydantic import ValidationError
 
 from fastapi_forge.dtos import (
+    CustomEnum,
+    CustomEnumValue,
     Model,
     ModelField,
     ModelFieldMetadata,
@@ -12,7 +14,10 @@ from fastapi_forge.dtos import (
 )
 from fastapi_forge.enums import FieldDataTypeEnum
 from fastapi_forge.forge import build_project
-from fastapi_forge.frontend.constants import DEFAULT_AUTH_USER_FIELDS
+from fastapi_forge.frontend.constants import (
+    DEFAULT_AUTH_USER_FIELDS,
+    DEFAULT_AUTH_USER_ROLE_ENUM_NAME,
+)
 from fastapi_forge.frontend.notifications import notify_validation_error
 from fastapi_forge.frontend.state import state
 
@@ -210,6 +215,23 @@ class ProjectConfigPanel(ui.right_drawer):
             return
 
         try:
+            auth_role_enum_name = DEFAULT_AUTH_USER_ROLE_ENUM_NAME
+            auth_enum = state.get_enum_by_name(auth_role_enum_name)
+
+            auth_enum_values = [
+                CustomEnumValue(name="USER", value="auto()"),
+                CustomEnumValue(name="ADMIN", value="auto()"),
+            ]
+            if auth_enum and not auth_enum.values:
+                auth_enum.values = auth_enum_values
+
+            if not auth_enum:
+                auth_enum = CustomEnum(
+                    name=auth_role_enum_name,
+                    values=auth_enum_values,
+                )
+                state.custom_enums.append(auth_enum)
+
             auth_user_model = Model(
                 name="auth_user",
                 metadata=ModelMetadata(is_auth_model=True),
@@ -222,6 +244,12 @@ class ProjectConfigPanel(ui.right_drawer):
                         index=True,
                     ),
                     *DEFAULT_AUTH_USER_FIELDS,
+                    ModelField(
+                        name="role",
+                        type=FieldDataTypeEnum.ENUM,
+                        type_enum=auth_role_enum_name,
+                        default_value=auth_enum.values[0].name,
+                    ),
                     ModelField(
                         name="created_at",
                         type=FieldDataTypeEnum.DATETIME,

@@ -82,3 +82,4 @@ DEFAULT_AUTH_USER_FIELDS: list[ModelField] = [
         type=FieldDataTypeEnum.STRING,
     ),
 ]
+DEFAULT_AUTH_USER_ROLE_ENUM_NAME = "UserRole"

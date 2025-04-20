@@ -264,5 +264,11 @@ class ProjectState(BaseModel):
             None,
         )
 
+    def get_enum_by_name(self, name: str) -> CustomEnum | None:
+        return next(
+            (enum for enum in self.custom_enums if enum.name == name),
+            None,
+        )
+
 
 state: ProjectState = ProjectState()
