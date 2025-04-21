@@ -33,13 +33,48 @@ class ProjectConfigPanel(ui.right_drawer):
         self._bind_state_to_ui()
         self._update_taskiq_state()
 
-    def _upload_from_db(self, conn_string: str) -> None:
+    async def _confirm_upload(self) -> bool:
+        dialog = ui.dialog()
+        with dialog, ui.card().classes("w-full max-w-md p-6 text-center"):
+            ui.icon("warning", color="orange-500").classes("text-4xl self-center")
+            ui.markdown(
+                "⚠️ Current project configuration will be overwritten!\n\n"
+                "It is **highly recommended** to export the current project before proceeding."
+            ).classes("text-center mb-4")
+
+            confirm_checkbox = ui.checkbox("I understand and want to proceed")
+
+            with ui.row().classes("w-full justify-center gap-4 mt-4"):
+                ui.button("Cancel", color="primary", on_click=dialog.close)
+                ui.button(
+                    "Continue",
+                    color="negative",
+                    on_click=lambda: dialog.submit(confirm_checkbox.value),
+                ).bind_enabled_from(confirm_checkbox, "value")
+
+        return await dialog
+
+    async def _load_from_conn_string(self, conn_string: str) -> None:
         try:
-            project_spec = ProjectLoader.load_from_conn_string(conn_string=conn_string)
+            confirmed = await self._confirm_upload()
+            if not confirmed:
+                ui.notify("Upload cancelled", type="warning")
+                return
+
+            project_spec = ProjectLoader.load_from_conn_string(
+                conn_string=conn_string,
+            )
             state.initialize_from_project(project_spec)
             self.upload_menu.close()
+            ui.notify(
+                "Successfully loaded project configuration from connection string!",
+                type="positive",
+            )
+
         except ValueError as exc:
             notify_value_error(exc)
+        except Exception as exc:
+            ui.notify(f"Error loading project: {exc!s}", type="negative")
 
     def _build(self) -> None:
         with (
@@ -54,31 +89,43 @@ class ProjectConfigPanel(ui.right_drawer):
 
                     with (
                         ui.menu() as self.upload_menu,
-                        ui.row().classes("items-center gap-2 p-2 w-full"),
+                        ui.column().classes("p-2 w-full"),
+                        ui.row().classes("items-center w-full gap-2"),
                     ):
                         text_input = ui.input(
                             "Postgres connection string",
-                            placeholder="postgresql://user:password@host/database",
-                        ).classes("min-w-80")
+                            placeholder="postgresql://user:pass@host/database",
+                        ).classes("flex-grow w-[250px]")
                         ui.button(
                             "Upload",
-                            on_click=lambda: self._upload_from_db(text_input.value),
-                        ).classes("w-auto")
+                            on_click=lambda: self._load_from_conn_string(
+                                text_input.value
+                            ),
+                        ).props("unelevated")
 
                     ui.button(icon="upload", on_click=self.upload_menu.open).props(
                         "round"
                     ).tooltip("Upload from database")
-                self.project_name = ui.input(
-                    placeholder="Project Name",
-                    value=state.project_name,
-                ).classes("w-full")
+
+                self.project_name = (
+                    ui.input(
+                        placeholder="Project Name",
+                        value=state.project_name,
+                    )
+                    .classes("w-full")
+                    .bind_value_from(state, "project_name")
+                )
 
             with ui.column().classes("w-full gap-2"):
                 ui.label("Database").classes("text-lg font-bold")
-                self.use_postgres = ui.checkbox(
-                    "Postgres",
-                    value=state.use_postgres,
-                ).classes("w-full")
+                self.use_postgres = (
+                    ui.checkbox(
+                        "Postgres",
+                        value=state.use_postgres,
+                    )
+                    .classes("w-full")
+                    .bind_value_from(state, "use_postgres")
+                )
 
                 self.use_mysql = (
                     ui.checkbox("MySQL")
@@ -93,6 +140,7 @@ class ProjectConfigPanel(ui.right_drawer):
                     ui.checkbox("Alembic", value=state.use_alembic)
                     .classes("w-full")
                     .bind_enabled_from(self.use_postgres, "value")
+                    .bind_value_from(state, "use_alembic")
                 )
 
             with ui.column().classes("w-full gap-2"):
@@ -108,23 +156,33 @@ class ProjectConfigPanel(ui.right_drawer):
                     )
                     .classes("w-full")
                     .bind_enabled_from(self.use_postgres, "value")
+                    .bind_value_from(state, "use_builtin_auth")
                 )
 
             with ui.column().classes("w-full gap-2"):
                 ui.label("Messaging").classes("text-lg font-bold")
-                self.use_rabbitmq = ui.checkbox(
-                    "RabbitMQ",
-                    value=state.use_rabbitmq,
-                    on_change=self._update_taskiq_state,
-                ).classes("w-full")
+                self.use_rabbitmq = (
+                    ui.checkbox(
+                        "RabbitMQ",
+                        value=state.use_rabbitmq,
+                        on_change=self._update_taskiq_state,
+                    )
+                    .classes("w-full")
+                    .bind_value_from(state, "use_rabbitmq")
+                )
 
             with ui.column().classes("w-full gap-2"):
                 ui.label("Task Queues").classes("text-lg font-bold")
-                self.use_taskiq = ui.checkbox(
-                    "Taskiq",
-                    value=state.use_taskiq,
-                    on_change=self._update_taskiq_state,
-                ).classes("w-full")
+                self.use_taskiq = (
+                    ui.checkbox(
+                        "Taskiq",
+                        value=state.use_taskiq,
+                        on_change=self._update_taskiq_state,
+                    )
+                    .classes("w-full")
+                    .bind_value_from(state, "use_taskiq")
+                )
+
                 self.use_celery = (
                     ui.checkbox("Celery")
                     .classes("w-full")
@@ -134,11 +192,15 @@ class ProjectConfigPanel(ui.right_drawer):
 
             with ui.column().classes("w-full gap-2"):
                 ui.label("Caching").classes("text-lg font-bold")
-                self.use_redis = ui.checkbox(
-                    "Redis",
-                    value=state.use_redis,
-                    on_change=self._update_taskiq_state,
-                ).classes("w-full")
+                self.use_redis = (
+                    ui.checkbox(
+                        "Redis",
+                        value=state.use_redis,
+                        on_change=self._update_taskiq_state,
+                    )
+                    .classes("w-full")
+                    .bind_value_from(state, "use_redis")
+                )
 
             with ui.column().classes("w-full gap-2"):
                 ui.label("Metrics").classes("text-lg font-bold")
