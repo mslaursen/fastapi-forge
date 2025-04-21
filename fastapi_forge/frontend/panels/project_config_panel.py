@@ -24,6 +24,7 @@ from fastapi_forge.frontend.notifications import (
 )
 from fastapi_forge.frontend.state import state
 from fastapi_forge.project_io import ProjectLoader
+from fastapi_forge.type_info_registry import enum_registry
 
 
 class ProjectConfigPanel(ui.right_drawer):
@@ -61,9 +62,11 @@ class ProjectConfigPanel(ui.right_drawer):
                 ui.notify("Upload cancelled", type="warning")
                 return
 
+            enum_registry.clear()
             project_spec = ProjectLoader.load_from_conn_string(
                 conn_string=conn_string,
             )
+
             state.initialize_from_project(project_spec)
             self.upload_menu.close()
             ui.notify(
