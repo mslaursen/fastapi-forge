@@ -24,3 +24,9 @@ def pluralize(s: str) -> str:
     if is_singular:
         return p.plural(s)
     return s
+
+
+def number_to_word(v: int | str) -> str:
+    words = p.number_to_words(v)
+    word: str = words[0] if isinstance(words, list) else words
+    return word.replace(" ", "_")

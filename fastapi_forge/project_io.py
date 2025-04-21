@@ -32,7 +32,7 @@ from fastapi_forge.jinja import (
     render_model_to_routers,
 )
 from fastapi_forge.logger import logger
-from fastapi_forge.string_utils import camel_to_snake, snake_to_camel
+from fastapi_forge.string_utils import camel_to_snake, number_to_word, snake_to_camel
 
 
 def _validate_connection_string(connection_string: str) -> str:
@@ -255,10 +255,10 @@ class ProjectLoader:
         cls, conn_string: str, schema: str = "public"
     ) -> ProjectSpec:
         db_info = _inspect_postgres_schema(conn_string, schema)
-        db_schema = db_info["schema_data"]
         db_name = db_info["database_name"]
-        db_enums = db_info["enums"]
-        db_enum_usage = db_info["enum_usage"]
+        db_schema: dict[str, Any] = db_info["schema_data"]
+        db_enums: dict[str, Any] = db_info["enums"]
+        db_enum_usage: dict[str, Any] = db_info["enum_usage"]
 
         enum_column_lookup = {
             f"{col_info['schema']}.{col_info['table']}.{col_info['column']}": enum_type
@@ -306,15 +306,26 @@ class ProjectLoader:
                 Model(name=table_name, fields=fields, relationships=relationships)
             )
 
+        def _is_int_convertible(s: str) -> bool:
+            try:
+                int(s)
+            except ValueError:
+                return False
+            return True
+
         custom_enums = []
         for enum_name, enum_values in db_enums.items():
             enum_name_processed = snake_to_camel(enum_name)
 
             custom_enum_values = []
             for value_name in enum_values:
+                name = value_name
                 try:
+                    if _is_int_convertible(value_name):
+                        name = number_to_word(value_name)
+
                     custom_enum_value = CustomEnumValue(
-                        name=value_name,
+                        name=name,
                         value="auto()",
                     )
                     custom_enum_values.append(custom_enum_value)
