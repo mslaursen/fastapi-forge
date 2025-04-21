@@ -18,8 +18,12 @@ from fastapi_forge.frontend.constants import (
     DEFAULT_AUTH_USER_FIELDS,
     DEFAULT_AUTH_USER_ROLE_ENUM_NAME,
 )
-from fastapi_forge.frontend.notifications import notify_validation_error
+from fastapi_forge.frontend.notifications import (
+    notify_validation_error,
+    notify_value_error,
+)
 from fastapi_forge.frontend.state import state
+from fastapi_forge.project_io import ProjectLoader
 
 
 class ProjectConfigPanel(ui.right_drawer):
@@ -29,6 +33,14 @@ class ProjectConfigPanel(ui.right_drawer):
         self._bind_state_to_ui()
         self._update_taskiq_state()
 
+    def _upload_from_db(self, conn_string: str) -> None:
+        try:
+            project_spec = ProjectLoader.load_from_conn_string(conn_string=conn_string)
+            state.initialize_from_project(project_spec)
+            self.upload_menu.close()
+        except ValueError as exc:
+            notify_value_error(exc)
+
     def _build(self) -> None:
         with (
             self,
@@ -37,7 +49,25 @@ class ProjectConfigPanel(ui.right_drawer):
             ) as self.column,
         ):
             with ui.column().classes("w-full gap-2"):
-                ui.label("Project Name").classes("text-lg font-bold")
+                with ui.row().classes("w-full justify-between items-center"):
+                    ui.label("Project Name").classes("text-lg font-bold")
+
+                    with (
+                        ui.menu() as self.upload_menu,
+                        ui.row().classes("items-center gap-2 p-2 w-full"),
+                    ):
+                        text_input = ui.input(
+                            "Postgres connection string",
+                            placeholder="postgresql://user:password@host/database",
+                        ).classes("min-w-80")
+                        ui.button(
+                            "Upload",
+                            on_click=lambda: self._upload_from_db(text_input.value),
+                        ).classes("w-auto")
+
+                    ui.button(icon="upload", on_click=self.upload_menu.open).props(
+                        "round"
+                    ).tooltip("Upload from database")
                 self.project_name = ui.input(
                     placeholder="Project Name",
                     value=state.project_name,
