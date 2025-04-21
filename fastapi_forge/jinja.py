@@ -114,7 +114,7 @@ from src.dtos import (
 )
 from uuid import UUID
 
-router = APIRouter(prefix="/{{ model.name_hyphen }}s")
+router = APIRouter(prefix="/{{ model.name_plural_hyphen }}")
 
 
 @router.post("/", status_code=201)
@@ -190,7 +190,7 @@ from uuid import uuid4
 from typing import Any
 from uuid import UUID
 
-URI = "/api/v1/{{ model.name_hyphen }}s/"
+URI = "/api/v1/{{ model.name_plural_hyphen }}/"
 
 @pytest.mark.anyio
 async def test_post_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> None:
@@ -243,7 +243,7 @@ from datetime import datetime, timezone,  timedelta
 
 from uuid import UUID
 
-URI = "/api/v1/{{ model.name_hyphen }}s/"
+URI = "/api/v1/{{ model.name_plural_hyphen }}/"
 
 @pytest.mark.anyio
 async def test_get_{{ model.name }}s(client: AsyncClient,) -> None:
@@ -270,7 +270,7 @@ from datetime import datetime, timezone,  timedelta
 
 from uuid import UUID
 
-URI = "/api/v1/{{ model.name_hyphen }}s/{ {{- model.name -}}_id}"
+URI = "/api/v1/{{ model.name_plural_hyphen }}/{ {{- model.name -}}_id}"
 
 @pytest.mark.anyio
 async def test_get_{{ model.name }}_by_id(client: AsyncClient,) -> None:
@@ -305,7 +305,7 @@ from uuid import uuid4
 from typing import Any
 from uuid import UUID
 
-URI = "/api/v1/{{ model.name_hyphen }}s/{ {{- model.name -}}_id}"
+URI = "/api/v1/{{ model.name_plural_hyphen }}/{ {{- model.name -}}_id}"
 
 @pytest.mark.anyio
 async def test_patch_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> None:
@@ -360,7 +360,7 @@ from datetime import datetime, timezone,  timedelta
 
 from uuid import UUID
 
-URI = "/api/v1/{{ model.name_hyphen }}s/{ {{- model.name -}}_id}"
+URI = "/api/v1/{{ model.name_plural_hyphen }}/{ {{- model.name -}}_id}"
 
 @pytest.mark.anyio
 async def test_delete_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> None:

@@ -15,6 +15,7 @@ dependencies = [
     "pytest",
     "ruff",
     "psycopg2-binary>=2.9.10",
+    "inflect>=7.5.0",
 ]
 authors = [{ name = "mslaursen", email = "mslaursendk@gmail.com" }]
 
