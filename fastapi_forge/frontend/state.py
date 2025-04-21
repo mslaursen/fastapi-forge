@@ -17,6 +17,7 @@ from fastapi_forge.frontend.notifications import (
     notify_something_went_wrong,
     notify_validation_error,
 )
+from fastapi_forge.type_info_registry import enum_registry
 
 
 class ProjectState(BaseModel):
@@ -72,6 +73,7 @@ class ProjectState(BaseModel):
 
     def initialize_from_project(self, project: ProjectSpec) -> None:
         """Initialize state from an existing project specification."""
+        enum_registry.clear()
         self.project_name = project.project_name
         self.use_postgres = project.use_postgres
         self.use_alembic = project.use_alembic
