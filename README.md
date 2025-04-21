@@ -8,7 +8,8 @@
 
 ### 🖌️ UI Power  
 - 🖥️ [NiceGUI](https://github.com/zauberzeug/nicegui)-based interface for project design  
-- 📊 Visual model creation and configuration  
+- 📊 Visual model creation and configuration 
+- ✅ Checkbox additional services to be integrated
 - ⚙️ One-click project generation  
 
 ### ⚡ Auto-Generated Components
@@ -47,8 +48,7 @@
 *Much more to come!* 
 
 ## UI for designing your API projects
-![UI Interface](https://github.com/user-attachments/assets/48e3c768-0909-4229-8aae-391ce66f82d5) 
-![alt text](image.png)
+![UI Interface](https://github.com/user-attachments/assets/662c7ff2-7a42-4208-ae63-dd9760145474) 
 ## Generated project example
 ![Generated Project Structure](https://github.com/user-attachments/assets/cc546f56-abd5-4eb1-b469-5940f0558255)
 
