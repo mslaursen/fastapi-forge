@@ -10,6 +10,7 @@
 - 🖥️ [NiceGUI](https://github.com/zauberzeug/nicegui)-based interface for project design  
 - 📊 Visual model creation and configuration 
 - ✅ Checkbox additional services to be integrated
+- 🚀 Quick-add common fields
 - ⚙️ One-click project generation  
 
 ### ⚡ Auto-Generated Components
@@ -81,7 +82,7 @@ fastapi-forge start
 To start the generated project and its dependencies in Docker:
 
 ```bash
-make up # Builds your project, and runs additional services
+make up # Builds and runs your project along with additional services
 ```
 
 - The project will run using Docker Compose, simplifying your development environment.  
