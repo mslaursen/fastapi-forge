@@ -183,6 +183,7 @@ class ProjectConfigPanel(ui.right_drawer):
                         on_change=self._update_taskiq_state,
                     )
                     .classes("w-full")
+                    .tooltip("Requires Redis and RabbitMQ to be enabled.")
                     .bind_value_from(state, "use_taskiq")
                 )
 
