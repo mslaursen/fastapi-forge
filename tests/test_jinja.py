@@ -1,6 +1,8 @@
+import pytest
+
 from fastapi_forge.dtos import Model, ModelField
 from fastapi_forge.enums import FieldDataTypeEnum
-from fastapi_forge.jinja import render_model_to_model
+from fastapi_forge.jinja import render_model_to_model, render_model_to_post_test
 
 
 def _clip_imports(rendered_str: str, split_str: str) -> str:
@@ -38,3 +40,33 @@ def test_render_model() -> None:
     """
 
     assert str_field in render
+
+
+@pytest.mark.parametrize(
+    "noun, expected",
+    [
+        ("tooth", "teeth"),
+        ("teeth", "teeth"),
+        ("person", "people"),
+        ("people", "people"),
+        ("game_zone", "game-zones"),
+        ("user", "users"),
+        ("auth_user", "auth-users"),
+        ("hardware_setup", "hardware-setups"),
+    ],
+)
+def test_render_post_test(noun: str, expected: str) -> None:
+    model = Model(
+        name=noun,
+        fields=[
+            ModelField(
+                name="id",
+                type=FieldDataTypeEnum.UUID,
+                primary_key=True,
+                unique=True,
+            ),
+        ],
+    )
+
+    render = render_model_to_post_test(model)
+    assert f'URI = "/api/v1/{expected}/"' in render

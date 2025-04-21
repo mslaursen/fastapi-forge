@@ -13,7 +13,7 @@ from fastapi_forge.constants import TAB
 from fastapi_forge.enums import FieldDataTypeEnum, OnDeleteEnum
 from fastapi_forge.string_utils import (
     camel_to_snake,
-    camel_to_snake_hyphen,
+    pluralize,
     snake_to_camel,
 )
 from fastapi_forge.type_info_registry import TypeInfo, enum_registry, registry
@@ -241,8 +241,8 @@ class Model(_Base):
 
     @computed_field
     @property
-    def name_hyphen(self) -> str:
-        return camel_to_snake_hyphen(self.name)
+    def name_plural_hyphen(self) -> str:
+        return pluralize(self.name.replace("_", "-"))
 
     @property
     def fields_sorted(self) -> list[ModelField]:
