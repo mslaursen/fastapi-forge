@@ -51,7 +51,7 @@ class ModelCreate(_RowCreate):
     def __init__(self):
         super().__init__(
             input_placeholder="Model name",
-            input_tooltip="Model names should be singular (e.g., 'user' instead of 'users').",
+            input_tooltip="Model names should be singular and snake_case (e.g. 'auth_user').",
             button_tooltip="Add Model",
             on_add_item=state.add_model,
         )
