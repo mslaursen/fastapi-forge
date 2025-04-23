@@ -11,13 +11,32 @@ EnumName = Annotated[str, Field(...)]
 
 @dataclass
 class TypeInfo:
+    """
+    Stores metadata about a database column type for testing and data generation.
+
+    This class contains information needed to:
+    - Generate SQLAlchemy column definitions
+    - Create appropriate Python values for the type
+    - Generate fake test data
+    - Define test assertions for the type
+
+    Attributes:
+        sqlalchemy_type: The SQLAlchemy type name (e.g., 'Integer', 'String')
+        sqlalchemy_prefix: Whether to prefix the `sqlalchemy_type` with 'sa.' or not.
+        python_type: The corresponding Python type name (e.g., 'int', 'str')
+        faker_field_value: The factory field value for this type (can be a Faker method)
+        test_value: Value to insert into models for post/patch tests.
+        test_func: A function to call with the `test_value`.
+        encapsulate_assert: Wraps the `test_value` value (e.g, UUID(test_value))
+
+    """
+
     sqlalchemy_type: str
     sqlalchemy_prefix: bool
     python_type: str
     faker_field_value: str | None = None
-    value: str | None = None
-    test_value: str | None = None
     test_func: str | None = None
+    test_value: str | None = None
     encapsulate_assert: str | None = None
 
 
@@ -75,7 +94,6 @@ registry.register(
         sqlalchemy_prefix=True,
         python_type="str",
         faker_field_value=faker_placeholder.format(placeholder='"text"'),
-        value="hello",
         test_value="'world'",
     ),
 )
@@ -90,7 +108,6 @@ registry.register(
         faker_field_value=faker_placeholder.format(
             placeholder='"pyfloat", positive=True, min_value=0.1, max_value=100'
         ),
-        value="1.0",
         test_value="2.0",
     ),
 )
@@ -102,7 +119,6 @@ registry.register(
         sqlalchemy_prefix=True,
         python_type="bool",
         faker_field_value=faker_placeholder.format(placeholder='"boolean"'),
-        value="True",
         test_value="False",
     ),
 )
@@ -114,7 +130,6 @@ registry.register(
         sqlalchemy_prefix=True,
         python_type="datetime",
         faker_field_value=faker_placeholder.format(placeholder='"date_time"'),
-        value="datetime.now(timezone.utc)",
         test_value="datetime.now(timezone.utc)",
         test_func=".isoformat()",
     ),
@@ -127,7 +142,6 @@ registry.register(
         sqlalchemy_prefix=True,
         python_type="UUID",
         faker_field_value="str(uuid4())",
-        value="str(uuid4())",
         test_value="str(uuid4())",
         encapsulate_assert="UUID",
     ),
@@ -140,7 +154,6 @@ registry.register(
         sqlalchemy_prefix=False,
         python_type="dict[str, Any]",
         faker_field_value="{}",
-        value="{}",
         test_value='{"another_key": 123}',
     ),
 )
@@ -152,7 +165,6 @@ registry.register(
         sqlalchemy_prefix=True,
         python_type="int",
         faker_field_value=faker_placeholder.format(placeholder='"random_int"'),
-        value="1",
         test_value="2",
     ),
 )

@@ -1,16 +1,15 @@
+import re
+
 import inflect
 
 p = inflect.engine()
 
 
-def _convert(s: str, separator: str) -> str:
-    return "".join([separator + c.lower() if c.isupper() else c for c in s]).lstrip(
-        separator,
-    )
-
-
-def camel_to_snake(s: str) -> str:
-    return _convert(s, "_")
+def camel_to_snake(s: str):
+    s = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", s)
+    s = re.sub("__([A-Z])", r"_\1", s)
+    s = re.sub("([a-z0-9])([A-Z])", r"\1_\2", s)
+    return s.lower()
 
 
 def snake_to_camel(s: str) -> str:
