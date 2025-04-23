@@ -104,6 +104,14 @@ class JWTSettings(BaseSettings):
     algorithm: str = "HS256"
 {% endif %}
 
+{% if cookiecutter.use_prometheus %}
+class PrometheusSettings(BaseSettings):
+    enabled: bool = True
+    model_config = SettingsConfigDict(
+        env_file=".env", env_prefix=f"{PREFIX}PROMETHEUS_"
+    )
+{% endif %}
+
 class Settings(BaseSettings):
     """Main settings."""
 
@@ -125,6 +133,9 @@ class Settings(BaseSettings):
     {% endif %}
     {%- if cookiecutter.use_rabbitmq -%}
     rabbitmq: RabbitMQSettings = RabbitMQSettings()
+    {% endif %}
+    {% if cookiecutter.use_prometheus %}
+    prometheus: PrometheusSettings = PrometheusSettings()
     {% endif %}
     model_config = SettingsConfigDict(
         env_file=DOTENV,

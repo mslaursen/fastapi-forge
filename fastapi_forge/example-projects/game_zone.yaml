@@ -6,6 +6,7 @@ project:
   use_redis: true
   use_rabbitmq: true
   use_taskiq: true
+  use_prometheus: true
 
   custom_enums:
     - name: UserRole

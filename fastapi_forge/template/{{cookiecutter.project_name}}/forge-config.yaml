@@ -33,6 +33,11 @@ paths:
     enabled: {{cookiecutter.use_taskiq | lower}}
     paths:
       - src/services/taskiq
+  
+  use_prometheus:
+    enabled: {{cookiecutter.use_prometheus | lower}}
+    paths:
+      - observability/prometheus
 
   constants:
     requires_all:
@@ -40,5 +45,13 @@ paths:
       - use_rabbitmq
     paths:
       - src/constants.py
+
+  observability:
+    requires_all:
+      - use_prometheus
+    paths:
+      - observability
+
+  
 
   
