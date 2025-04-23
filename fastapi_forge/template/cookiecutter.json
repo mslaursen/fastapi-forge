@@ -20,6 +20,9 @@
     "use_taskiq": {
         "default": true
     },
+    "use_prometheus": {
+        "default": true
+    },
     "models": {
         "models": []
     },

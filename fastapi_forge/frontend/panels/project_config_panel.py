@@ -209,10 +209,10 @@ class ProjectConfigPanel(ui.right_drawer):
             with ui.column().classes("w-full gap-2"):
                 ui.label("Metrics").classes("text-lg font-bold")
                 self.use_prometheus = (
-                    ui.checkbox("Prometheus")
+                    ui.checkbox("Prometheus", value=state.use_prometheus)
                     .classes("w-full")
-                    .tooltip("Coming soon!")
-                    .set_enabled(False)
+                    .bind_value_from(state, "use_prometheus")
+                    .tooltip("Collect and query metrics with Prometheus")
                 )
 
             with ui.column().classes("w-full gap-2"):
@@ -247,6 +247,7 @@ class ProjectConfigPanel(ui.right_drawer):
             "change", self._update_taskiq_state
         )
         self.use_taskiq.bind_value_to(state, "use_taskiq")
+        self.use_prometheus.bind_value_to(state, "use_prometheus")
 
     def _update_taskiq_state(self, *_) -> None:
         """Enable or disable Taskiq based on Redis and RabbitMQ."""
@@ -421,6 +422,7 @@ class ProjectConfigPanel(ui.right_drawer):
             state.use_redis = self.use_redis.value
             state.use_rabbitmq = self.use_rabbitmq.value
             state.use_taskiq = self.use_taskiq.value
+            state.use_prometheus = self.use_prometheus.value
 
             project_spec = state.get_project_spec()
             await build_project(project_spec)
