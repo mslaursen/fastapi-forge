@@ -20,10 +20,6 @@ from fastapi_forge.type_info_registry import TypeInfo, enum_registry, registry
 
 BoundedStr = Annotated[str, Field(..., min_length=1, max_length=100)]
 SnakeCaseStr = Annotated[BoundedStr, Field(..., pattern=r"^[a-z][a-z0-9_]*$")]
-PascalCaseStr = Annotated[
-    BoundedStr,
-    Field(..., pattern=r"^[A-Z][a-zA-Z0-9]*$"),
-]
 ModelName = SnakeCaseStr
 FieldName = SnakeCaseStr
 BackPopulates = Annotated[str, Field(..., pattern=r"^[a-z][a-z0-9_]*$")]

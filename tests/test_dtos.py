@@ -7,6 +7,7 @@ from fastapi_forge.dtos import (
     CustomEnumValue,
     Model,
     ModelField,
+    ModelMetadata,
     ModelRelationship,
     ProjectSpec,
 )
@@ -131,36 +132,6 @@ def test_field_name_not_endswith_id() -> None:
     assert "Relationship field names must end with '_id'." in str(exc_info.value)
 
 
-#########################
-# ProjectSpec DTO tests #
-#########################
-
-
-def test_project_spec_non_existing_target_model() -> None:
-    model = Model(
-        name="restaurant",
-        fields=[
-            ModelField(name="id", type=FieldDataTypeEnum.UUID, primary_key=True),
-        ],
-        relationships=[
-            ModelRelationship(
-                field_name="test_id",
-                target_model="non_existing",
-                on_delete=OnDeleteEnum.CASCADE,
-            ),
-        ],
-    )
-    with pytest.raises(ValidationError) as exc_info:
-        ProjectSpec(
-            project_name="test_project",
-            models=[model],
-        )
-    assert (
-        "'restaurant' has a relationship to 'non_existing', which does not exist."
-        in str(exc_info.value)
-    )
-
-
 ##############
 # CustomEnum #
 ##############
@@ -196,3 +167,156 @@ def test_custom_enum_valid() -> None:
         f"{TAB}BAZ = auto()"
     )
     assert enum.class_definition == expected_definition
+
+
+#########################
+# ProjectSpec DTO tests #
+#########################
+
+
+def test_project_spec_non_existing_target_model() -> None:
+    model = Model(
+        name="restaurant",
+        fields=[
+            ModelField(name="id", type=FieldDataTypeEnum.UUID, primary_key=True),
+        ],
+        relationships=[
+            ModelRelationship(
+                field_name="test_id",
+                target_model="non_existing",
+                on_delete=OnDeleteEnum.CASCADE,
+            ),
+        ],
+    )
+    with pytest.raises(ValidationError) as exc_info:
+        ProjectSpec(
+            project_name="test_project",
+            models=[model],
+        )
+    assert (
+        "'restaurant' has a relationship to 'non_existing', which does not exist."
+        in str(exc_info.value)
+    )
+
+
+def test_project_spec_duplicate_model_names() -> None:
+    model1 = Model(
+        name="duplicate",
+        fields=[ModelField(name="id", type=FieldDataTypeEnum.UUID, primary_key=True)],
+    )
+    model2 = Model(
+        name="duplicate",
+        fields=[ModelField(name="id", type=FieldDataTypeEnum.UUID, primary_key=True)],
+    )
+    with pytest.raises(ValidationError) as exc_info:
+        ProjectSpec(
+            project_name="test_project",
+            models=[model1, model2],
+        )
+    assert "Model names must be unique." in str(exc_info.value)
+
+
+def test_project_spec_invalid_enum_reference() -> None:
+    model = Model(
+        name="test",
+        fields=[
+            ModelField(name="id", type=FieldDataTypeEnum.UUID, primary_key=True),
+            ModelField(
+                name="status",
+                type=FieldDataTypeEnum.ENUM,
+                type_enum="NonExistentEnum",
+            ),
+        ],
+    )
+    with pytest.raises(ValidationError) as exc_info:
+        ProjectSpec(
+            project_name="test_project",
+            models=[model],
+            custom_enums=[CustomEnum(name="valid_enum")],
+        )
+    assert "Invalid enum references" in str(exc_info.value)
+    assert "test.status (ref: 'NonExistentEnum')" in str(exc_info.value)
+    assert "Valid enums: valid_enum" in str(exc_info.value)
+
+
+def test_project_spec_multiple_auth_models() -> None:
+    model1 = Model(
+        name="user1",
+        fields=[ModelField(name="id", type=FieldDataTypeEnum.UUID, primary_key=True)],
+        metadata=ModelMetadata(is_auth_model=True),
+    )
+    model2 = Model(
+        name="user2",
+        fields=[ModelField(name="id", type=FieldDataTypeEnum.UUID, primary_key=True)],
+        metadata=ModelMetadata(is_auth_model=True),
+    )
+    with pytest.raises(ValidationError) as exc_info:
+        ProjectSpec(
+            project_name="test_project",
+            models=[model1, model2],
+        )
+    assert "Only one model can be an auth user." in str(exc_info.value)
+
+
+def test_project_spec_get_auth_model() -> None:
+    auth_model = Model(
+        name="user",
+        fields=[ModelField(name="id", type=FieldDataTypeEnum.UUID, primary_key=True)],
+        metadata=ModelMetadata(is_auth_model=True),
+    )
+    project_spec = ProjectSpec(
+        project_name="test_project",
+        models=[auth_model],
+        use_builtin_auth=True,
+        use_postgres=True,
+    )
+    assert project_spec.get_auth_model() == auth_model
+
+
+def test_project_spec_no_auth_model_when_not_using_auth() -> None:
+    model = Model(
+        name="user",
+        fields=[ModelField(name="id", type=FieldDataTypeEnum.UUID, primary_key=True)],
+        metadata=ModelMetadata(is_auth_model=True),
+    )
+    project_spec = ProjectSpec(
+        project_name="test_project",
+        models=[model],
+        use_builtin_auth=False,
+    )
+    assert project_spec.get_auth_model() is None
+
+
+def test_project_spec_taskiq_dependencies() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        ProjectSpec(
+            project_name="test_project",
+            use_taskiq=True,
+            use_redis=False,
+            use_rabbitmq=False,
+        )
+    assert "TaskIQ is enabled, but the following are missing" in str(exc_info.value)
+    assert "RabbitMQ" in str(exc_info.value)
+    assert "Redis" in str(exc_info.value)
+
+
+def test_project_spec_alembic_requires_postgres() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        ProjectSpec(
+            project_name="test_project",
+            use_alembic=True,
+            use_postgres=False,
+        )
+    assert "Cannot use Alembic if PostgreSQL is not enabled." in str(exc_info.value)
+
+
+def test_project_spec_auth_requires_postgres() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        ProjectSpec(
+            project_name="test_project",
+            use_builtin_auth=True,
+            use_postgres=False,
+        )
+    assert "Cannot use built-in auth if PostgreSQL is not enabled." in str(
+        exc_info.value
+    )
