@@ -75,7 +75,6 @@ class CustomEnum(_Base):
                 sqlalchemy_prefix=True,
                 python_type=enum_repr,
                 faker_field_value=enum_value_repr,
-                value=enum_value_repr,
                 test_value=enum_value_repr,
             ),
         )
