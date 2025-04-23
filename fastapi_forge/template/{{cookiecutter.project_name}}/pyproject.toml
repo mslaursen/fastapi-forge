@@ -41,6 +41,9 @@ dependencies = [
     "taskiq-fastapi>=0.3.4",
     "orjson>=3.10.16",
     {%- endif %}
+    {%- if cookiecutter.use_prometheus -%}
+    "prometheus-fastapi-instrumentator>=7.1.0",
+    {%- endif %}
 ]
 
 [tool.pytest.ini_options]

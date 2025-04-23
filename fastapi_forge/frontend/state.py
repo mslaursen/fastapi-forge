@@ -51,6 +51,7 @@ class ProjectState(BaseModel):
     use_redis: bool = False
     use_rabbitmq: bool = False
     use_taskiq: bool = False
+    use_prometheus: bool = False
 
     def switch_item_editor(
         self,
@@ -79,6 +80,7 @@ class ProjectState(BaseModel):
         self.use_redis = project.use_redis
         self.use_rabbitmq = project.use_rabbitmq
         self.use_taskiq = project.use_taskiq
+        self.use_prometheus = project.use_prometheus
         self.models = project.models.copy()
         self.custom_enums = project.custom_enums.copy()
 
@@ -191,6 +193,7 @@ class ProjectState(BaseModel):
             use_redis=self.use_redis,
             use_rabbitmq=self.use_rabbitmq,
             use_taskiq=self.use_taskiq,
+            use_prometheus=self.use_prometheus,
             models=self.models,
             custom_enums=self.custom_enums,
         )

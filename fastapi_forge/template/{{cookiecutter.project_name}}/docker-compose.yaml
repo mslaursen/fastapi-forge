@@ -51,6 +51,9 @@ services:
       {{ cookiecutter.project_name|upper|replace('-', '_') }}_RABBITMQ_CONNECTION_POOL_SIZE: 2
       {{ cookiecutter.project_name|upper|replace('-', '_') }}_RABBITMQ_CHANNEL_POOL_SIZE: 10
       {% endif %}
+      {%- if cookiecutter.use_rabbitmq -%}
+      {{ cookiecutter.project_name|upper|replace('-', '_') }}_PROMETHEUS_ENABLED: true
+      {% endif %}
     {%- if cookiecutter.use_alembic %}
     volumes:
       - ./migrations:/app/migrations
@@ -138,6 +141,17 @@ services:
       retries: 40
     volumes:
       - {{ cookiecutter.project_name }}-rabbitmq-data:/var/lib/rabbitmq
+  {% endif %}
+  {%- if cookiecutter.use_prometheus -%}
+  prometheus:
+    image: prom/prometheus:latest
+    restart: always
+    volumes:
+      - ./observability/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yaml"
+    ports:
+      - 9090:9090
   {% endif %}
 {%- if cookiecutter.use_postgres or cookiecutter.use_redis or cookiecutter.use_rabbitmq %}
 volumes:
