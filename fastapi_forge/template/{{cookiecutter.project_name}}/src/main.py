@@ -62,6 +62,12 @@ def get_app() -> FastAPI:
     {% if cookiecutter.use_alembic %}
     logger.info("Alembic enabled - see Makefile for migration commands")
     {% endif %}
+    {%- if cookiecutter.use_prometheus %}
+    logger.info(
+        "Prometheus enabled - metrics available at /metrics, "
+        "and queryable at localhost:9090"
+    )
+    {% endif %}
     app = FastAPI(lifespan=lifespan)
     add_middleware(app)
     app.include_router(base_router)
