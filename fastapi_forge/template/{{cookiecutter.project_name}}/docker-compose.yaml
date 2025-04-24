@@ -61,9 +61,9 @@ services:
     hostname: {{ cookiecutter.project_name }}-pg
     container_name: {{ cookiecutter.project_name }}-pg
     environment:
-      POSTGRES_PASSWORD: "${ {{-cookiecutter.project_name|upper|replace('-','_') -}}_PG_PASSWORD:-{{ cookiecutter.project_name-}} }"
-      POSTGRES_USER: "${ {{-cookiecutter.project_name|upper|replace('-','_') -}}_PG_USER:-{{ cookiecutter.project_name-}} }"
-      POSTGRES_DB: "${ {{-cookiecutter.project_name|upper|replace('-','_') -}}_PG_DATABASE:-{{ cookiecutter.project_name-}} }"
+      POSTGRES_PASSWORD: {{ cookiecutter.project_name }}
+      POSTGRES_USER: {{ cookiecutter.project_name }}
+      POSTGRES_DB: {{ cookiecutter.project_name }}
     volumes:
     - {{ cookiecutter.project_name }}-pg-data:/var/lib/postgresql/data
     restart: always
@@ -98,9 +98,9 @@ services:
       - "15672:15672"
       - "5672:5672"
     environment:
-      RABBITMQ_DEFAULT_USER: "${ {{-cookiecutter.project_name|upper|replace('-','_') -}}_RABBITMQ_USER:-user}"
-      RABBITMQ_DEFAULT_PASS: "${ {{-cookiecutter.project_name|upper|replace('-','_') -}}_RABBITMQ_PASSWORD:-password}"
-      RABBITMQ_DEFAULT_VHOST: "${ {{-cookiecutter.project_name|upper|replace('-','_') -}}_RABBITMQ_VHOST:-/}"
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+      RABBITMQ_DEFAULT_VHOST: /
     healthcheck:
       test: rabbitmq-diagnostics -q check_running
       interval: 2s
