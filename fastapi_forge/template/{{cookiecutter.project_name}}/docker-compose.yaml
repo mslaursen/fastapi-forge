@@ -111,7 +111,7 @@ services:
   {% endif %}
   {% if cookiecutter.use_prometheus -%}
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.3.0
     restart: always
     volumes:
       - ./observability/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml
