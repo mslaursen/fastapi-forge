@@ -1,7 +1,7 @@
 import asyncio
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import Any
 from urllib.parse import urlparse
 
 import aiofiles
