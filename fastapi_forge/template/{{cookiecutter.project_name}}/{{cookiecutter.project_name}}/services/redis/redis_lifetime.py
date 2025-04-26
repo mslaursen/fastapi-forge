@@ -1,6 +1,6 @@
 import redis.asyncio as redis
 from fastapi import FastAPI
-from src.settings import settings
+from {{cookiecutter.project_name}}.settings import settings
 
 
 async def setup_redis(app: FastAPI) -> None:

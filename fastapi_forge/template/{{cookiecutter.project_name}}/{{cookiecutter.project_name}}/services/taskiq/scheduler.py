@@ -2,8 +2,8 @@ from taskiq import TaskiqScheduler
 from taskiq.schedule_sources import LabelScheduleSource
 from taskiq_redis import RedisScheduleSource
 
-from src.services.taskiq.broker import broker
-from src.settings import settings
+from {{cookiecutter.project_name}}.services.taskiq.broker import broker
+from {{cookiecutter.project_name}}.settings import settings
 
 redis_source = RedisScheduleSource(str(settings.redis.url))
 

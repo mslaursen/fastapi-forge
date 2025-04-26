@@ -1,16 +1,16 @@
 from fastapi import APIRouter
-from src import exceptions
-from src.services.redis import GetRedis
+from {{cookiecutter.project_name}} import exceptions
+from {{cookiecutter.project_name}}.services.redis import GetRedis
 {% if cookiecutter.use_rabbitmq %}
-from src.services.rabbitmq import GetRabbitMQ
+from {{cookiecutter.project_name}}.services.rabbitmq import GetRabbitMQ
 {% endif %}
 from pydantic import BaseModel
 from typing import Any
 
 {% if cookiecutter.use_taskiq %}
 from datetime import UTC, datetime, timedelta
-from src.services.taskiq import tasks
-from src.services.taskiq.scheduler import redis_source
+from {{cookiecutter.project_name}}.services.taskiq import tasks
+from {{cookiecutter.project_name}}.services.taskiq.scheduler import redis_source
 {% endif %}
 
 router = APIRouter(prefix="/demo")

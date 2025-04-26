@@ -1,10 +1,10 @@
-from src.routes.health_routes import router as health_router
-from src.routes.demo_routes import router as demo_router
+from {{cookiecutter.project_name}}.routes.health_routes import router as health_router
+from {{cookiecutter.project_name}}.routes.demo_routes import router as demo_router
 {% for model in cookiecutter.models.models if model.metadata.create_endpoints -%}
-from src.routes.{{ model.name }}_routes import router as {{ model.name }}_router
+from {{cookiecutter.project_name}}.routes.{{ model.name }}_routes import router as {{ model.name }}_router
 {% endfor %}
 {% if cookiecutter.use_builtin_auth %}
-from src.routes.auth_routes import router as auth_router
+from {{cookiecutter.project_name}}.routes.auth_routes import router as auth_router
 {% endif %}
 
 from fastapi import APIRouter

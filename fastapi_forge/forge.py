@@ -76,7 +76,9 @@ async def build_project(spec: ProjectSpec) -> None:
         logger.info(f"Building project '{project_name}'...")
 
         builder = ProjectBuilder(spec)
+        logger.info("Building project artifacts...")
         await builder.build_artifacts()
+        logger.info("Project artifacts built successfully.")
 
         extra_context = {
             **spec.model_dump(exclude={"models"}),
@@ -92,7 +94,7 @@ async def build_project(spec: ProjectSpec) -> None:
             else:
                 logger.warning("No auth model found. Skipping authentication setup.")
                 extra_context["use_builtin_auth"] = False
-
+        logger.info("Running cookiecutter...")
         cookiecutter(
             template=str(_get_template_path()),
             output_dir=str(Path.cwd().resolve()),
@@ -100,6 +102,7 @@ async def build_project(spec: ProjectSpec) -> None:
             overwrite_if_exists=True,
             extra_context=extra_context,
         )
+        logger.info("Cookiecutter completed successfully.")
 
         build_time = perf_counter() - start_time
         logger.info(

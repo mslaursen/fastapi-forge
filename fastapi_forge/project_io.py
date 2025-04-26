@@ -1,7 +1,7 @@
 import asyncio
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 from urllib.parse import urlparse
 
 import aiofiles
@@ -376,7 +376,7 @@ class ProjectExporter:
         )
 
 
-TEST_RENDERERS: dict[HTTPMethodEnum, Callable[[Model], str]] = {
+TEST_RENDERERS: dict[HTTPMethodEnum, Callable[[Model, str], str]] = {
     HTTPMethodEnum.GET: render_model_to_get_test,
     HTTPMethodEnum.GET_ID: render_model_to_get_id_test,
     HTTPMethodEnum.POST: render_model_to_post_test,
@@ -386,6 +386,8 @@ TEST_RENDERERS: dict[HTTPMethodEnum, Callable[[Model], str]] = {
 
 
 class ProjectBuilder:
+    """Builds project artifacts based on the project specification."""
+
     def __init__(
         self,
         project_spec: ProjectSpec,
@@ -395,7 +397,7 @@ class ProjectBuilder:
         self.project_name = project_spec.project_name
         self.base_path = base_path or Path.cwd()
         self.project_dir = self.base_path / self.project_name
-        self.src_dir = self.project_dir / "src"
+        self.package_dir = self.project_dir / self.project_name
         self._insert_relation_fields()
 
     def _insert_relation_fields(self) -> None:
@@ -424,10 +426,10 @@ class ProjectBuilder:
 
     async def _init_project_directories(self) -> None:
         await self._create_directory(self.project_dir)
-        await self._create_directory(self.src_dir)
+        await self._create_directory(self.package_dir)
 
     async def _create_module_path(self, module: str) -> Path:
-        path = self.src_dir / module
+        path = self.package_dir / module
         await self._create_directory(path)
         return path
 
@@ -435,11 +437,11 @@ class ProjectBuilder:
         self,
         module: str,
         model: Model,
-        render_func: Callable[[Model], str],
+        render_func: Callable[[Model, str], str],
     ) -> None:
         path = await self._create_module_path(module)
         file_name = f"{camel_to_snake(model.name)}_{module}.py"
-        await _write_file(path / file_name, render_func(model))
+        await _write_file(path / file_name, render_func(model, self.project_name))
 
     async def _write_tests(self, model: Model) -> None:
         test_dir = (
@@ -460,12 +462,20 @@ class ProjectBuilder:
                 f"{f'_{method_suffix}' if method_suffix else ''}"
                 ".py"
             )
-            tasks.append(_write_file(test_dir / file_name, render_func(model)))
+            tasks.append(
+                _write_file(
+                    test_dir / file_name,
+                    render_func(
+                        model,
+                        self.project_name,
+                    ),
+                )
+            )
 
         await asyncio.gather(*tasks)
 
     async def _write_enums(self) -> None:
-        path = self.src_dir / "enums.py"
+        path = self.package_dir / "enums.py"
         content = render_custom_enums_to_enums(self.project_spec.custom_enums)
         await _write_file(path, content)
 

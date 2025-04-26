@@ -1,5 +1,5 @@
 {% if cookiecutter.use_rabbitmq %}
-from src.services.rabbitmq.rabbitmq_dependencies import QueueConfig
+from {{cookiecutter.project_name}}.services.rabbitmq.rabbitmq_dependencies import QueueConfig
 {% endif %}
 
 {% if cookiecutter.use_builtin_auth %}

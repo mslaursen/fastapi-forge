@@ -1,7 +1,7 @@
 {% for model in cookiecutter.models.models if model.metadata.create_daos -%}
-from src.daos.{{ model.name }}_daos import {{ model.name_cc }}DAO
+from {{cookiecutter.project_name}}.daos.{{ model.name }}_daos import {{ model.name_cc }}DAO
 {% endfor %}
-from src.db.db_dependencies import GetDBSession
+from {{cookiecutter.project_name}}.db.db_dependencies import GetDBSession
 from fastapi import Depends
 from typing import Annotated
 

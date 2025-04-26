@@ -2,7 +2,7 @@ DOCKER_CMD = docker compose exec -it api
 
 
 run:
-	uv run -m src
+	uv run -m {{cookiecutter.project_name}}
 
 up:
 	docker-compose up --watch

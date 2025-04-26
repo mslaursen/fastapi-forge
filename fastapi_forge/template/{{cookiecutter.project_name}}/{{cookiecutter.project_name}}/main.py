@@ -3,21 +3,21 @@ from loguru import logger
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from fastapi import FastAPI
-from src.settings import settings
-from src.routes import base_router
-from src.middleware import add_middleware
+from {{cookiecutter.project_name}}.settings import settings
+from {{cookiecutter.project_name}}.routes import base_router
+from {{cookiecutter.project_name}}.middleware import add_middleware
 {% if cookiecutter.use_postgres %}
-from src.db import db_lifetime
+from {{cookiecutter.project_name}}.db import db_lifetime
 {% endif %}
 {% if cookiecutter.use_redis -%}
-from src.services.redis import redis_lifetime
+from {{cookiecutter.project_name}}.services.redis import redis_lifetime
 {% endif %}
 {% if cookiecutter.use_rabbitmq -%}
-from src.services.rabbitmq import rabbitmq_lifetime
-from src.constants import QUEUE_CONFIGS
+from {{cookiecutter.project_name}}.services.rabbitmq import rabbitmq_lifetime
+from {{cookiecutter.project_name}}.constants import QUEUE_CONFIGS
 {% endif %}
 {% if cookiecutter.use_taskiq %}
-from src.services.taskiq import taskiq_lifetime
+from {{cookiecutter.project_name}}.services.taskiq import taskiq_lifetime
 {% endif %}
 
 @asynccontextmanager

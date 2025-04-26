@@ -1,5 +1,5 @@
 {%- for model in cookiecutter.models.models -%}
-from src.models.{{ model.name }}_models import {{ model.name_cc }}
+from {{cookiecutter.project_name}}.models.{{ model.name }}_models import {{ model.name_cc }}
 {% endfor %}
 
 __all__ = [

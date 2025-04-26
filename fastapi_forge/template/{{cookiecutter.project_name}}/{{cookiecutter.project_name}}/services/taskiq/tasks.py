@@ -1,8 +1,8 @@
 from pydantic import create_model
 from taskiq import TaskiqDepends
 
-from src.services.rabbitmq import GetRabbitMQ
-from src.services.taskiq.broker import broker
+from {{cookiecutter.project_name}}.services.rabbitmq import GetRabbitMQ
+from {{cookiecutter.project_name}}.services.taskiq.broker import broker
 
 
 @broker.task

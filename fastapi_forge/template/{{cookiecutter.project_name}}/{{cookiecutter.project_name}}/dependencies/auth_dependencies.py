@@ -4,10 +4,10 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPBearer as _HTTPBearer
 
-from src import exceptions
-from src.daos import GetDAOs
-from src.dtos.{{ cookiecutter.auth_model.name }}_dtos import {{ cookiecutter.auth_model.name_cc }}DTO
-from src.utils import auth_utils
+from {{cookiecutter.project_name}} import exceptions
+from {{cookiecutter.project_name}}.daos import GetDAOs
+from {{cookiecutter.project_name}}.dtos.{{ cookiecutter.auth_model.name }}_dtos import {{ cookiecutter.auth_model.name_cc }}DTO
+from {{cookiecutter.project_name}}.utils import auth_utils
 
 
 class HTTPBearer(_HTTPBearer):

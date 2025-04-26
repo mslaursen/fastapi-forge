@@ -2,8 +2,8 @@ from typing import Any, Sequence
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db import Base
-from src.dtos import (
+from {{cookiecutter.project_name}}.db import Base
+from {{cookiecutter.project_name}}.dtos import (
     OffsetPaginationMetadata,
     PaginationParams,
     PaginationParamsSortBy,

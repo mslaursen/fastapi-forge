@@ -21,16 +21,16 @@ from sqlalchemy.dialects.postgresql import JSONB
 from uuid import UUID
 from typing import Any, Annotated
 from datetime import datetime, timezone,  timedelta
-from src import enums
+from {{ project_name }} import enums
 
 
 {% set unique_relationships = model.relationships | unique(attribute='target') %}
 {% for relation in unique_relationships if relation.target != model.name_cc -%}
-from src.models.{{ relation.target_model }}_models import {{ relation.target }}
+from {{ project_name }}.models.{{ relation.target_model }}_models import {{ relation.target }}
 {% endfor %}
 
 
-from src.db import Base
+from {{ project_name }}.db import Base
 
 class {{ model.name_cc }}(Base):
     \"\"\"{{ model.name_cc }} model.\"\"\"
@@ -54,8 +54,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from fastapi import Depends
 from uuid import UUID
 from typing import Annotated, Any
-from src.dtos import BaseOrmModel
-from src import enums
+from {{ project_name }}.dtos import BaseOrmModel
+from {{ project_name }} import enums
 
 
 class {{ model.name_cc }}DTO(BaseOrmModel):
@@ -85,10 +85,10 @@ class {{ model.name_cc }}UpdateDTO(BaseModel):
 """
 
 dao_template = """
-from src.daos.base_daos import BaseDAO
+from {{ project_name }}.daos.base_daos import BaseDAO
 
-from src.models.{{ model.name }}_models import {{ model.name_cc }}
-from src.dtos.{{ model.name }}_dtos import {{ model.name_cc }}InputDTO, {{ model.name_cc }}UpdateDTO
+from {{ project_name }}.models.{{ model.name }}_models import {{ model.name_cc }}
+from {{ project_name }}.dtos.{{ model.name }}_dtos import {{ model.name_cc }}InputDTO, {{ model.name_cc }}UpdateDTO
 
 
 class {{ model.name_cc }}DAO(
@@ -103,9 +103,9 @@ class {{ model.name_cc }}DAO(
 
 routers_template = """
 from fastapi import APIRouter
-from src.daos import GetDAOs
-from src.dtos.{{ model.name  }}_dtos import {{ model.name_cc }}InputDTO, {{ model.name_cc }}DTO, {{ model.name_cc }}UpdateDTO
-from src.dtos import (
+from {{ project_name }}.daos import GetDAOs
+from {{ project_name }}.dtos.{{ model.name  }}_dtos import {{ model.name_cc }}InputDTO, {{ model.name_cc }}DTO, {{ model.name_cc }}UpdateDTO
+from {{ project_name }}.dtos import (
     DataResponse,
     Pagination,
     OffsetResults,
@@ -180,8 +180,8 @@ async def get_{{ model.name }}(
 test_template_post = """
 import pytest
 from tests import factories
-from src.daos import AllDAOs
-from src import enums
+from {{ project_name }}.daos import AllDAOs
+from {{ project_name }} import enums
 from httpx import AsyncClient
 from datetime import datetime, timezone,  timedelta
 from uuid import uuid4
@@ -295,8 +295,8 @@ async def test_get_{{ model.name }}_by_id(client: AsyncClient,) -> None:
 test_template_patch = """
 import pytest
 from tests import factories
-from src.daos import AllDAOs
-from src import enums
+from {{ project_name }}.daos import AllDAOs
+from {{ project_name }} import enums
 from httpx import AsyncClient
 from datetime import datetime, timezone,  timedelta
 from uuid import uuid4
@@ -353,7 +353,7 @@ async def test_patch_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> No
 test_template_delete = """
 import pytest
 from tests import factories
-from src.daos import AllDAOs
+from {{ project_name }}.daos import AllDAOs
 from httpx import AsyncClient
 from datetime import datetime, timezone,  timedelta
 
@@ -384,10 +384,13 @@ from enum import StrEnum, auto
 """
 
 
-def _render_model(model: Model, template_name: str, **kwargs: Any) -> str:
+def _render_model(
+    model: Model, template_name: str, project_name: str, **kwargs: Any
+) -> str:
     template = env.from_string(template_name)
     return template.render(
         model=model,
+        project_name=project_name,
         **kwargs,
     )
 
@@ -402,66 +405,75 @@ def _render_custom_enums(
     )
 
 
-def render_model_to_model(model: Model) -> str:
+def render_model_to_model(model: Model, project_name: str) -> str:
     return _render_model(
         model,
         model_template,
+        project_name=project_name,
     )
 
 
-def render_model_to_dto(model: Model) -> str:
+def render_model_to_dto(model: Model, project_name: str) -> str:
     return _render_model(
         model,
         dto_template,
+        project_name=project_name,
     )
 
 
-def render_model_to_dao(model: Model) -> str:
+def render_model_to_dao(model: Model, project_name: str) -> str:
     return _render_model(
         model,
         dao_template,
+        project_name=project_name,
     )
 
 
-def render_model_to_routers(model: Model) -> str:
+def render_model_to_routers(model: Model, project_name: str) -> str:
     return _render_model(
         model,
         routers_template,
+        project_name=project_name,
     )
 
 
-def render_model_to_post_test(model: Model) -> str:
+def render_model_to_post_test(model: Model, project_name: str) -> str:
     return _render_model(
         model,
         test_template_post,
+        project_name=project_name,
     )
 
 
-def render_model_to_get_test(model: Model) -> str:
+def render_model_to_get_test(model: Model, project_name: str) -> str:
     return _render_model(
         model,
         test_template_get,
+        project_name=project_name,
     )
 
 
-def render_model_to_get_id_test(model: Model) -> str:
+def render_model_to_get_id_test(model: Model, project_name: str) -> str:
     return _render_model(
         model,
         test_template_get_id,
+        project_name=project_name,
     )
 
 
-def render_model_to_patch_test(model: Model) -> str:
+def render_model_to_patch_test(model: Model, project_name: str) -> str:
     return _render_model(
         model,
         test_template_patch,
+        project_name=project_name,
     )
 
 
-def render_model_to_delete_test(model: Model) -> str:
+def render_model_to_delete_test(model: Model, project_name: str) -> str:
     return _render_model(
         model,
         test_template_delete,
+        project_name=project_name,
     )
 
 

@@ -1,6 +1,6 @@
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
-from src.settings import settings
+from {{cookiecutter.project_name}}.settings import settings
 {% if cookiecutter.use_prometheus %}
 from prometheus_fastapi_instrumentator import Instrumentator
 {% endif %}

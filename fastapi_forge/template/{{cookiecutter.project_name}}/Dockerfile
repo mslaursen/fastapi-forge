@@ -25,4 +25,4 @@ COPY --from=builder --chown=app:app /app /app
 
 WORKDIR /app
 
-CMD ["python3.12", "-m", "src"]
+CMD ["python3.12", "-m", "{{cookiecutter.project_name}}"]

@@ -3,8 +3,8 @@ import inspect
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
 )
-from src.db import Base
-from src import enums
+from {{cookiecutter.project_name}}.db import Base
+from {{cookiecutter.project_name}} import enums
 import factory
 from typing import Any
 from datetime import datetime, timezone,  timedelta
@@ -13,7 +13,7 @@ from uuid import uuid4
 
 
 {% for model in cookiecutter.models.models -%}
-from src.models.{{ model.name }}_models import {{ model.name_cc }}
+from {{cookiecutter.project_name}}.models.{{ model.name }}_models import {{ model.name_cc }}
 {% endfor %}
 
 

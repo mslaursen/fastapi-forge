@@ -3,8 +3,8 @@ from aio_pika.abc import AbstractChannel, AbstractRobustConnection
 from aio_pika.pool import Pool
 from fastapi import FastAPI
 
-from src.services.rabbitmq.rabbitmq_dependencies import QueueConfig, init_consumer
-from src.settings import settings
+from {{cookiecutter.project_name}}.services.rabbitmq.rabbitmq_dependencies import QueueConfig, init_consumer
+from {{cookiecutter.project_name}}.settings import settings
 
 
 async def setup_rabbitmq(

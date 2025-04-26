@@ -4,7 +4,7 @@ from taskiq.serializers import ORJSONSerializer
 from taskiq_aio_pika import AioPikaBroker
 from taskiq_redis import RedisAsyncResultBackend
 
-from src.settings import settings
+from {{cookiecutter.project_name}}.settings import settings
 
 broker: AsyncBroker
 
@@ -17,4 +17,4 @@ else:
     ).with_result_backend(result_backend)
     broker.with_serializer(ORJSONSerializer())
 
-taskiq_fastapi.init(broker, "src.main:get_app")
+taskiq_fastapi.init(broker, "{{cookiecutter.project_name}}.main:get_app")

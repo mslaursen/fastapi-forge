@@ -1,5 +1,5 @@
-from src.settings import settings
-from src.db import meta
+from {{cookiecutter.project_name}}.settings import settings
+from {{cookiecutter.project_name}}.db import meta
 
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine

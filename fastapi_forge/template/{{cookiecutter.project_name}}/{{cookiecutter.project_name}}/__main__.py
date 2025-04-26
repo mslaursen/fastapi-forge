@@ -1,4 +1,4 @@
-from src.settings import settings
+from {{cookiecutter.project_name}}.settings import settings
 
 
 
@@ -6,7 +6,7 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "src.main:get_app",
+        "{{cookiecutter.project_name}}.main:get_app",
         host=settings.host,
         port=settings.port,
         log_level=settings.log_level,

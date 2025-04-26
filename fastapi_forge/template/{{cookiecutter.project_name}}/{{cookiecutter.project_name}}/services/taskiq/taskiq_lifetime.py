@@ -1,4 +1,4 @@
-from src.services.taskiq.broker import broker
+from {{cookiecutter.project_name}}.services.taskiq.broker import broker
 
 
 async def setup_taskiq() -> None:

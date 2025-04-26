@@ -1,12 +1,12 @@
 {%- if cookiecutter.use_builtin_auth %}
 from fastapi import APIRouter
-from src.dtos.auth_dtos import UserLoginDTO, UserCreateDTO, LoginResponse, TokenData
-from src.dtos.{{ cookiecutter.auth_model.name }}_dtos import {{ cookiecutter.auth_model.name_cc }}DTO, {{ cookiecutter.auth_model.name_cc }}InputDTO
-from src.dtos import DataResponse, CreatedResponse
-from src.daos import GetDAOs
-from src import exceptions
-from src.utils import auth_utils
-from src.dependencies.auth_dependencies import GetCurrentUser
+from {{cookiecutter.project_name}}.dtos.auth_dtos import UserLoginDTO, UserCreateDTO, LoginResponse, TokenData
+from {{cookiecutter.project_name}}.dtos.{{ cookiecutter.auth_model.name }}_dtos import {{ cookiecutter.auth_model.name_cc }}DTO, {{ cookiecutter.auth_model.name_cc }}InputDTO
+from {{cookiecutter.project_name}}.dtos import DataResponse, CreatedResponse
+from {{cookiecutter.project_name}}.daos import GetDAOs
+from {{cookiecutter.project_name}} import exceptions
+from {{cookiecutter.project_name}}.utils import auth_utils
+from {{cookiecutter.project_name}}.dependencies.auth_dependencies import GetCurrentUser
 
 
 router = APIRouter(prefix="/auth")

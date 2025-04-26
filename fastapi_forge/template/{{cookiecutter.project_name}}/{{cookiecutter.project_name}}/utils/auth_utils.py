@@ -1,14 +1,14 @@
 {%- if cookiecutter.use_builtin_auth %}
 from datetime import datetime, timedelta, timezone
 from typing import Any
-from src.dtos.auth_dtos import TokenData
+from {{cookiecutter.project_name}}.dtos.auth_dtos import TokenData
 import jwt
 import json
 from uuid import UUID
-from src import exceptions
-from src.settings import settings
+from {{cookiecutter.project_name}} import exceptions
+from {{cookiecutter.project_name}}.settings import settings
 from passlib.context import CryptContext
-from src.constants import CREATE_TOKEN_EXPIRE_MINUTES
+from {{cookiecutter.project_name}}.constants import CREATE_TOKEN_EXPIRE_MINUTES
 
 
 class Encoder(json.JSONEncoder):
