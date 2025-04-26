@@ -40,9 +40,7 @@ def generate_field(
     field: ModelField,
     relationships: list[ModelRelationship] | None = None,
 ) -> str:
-    if field.primary_key:
-        return ""
-
+    """Generate a field for an SQLAlchemy model."""
     target = None
     if field.metadata.is_foreign_key and relationships is not None:
         target = next(
@@ -67,6 +65,7 @@ def generate_field(
 def generate_relationship(
     relation: ModelRelationship, is_self_reference: bool = False
 ) -> str:
+    """Generate a relationship for an SQLAlchemy model."""
     args = []
     args.append(f"foreign_keys=[{relation.field_name}]")
     if relation.back_populates:

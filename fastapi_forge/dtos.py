@@ -239,6 +239,27 @@ class Model(_Base):
     def name_plural_hyphen(self) -> str:
         return pluralize(self.name.replace("_", "-"))
 
+    @computed_field
+    @property
+    def is_composite(self) -> bool:
+        return sum(field.primary_key for field in self.fields) > 1
+
+    @computed_field
+    @property
+    def table_args(self) -> str:
+        """Returns the __table_args__ section for SQLAlchemy model."""
+        if not self.is_composite:
+            return ""
+        args = []
+        if self.is_composite:
+            primary_keys = [
+                f'"{field.name}"' for field in self.fields if field.primary_key
+            ]
+            args.append(
+                f"__table_args__ = (sa.PrimaryKeyConstraint({', '.join(primary_keys)}),)"
+            )
+        return "\n".join(args)
+
     @property
     def fields_sorted(self) -> list[ModelField]:
         primary_keys = []
@@ -266,9 +287,6 @@ class Model(_Base):
         field_names = [field.name for field in self.fields]
         if len(field_names) != len(set(field_names)):
             raise ValueError(f"Model '{self.name}' contains duplicate fields.")
-
-        if sum(field.primary_key for field in self.fields) != 1:
-            raise ValueError(f"Model '{self.name}' must have exactly one primary key.")
 
         unique_relationships = [
             relationship.field_name for relationship in self.relationships

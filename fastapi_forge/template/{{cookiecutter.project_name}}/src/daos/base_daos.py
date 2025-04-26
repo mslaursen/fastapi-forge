@@ -1,6 +1,6 @@
 from typing import Any, Sequence
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio.session import AsyncSession
 
 from src.db import Base
 from src.dtos import (
@@ -121,7 +121,7 @@ class BaseDAO[
     async def create(
         self,
         input_dto: InputDTO,
-    ) -> UUID:
+    ) -> Model:
         """Create a new record, returning its ID."""
 
         id = uuid4()
@@ -132,7 +132,7 @@ class BaseDAO[
         self.session.add(record)
 
         await self.session.commit()
-        return id
+        return record
 
     async def filter(
         self,
@@ -221,3 +221,26 @@ class BaseDAO[
             data=[out_dto.model_validate(row) for row in results.scalars()],
             pagination=computed_pagination,
         )
+
+
+class BaseCompositeDAO[
+    Model: Base,
+    InputDTO: BaseModel,
+    UpdateDTO: BaseModel,
+](
+    BaseDAO[
+        Model,
+        InputDTO,
+        UpdateDTO,
+    ]
+):
+    """Base class for models with composite keys."""
+
+    async def create(self, input_dto: InputDTO) -> Model:
+        record = self.model(
+            **input_dto.model_dump(),
+        )
+        self.session.add(record)
+
+        await self.session.commit()
+        return record

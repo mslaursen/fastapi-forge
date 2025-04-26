@@ -22,6 +22,7 @@ project:
         - name: id
           type: UUID
           primary_key: true
+          default_value: uuid.uuid4
         - name: email
           type: String
           unique: true
@@ -55,6 +56,11 @@ project:
         - name: id
           type: UUID
           primary_key: true
+          default_value: uuid.uuid4
+        - name: obj_id
+          type: UUID
+          primary_key: true
+          default_value: uuid.uuid4
         - name: username
           type: String
           unique: true
@@ -85,6 +91,7 @@ project:
         - name: id
           type: UUID
           primary_key: true
+          default_value: uuid.uuid4
         - name: title
           type: String
           index: true
@@ -116,6 +123,7 @@ project:
         - name: id
           type: UUID
           primary_key: true
+          default_value: uuid.uuid4
         - name: purchase_date
           type: DateTime
         - name: playtime_hours
@@ -148,6 +156,7 @@ project:
         - name: id
           type: UUID
           primary_key: true
+          default_value: uuid.uuid4
         - name: name
           type: String
         - name: start_time
@@ -178,6 +187,7 @@ project:
         - name: id
           type: UUID
           primary_key: true
+          default_value: uuid.uuid4
         - name: pc_model
           type: String
         - name: gpu

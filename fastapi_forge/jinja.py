@@ -22,6 +22,7 @@ from uuid import UUID
 from typing import Any, Annotated
 from datetime import datetime, timezone,  timedelta
 from src import enums
+import uuid
 
 
 {% set unique_relationships = model.relationships | unique(attribute='target') %}
@@ -44,6 +45,8 @@ class {{ model.name_cc }}(Base):
     {% for relation in model.relationships -%}
     {{ relation | generate_relationship(model.name_cc == relation.target) }}
     {% endfor %}
+
+    {{ model.table_args }}
 """
 
 dto_template = """
@@ -61,8 +64,7 @@ from src import enums
 class {{ model.name_cc }}DTO(BaseOrmModel):
     \"\"\"{{ model.name_cc }} DTO.\"\"\"
 
-    id: UUID
-    {% for field in model.fields_sorted if not field.primary_key -%}
+    {% for field in model.fields_sorted -%}
     {{ field.name }}: {{ field.type_info.python_type }}{% if field.nullable %} | None{% endif %}
     {% endfor %}
 
@@ -71,7 +73,7 @@ class {{ model.name_cc }}DTO(BaseOrmModel):
 class {{ model.name_cc }}InputDTO(BaseModel):
     \"\"\"{{ model.name_cc }} input DTO.\"\"\"
 
-    {% for field in model.fields_sorted if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or field.primary_key) -%}
+    {% for field in model.fields_sorted if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or field.primary_key and not model.is_composite) -%}
     {{ field.name }}: {{ field.type_info.python_type }}{% if field.nullable %} | None{% endif %}
     {% endfor %}
 
@@ -85,14 +87,14 @@ class {{ model.name_cc }}UpdateDTO(BaseModel):
 """
 
 dao_template = """
-from src.daos.base_daos import BaseDAO
+from src.daos.base_daos import BaseDAO, BaseCompositeDAO
 
 from src.models.{{ model.name }}_models import {{ model.name_cc }}
 from src.dtos.{{ model.name }}_dtos import {{ model.name_cc }}InputDTO, {{ model.name_cc }}UpdateDTO
 
 
 class {{ model.name_cc }}DAO(
-    BaseDAO[
+    Base{{ 'Composite' if model.is_composite else '' }}DAO[
         {{ model.name_cc }},
         {{ model.name_cc }}InputDTO,
         {{ model.name_cc }}UpdateDTO,
@@ -124,9 +126,9 @@ async def create_{{ model.name }}(
 ) -> DataResponse[CreatedResponse]:
     \"\"\"Create a new {{ model.name_cc }}.\"\"\"
 
-    created_id = await daos.{{ model.name }}.create(input_dto)
+    created_obj = await daos.{{ model.name }}.create(input_dto)
     return DataResponse(
-        data=CreatedResponse(id=created_id),
+        data=CreatedResponse(id=created_obj.id),
     )
 
 
@@ -201,7 +203,7 @@ async def test_post_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> Non
     {%- endfor %}
 
     input_json = {
-        {%- for field in model.fields  if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or field.primary_key or not field.type_info.test_value) -%}
+        {%- for field in model.fields  if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or (field.primary_key and not model.is_composite) or not field.type_info.test_value) -%}
         {%- if not field.primary_key and field.name.endswith('_id') and field.metadata.is_foreign_key -%}
         "{{ field.name }}": str({{ field.name | replace('_id', '.id') }}),
         {%- elif not field.primary_key %}
