@@ -1,6 +1,6 @@
 from collections.abc import Callable
 
-from pydantic import BaseModel, ConfigDict, ValidationError
+from pydantic import BaseModel, ValidationError
 
 from fastapi_forge.enums import FieldDataTypeEnum
 from fastapi_forge.frontend.notifications import (
@@ -23,8 +23,6 @@ from fastapi_forge.schemas import (
 
 class ProjectState(BaseModel):
     """Central state management for the project configuration."""
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     models: list[Model] = []
     selected_model: Model | None = None
