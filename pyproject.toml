@@ -28,7 +28,7 @@ Repository = "https://github.com/mslaursen/fastapi-forge.git"
 fastapi-forge = "fastapi_forge.__main__:main"
 
 [tool.ruff]
-exclude = ["template", "__init__.py"]
+exclude = ["template"]
 target-version = "py312"
 line-length = 88
 indent-width = 4

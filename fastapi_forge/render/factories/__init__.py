@@ -4,16 +4,16 @@ from typing import TYPE_CHECKING
 from ..engines import BaseTemplateEngine
 from ..registry import RendererRegistry
 from ..renderers import (
-    ModelRenderer,
-    DTORenderer,
     DAORenderer,
-    RouterRenderer,
+    DTORenderer,
     EnumRenderer,
-    TestGetRenderer,
-    TestGetIdRenderer,
-    TestPostRenderer,
-    TestPatchRenderer,
+    ModelRenderer,
+    RouterRenderer,
     TestDeleteRenderer,
+    TestGetIdRenderer,
+    TestGetRenderer,
+    TestPatchRenderer,
+    TestPostRenderer,
 )
 
 if TYPE_CHECKING:
