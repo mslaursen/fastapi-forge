@@ -4,14 +4,6 @@ from nicegui import ui
 from nicegui.events import ValueChangeEventArguments
 from pydantic import ValidationError
 
-from fastapi_forge.dtos import (
-    CustomEnum,
-    CustomEnumValue,
-    Model,
-    ModelField,
-    ModelFieldMetadata,
-    ModelMetadata,
-)
 from fastapi_forge.enums import FieldDataTypeEnum
 from fastapi_forge.forge import build_project
 from fastapi_forge.frontend.constants import (
@@ -24,6 +16,14 @@ from fastapi_forge.frontend.notifications import (
 )
 from fastapi_forge.frontend.state import state
 from fastapi_forge.project_io import ProjectLoader
+from fastapi_forge.schemas import (
+    CustomEnum,
+    CustomEnumValue,
+    Model,
+    ModelField,
+    ModelFieldMetadata,
+    ModelMetadata,
+)
 from fastapi_forge.type_info_registry import enum_registry
 
 

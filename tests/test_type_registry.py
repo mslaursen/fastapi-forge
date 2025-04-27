@@ -1,7 +1,7 @@
 import pytest
 
-from fastapi_forge.dtos import CustomEnum, CustomEnumValue
 from fastapi_forge.enums import FieldDataTypeEnum
+from fastapi_forge.schemas import CustomEnum, CustomEnumValue
 from fastapi_forge.type_info_registry import TypeInfo, TypeInfoRegistry, enum_registry
 
 ##########################

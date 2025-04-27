@@ -3,12 +3,6 @@ from typing import Any
 from nicegui import ui
 from pydantic import ValidationError
 
-from fastapi_forge.dtos import (
-    Model,
-    ModelField,
-    ModelFieldMetadata,
-    ModelRelationship,
-)
 from fastapi_forge.enums import FieldDataTypeEnum, OnDeleteEnum
 from fastapi_forge.frontend import validation
 from fastapi_forge.frontend.constants import (
@@ -28,7 +22,12 @@ from fastapi_forge.frontend.notifications import (
     notify_value_error,
 )
 from fastapi_forge.frontend.state import state
-from fastapi_forge.jinja import render_model_to_model
+from fastapi_forge.schemas import (
+    Model,
+    ModelField,
+    ModelFieldMetadata,
+    ModelRelationship,
+)
 
 
 class ModelEditorPanel(ui.card):
@@ -62,7 +61,8 @@ class ModelEditorPanel(ui.card):
                 ui.dialog() as modal,
                 ui.card().classes("no-shadow border-[1px]"),
             ):
-                code = render_model_to_model(state.selected_model.get_preview())
+                model_renderer = state.get_render_manager().get_renderer("model")
+                code = model_renderer.render(state.selected_model.get_preview())
                 code = code.split("class ")[1]
                 code = f"# ID is inherited from the `Base` class\nclass {code}"
                 ui.code(code).classes("w-full")

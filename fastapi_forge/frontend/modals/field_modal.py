@@ -4,14 +4,14 @@ from collections.abc import Callable
 from nicegui import ui
 from pydantic import ValidationError
 
-from fastapi_forge.dtos import ModelField, ModelFieldMetadata
 from fastapi_forge.enums import FieldDataTypeEnum
 from fastapi_forge.frontend.notifications import (
     notify_validation_error,
     notify_value_error,
 )
 from fastapi_forge.frontend.state import state
-from fastapi_forge.jinja_utils import generate_field
+from fastapi_forge.render.filters import JinjaFilters
+from fastapi_forge.schemas import ModelField, ModelFieldMetadata
 
 
 class BaseFieldModal(ui.dialog, ABC):
@@ -211,7 +211,7 @@ class BaseFieldModal(ui.dialog, ABC):
                         is_foreign_key=False,
                     ),
                 )
-                ui.code(generate_field(preview_field)).classes("w-full")
+                ui.code(JinjaFilters.generate_field(preview_field)).classes("w-full")
                 modal.open()
         except ValidationError as exc:
             notify_validation_error(exc)

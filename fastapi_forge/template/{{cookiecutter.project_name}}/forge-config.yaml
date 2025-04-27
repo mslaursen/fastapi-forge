@@ -14,25 +14,25 @@ paths:
   use_builtin_auth:
     enabled: {{cookiecutter.use_builtin_auth | lower}}
     paths:
-      - src/dependencies/auth_dependencies.py
-      - src/dtos/auth_dtos.py
-      - src/routes/auth_routes.py
-      - src/utils/auth_utils.py
+      - {{cookiecutter.project_name}}/dependencies/auth_dependencies.py
+      - {{cookiecutter.project_name}}/dtos/auth_dtos.py
+      - {{cookiecutter.project_name}}/routes/auth_routes.py
+      - {{cookiecutter.project_name}}/utils/auth_utils.py
 
   use_redis:
     enabled: {{cookiecutter.use_redis | lower}}
     paths:
-      - src/services/redis
+      - {{cookiecutter.project_name}}/services/redis
 
   use_rabbitmq:
     enabled: {{cookiecutter.use_rabbitmq | lower}}
     paths:
-      - src/services/rabbitmq
+      - {{cookiecutter.project_name}}/services/rabbitmq
 
   use_taskiq:
     enabled: {{cookiecutter.use_taskiq | lower}}
     paths:
-      - src/services/taskiq
+      - {{cookiecutter.project_name}}/services/taskiq
   
   use_prometheus:
     enabled: {{cookiecutter.use_prometheus | lower}}
@@ -44,7 +44,7 @@ paths:
       - use_builtin_auth
       - use_rabbitmq
     paths:
-      - src/constants.py
+      - {{cookiecutter.project_name}}/constants.py
 
   observability:
     requires_all:

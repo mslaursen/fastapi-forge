@@ -1,0 +1,25 @@
+__all__ = [
+    "DAO_TEMPLATE",
+    "DTO_TEMPLATE",
+    "ENUMS_TEMPLATE",
+    "MODEL_TEMPLATE",
+    "ROUTERS_TEMPLATE",
+    "TEST_DELETE_TEMPLATE",
+    "TEST_GET_ID_TEMPLATE",
+    "TEST_GET_TEMPLATE",
+    "TEST_PATCH_TEMPLATE",
+    "TEST_POST_TEMPLATE",
+]
+
+from .dao import DAO_TEMPLATE
+from .dto import DTO_TEMPLATE
+from .enums import ENUMS_TEMPLATE
+from .model import MODEL_TEMPLATE
+from .routes import ROUTERS_TEMPLATE
+from .tests import (
+    TEST_DELETE_TEMPLATE,
+    TEST_GET_ID_TEMPLATE,
+    TEST_GET_TEMPLATE,
+    TEST_PATCH_TEMPLATE,
+    TEST_POST_TEMPLATE,
+)

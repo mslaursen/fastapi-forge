@@ -3,7 +3,6 @@ from typing import Any
 from nicegui import ui
 from pydantic import ValidationError
 
-from fastapi_forge.dtos import CustomEnum, CustomEnumValue
 from fastapi_forge.frontend import validation
 from fastapi_forge.frontend.constants import ENUM_COLUMNS
 from fastapi_forge.frontend.modals import (
@@ -15,6 +14,7 @@ from fastapi_forge.frontend.notifications import (
     notify_validation_error,
 )
 from fastapi_forge.frontend.state import state
+from fastapi_forge.schemas import CustomEnum, CustomEnumValue
 
 
 class EnumEditorPanel(ui.card):

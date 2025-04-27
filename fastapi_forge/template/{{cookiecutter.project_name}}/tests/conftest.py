@@ -4,7 +4,7 @@ from typing import Any
 import pytest
 {% if cookiecutter.use_redis %}
 from fakeredis.aioredis import FakeRedis
-from src.services.redis.redis_dependencies import get_redis
+from {{cookiecutter.project_name}}.services.redis.redis_dependencies import get_redis
 {% endif %}
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
@@ -15,21 +15,21 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from src.daos import AllDAOs
-from src.db import meta
-from src.db.db_dependencies import get_db_session
-from src.main import get_app
+from {{cookiecutter.project_name}}.daos import AllDAOs
+from {{cookiecutter.project_name}}.db import meta
+from {{cookiecutter.project_name}}.db.db_dependencies import get_db_session
+from {{cookiecutter.project_name}}.main import get_app
 {% if cookiecutter.use_rabbitmq %}
-from src.services.rabbitmq import (
+from {{cookiecutter.project_name}}.services.rabbitmq import (
     RabbitMQServiceMock,
     get_rabbitmq,
 )
 {% endif %}
 
 {% if cookiecutter.use_taskiq %}
-from src.services.taskiq.broker import broker
+from {{cookiecutter.project_name}}.services.taskiq.broker import broker
 {% endif %}
-from src.settings import settings
+from {{cookiecutter.project_name}}.settings import settings
 from tests.factories import BaseFactory
 from tests.test_utils import create_test_db, drop_test_db
 

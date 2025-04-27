@@ -3,9 +3,9 @@ from collections.abc import Callable
 
 from nicegui import ui
 
-from fastapi_forge.dtos import CustomEnumValue
 from fastapi_forge.frontend.notifications import notify_value_error
 from fastapi_forge.frontend.state import state
+from fastapi_forge.schemas import CustomEnumValue
 
 
 class BaseEnumValueModal(ui.dialog, ABC):

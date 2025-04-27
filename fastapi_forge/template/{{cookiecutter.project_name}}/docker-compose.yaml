@@ -32,8 +32,8 @@ services:
     develop:
       watch:
         - action: sync
-          path: ./src
-          target: /app/src
+          path: ./{{cookiecutter.project_name}}
+          target: /app/{{cookiecutter.project_name}}
         - action: sync
           path: ./tests
           target: /app/tests
@@ -47,13 +47,13 @@ services:
     <<: *api
     container_name: {{ cookiecutter.project_name }}-taskiq-worker
     ports: []
-    command: [ taskiq, worker, -fsd, src.services.taskiq.broker:broker, -w, "1", --max-fails, "1"]
+    command: [ taskiq, worker, -fsd, {{cookiecutter.project_name}}.services.taskiq.broker:broker, -w, "1", --max-fails, "1"]
 
   taskiq-scheduler:
     <<: *api
     container_name: {{ cookiecutter.project_name }}-taskiq-scheduler
     ports: []
-    command: [ taskiq, scheduler, -fsd, src.services.taskiq.scheduler:scheduler ]
+    command: [ taskiq, scheduler, -fsd, {{cookiecutter.project_name}}.services.taskiq.scheduler:scheduler ]
   {% endif %}
   {%- if cookiecutter.use_postgres %}
   postgres:

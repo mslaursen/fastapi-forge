@@ -5,9 +5,9 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from src.settings import settings
-from src.models import *  # noqa
-from src.db import meta 
+from {{cookiecutter.project_name}}.settings import settings
+from {{cookiecutter.project_name}}.models import *  # noqa
+from {{cookiecutter.project_name}}.db import meta 
 
 from alembic import context
 

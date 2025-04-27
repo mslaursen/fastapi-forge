@@ -2,7 +2,7 @@ from pathlib import Path
 
 import click
 
-from fastapi_forge.frontend import init
+from fastapi_forge.frontend.main import init
 from fastapi_forge.project_io import ProjectLoader
 
 

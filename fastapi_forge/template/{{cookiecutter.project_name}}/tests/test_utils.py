@@ -1,7 +1,7 @@
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from src.settings import settings
+from {{cookiecutter.project_name}}.settings import settings
 
 
 async def create_test_db() -> None:

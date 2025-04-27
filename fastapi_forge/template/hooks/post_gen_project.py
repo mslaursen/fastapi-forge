@@ -81,7 +81,7 @@ def _is_empty_init(dirpath: str) -> bool:
         return False
 
 
-def delete_empty_init_folders(root_dir: str = "src") -> None:
+def delete_empty_init_folders(root_dir: str = "{{cookiecutter.project_name}}") -> None:
     for dirpath, dirnames, filenames in os.walk(root_dir, topdown=False):
         if dirpath != root_dir and set(filenames) == {"__init__.py"} and not dirnames:
             if _is_empty_init(dirpath):
