@@ -2,20 +2,22 @@ from collections.abc import Callable
 
 from pydantic import BaseModel, ValidationError
 
-from fastapi_forge.dtos import (
-    CustomEnum,
-    CustomEnumValue,
-    Model,
-    ModelField,
-    ModelRelationship,
-    ProjectSpec,
-)
 from fastapi_forge.enums import FieldDataTypeEnum
 from fastapi_forge.frontend.notifications import (
     notify_enum_exists,
     notify_model_exists,
     notify_something_went_wrong,
     notify_validation_error,
+)
+from fastapi_forge.render import create_jinja_render_manager
+from fastapi_forge.render.manager import RenderManager
+from fastapi_forge.schemas import (
+    CustomEnum,
+    CustomEnumValue,
+    Model,
+    ModelField,
+    ModelRelationship,
+    ProjectSpec,
 )
 
 
@@ -52,6 +54,10 @@ class ProjectState(BaseModel):
     use_rabbitmq: bool = False
     use_taskiq: bool = False
     use_prometheus: bool = False
+
+    def get_render_manager(self) -> RenderManager:
+        """Get the render manager for the current project."""
+        return create_jinja_render_manager(project_name=self.project_name)
 
     def switch_item_editor(
         self,

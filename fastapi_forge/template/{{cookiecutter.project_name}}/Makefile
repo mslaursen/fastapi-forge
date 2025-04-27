@@ -2,7 +2,7 @@ DOCKER_CMD = docker compose exec -it api
 
 
 run:
-	uv run -m src
+	uv run -m {{cookiecutter.project_name}}
 
 up:
 	docker-compose up --watch
@@ -26,5 +26,5 @@ mig-down:
 	$(DOCKER_CMD) alembic downgrade -1
 
 lint:
-	uv run ruff format
-	uv run ruff check . --fix --unsafe-fixes
+	uv run ruff format {{cookiecutter.project_name}} tests
+	uv run ruff check {{cookiecutter.project_name}} tests --fix --unsafe-fixes
