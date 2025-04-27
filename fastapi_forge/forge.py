@@ -1,13 +1,11 @@
-import asyncio
-import shutil
 from pathlib import Path, PurePath
 from time import perf_counter
 
 from cookiecutter.main import cookiecutter
 
-from fastapi_forge.dtos import ProjectSpec
 from fastapi_forge.logger import logger
 from fastapi_forge.project_io import ProjectBuilder
+from fastapi_forge.schemas import ProjectSpec
 
 
 def _get_template_path() -> Path:
@@ -33,37 +31,6 @@ def _validate_project_name(project_name: str) -> None:
         logger.warning(
             f"Project name '{project_name}' may not be a valid Python identifier"
         )
-
-
-async def _teardown_project(project_name: str, *, dry_run: bool = False) -> bool:
-    """Safely remove the project directory and all its contents."""
-    project_dir = Path.cwd().resolve() / project_name
-
-    if not project_dir.exists():
-        logger.debug(f"Project directory does not exist: {project_dir}")
-        return False
-
-    if not project_dir.is_dir():
-        logger.warning(f"Path exists but is not a directory: {project_dir}")
-        return False
-
-    if not any(project_dir.glob("pyproject.toml")):
-        logger.warning(
-            f"Directory {project_dir} does not appear to be a project "
-            "(missing pyproject.toml) - skipping deletion"
-        )
-        return False
-
-    try:
-        logger.info(
-            f"{'Would remove' if dry_run else 'Removing'} project directory: {project_dir}"
-        )
-        if not dry_run:
-            await asyncio.to_thread(shutil.rmtree, project_dir)
-    except Exception as e:
-        logger.error(f"Failed to remove project directory {project_dir}: {e!s}")
-        return False
-    return True
 
 
 async def build_project(spec: ProjectSpec) -> None:

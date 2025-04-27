@@ -3,9 +3,9 @@ from collections.abc import Callable
 from nicegui import ui
 from pydantic import BaseModel
 
-from fastapi_forge.dtos import CustomEnum, Model
 from fastapi_forge.frontend.constants import ITEM_ROW_TRUNCATE_LEN
 from fastapi_forge.frontend.state import state
+from fastapi_forge.schemas import CustomEnum, Model
 
 
 class _ItemRow[T: BaseModel](ui.row):

@@ -1,8 +1,8 @@
 import pytest
 
-from fastapi_forge.dtos import Model, ModelField
 from fastapi_forge.enums import FieldDataTypeEnum
 from fastapi_forge.jinja import render_model_to_model, render_model_to_post_test
+from fastapi_forge.schemas import Model, ModelField
 
 
 def _clip_imports(rendered_str: str, split_str: str) -> str:

@@ -2,13 +2,6 @@ import asyncio
 
 from nicegui import native, ui
 
-from fastapi_forge.dtos import (
-    CustomEnum,
-    CustomEnumValue,
-    Model,
-    ModelField,
-    ProjectSpec,
-)
 from fastapi_forge.enums import FieldDataTypeEnum
 from fastapi_forge.forge import build_project
 from fastapi_forge.frontend import (
@@ -18,6 +11,13 @@ from fastapi_forge.frontend import (
 )
 from fastapi_forge.frontend.panels.item_editor_panel import ItemEditorPanel
 from fastapi_forge.frontend.state import state
+from fastapi_forge.schemas import (
+    CustomEnum,
+    CustomEnumValue,
+    Model,
+    ModelField,
+    ProjectSpec,
+)
 
 
 def setup_ui() -> None:

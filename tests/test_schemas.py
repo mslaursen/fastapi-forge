@@ -2,7 +2,8 @@ import pytest
 from pydantic import ValidationError
 
 from fastapi_forge.constants import TAB
-from fastapi_forge.dtos import (
+from fastapi_forge.enums import FieldDataTypeEnum, OnDeleteEnum
+from fastapi_forge.schemas import (
     CustomEnum,
     CustomEnumValue,
     Model,
@@ -11,11 +12,10 @@ from fastapi_forge.dtos import (
     ModelRelationship,
     ProjectSpec,
 )
-from fastapi_forge.enums import FieldDataTypeEnum, OnDeleteEnum
 
-########################
-# ModelField DTO tests #
-########################
+##############
+# ModelField #
+##############
 
 
 def test_primary_key_defaults_to_unique() -> None:
@@ -107,9 +107,9 @@ def test_type_incorrect_type() -> None:
     assert "but is not field type 'ENUM'" in str(exc_info.value)
 
 
-###############################
-# ModelRelationship DTO tests #
-###############################
+#####################
+# ModelRelationship #
+#####################
 
 
 def test_fields() -> None:
@@ -169,9 +169,9 @@ def test_custom_enum_valid() -> None:
     assert enum.class_definition == expected_definition
 
 
-#########################
-# ProjectSpec DTO tests #
-#########################
+###############
+# ProjectSpec #
+###############
 
 
 def test_project_spec_non_existing_target_model() -> None:

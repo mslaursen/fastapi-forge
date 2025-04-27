@@ -3,9 +3,9 @@ from collections.abc import Callable
 
 from nicegui import ui
 
-from fastapi_forge.dtos import Model, ModelRelationship
 from fastapi_forge.enums import OnDeleteEnum
 from fastapi_forge.frontend.notifications import notify_value_error
+from fastapi_forge.schemas import Model, ModelRelationship
 
 
 class BaseRelationModal(ui.dialog, ABC):
