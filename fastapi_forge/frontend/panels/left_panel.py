@@ -3,8 +3,8 @@ from pathlib import Path
 from nicegui import ui
 from pydantic import ValidationError
 
-from fastapi_forge.frontend import EnumRow, ModelCreate, ModelRow
-from fastapi_forge.frontend.components.item_create import EnumCreate
+from fastapi_forge.frontend.components.item_create import EnumCreate, ModelCreate
+from fastapi_forge.frontend.components.item_row import EnumRow, ModelRow
 from fastapi_forge.frontend.constants import (
     SELECTED_ENUM_TEXT_COLOR,
     SELECTED_MODEL_TEXT_COLOR,
