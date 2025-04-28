@@ -66,7 +66,7 @@ class BaseRegistry[T: Hashable]:
     def update_key(self, old_key: T, new_key: T) -> None:
         if old_key not in self:
             raise KeyError(
-                f"Key '{old_key}' not found. All names: {self._registry.keys()}"
+                f"Key '{old_key}' not found. Available keys: {self._registry.keys()}"
             )
         self._registry[new_key] = self._registry.pop(old_key)
 
