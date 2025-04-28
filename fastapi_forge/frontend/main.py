@@ -2,8 +2,8 @@ import asyncio
 
 from nicegui import native, ui
 
+from fastapi_forge.core import build_fastapi_project
 from fastapi_forge.enums import FieldDataTypeEnum
-from fastapi_forge.forge import build_project
 from fastapi_forge.frontend.components.header import Header
 from fastapi_forge.frontend.panels.item_editor_panel import ItemEditorPanel
 from fastapi_forge.frontend.panels.left_panel import LeftPanel
@@ -53,7 +53,7 @@ def init(
 ) -> None:
     if project_spec:
         if no_ui:
-            asyncio.run(build_project(project_spec))
+            asyncio.run(build_fastapi_project(project_spec))
             return
 
         state.initialize_from_project(project_spec)
