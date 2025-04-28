@@ -27,7 +27,7 @@ class TypeInfo:
         faker_field_value: The factory field value for this type (can be a Faker method)
         test_value: Value to insert into models for post/patch tests.
         test_func: A function to call with the `test_value`.
-        encapsulate_assert: Wraps the `test_value` value (e.g, UUID(test_value))
+        encapsulate_assert: Wraps the `test_value` value (e.g, "UUID" => UUID(test_value))')
 
     """
 
@@ -57,6 +57,18 @@ class BaseRegistry[T: Hashable]:
         if key not in self:
             raise KeyError(f"Key '{key}' not found.")
         return self._registry[key]
+
+    def remove(self, key: T) -> None:
+        if key not in self:
+            raise KeyError(f"Key '{key}' not found.")
+        del self._registry[key]
+
+    def update_key(self, old_key: T, new_key: T) -> None:
+        if old_key not in self:
+            raise KeyError(
+                f"Key '{old_key}' not found. All names: {self._registry.keys()}"
+            )
+        self._registry[new_key] = self._registry.pop(old_key)
 
     def all(self) -> list[TypeInfo]:
         return list(self._registry.values())
