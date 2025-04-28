@@ -1,6 +1,6 @@
 import pytest
 
-from fastapi_forge import string_utils
+from fastapi_forge.utils import string_utils
 
 
 @pytest.mark.parametrize(

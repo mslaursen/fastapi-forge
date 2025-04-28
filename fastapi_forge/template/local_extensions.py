@@ -1,5 +1,5 @@
 from cookiecutter.utils import simple_filter
-from fastapi_forge.string_utils import camel_to_snake as _camel_to_snake
+from fastapi_forge.utils.string_utils import camel_to_snake as _camel_to_snake
 
 
 @simple_filter

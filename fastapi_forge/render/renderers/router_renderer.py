@@ -2,13 +2,13 @@ from typing import Any
 
 from fastapi_forge.schemas import Model
 
-from ..engines.base_engine import BaseTemplateEngine
+from ..engines.protocols import TemplateEngine
 from ..templates import ROUTERS_TEMPLATE
-from .base_renderer import BaseRenderer
+from .protocols import Renderer
 
 
-class RouterRenderer(BaseRenderer):
-    def __init__(self, engine: BaseTemplateEngine):
+class RouterRenderer(Renderer):
+    def __init__(self, engine: TemplateEngine):
         self.engine = engine
 
     def render(self, model: Model, **kwargs: Any) -> str:

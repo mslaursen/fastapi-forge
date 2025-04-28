@@ -2,7 +2,7 @@ from typing import Any
 
 from fastapi_forge.schemas import Model
 
-from ..engines.base_engine import BaseTemplateEngine
+from ..engines.protocols import TemplateEngine
 from ..templates import (
     TEST_DELETE_TEMPLATE,
     TEST_GET_ID_TEMPLATE,
@@ -10,43 +10,43 @@ from ..templates import (
     TEST_PATCH_TEMPLATE,
     TEST_POST_TEMPLATE,
 )
-from .base_renderer import BaseRenderer
+from .protocols import Renderer
 
 
-class TestPostRenderer(BaseRenderer):
-    def __init__(self, engine: BaseTemplateEngine):
+class TestPostRenderer(Renderer):
+    def __init__(self, engine: TemplateEngine):
         self.engine = engine
 
     def render(self, model: Model, **kwargs: Any) -> str:
         return self.engine.render(TEST_POST_TEMPLATE, {"model": model, **kwargs})
 
 
-class TestGetRenderer(BaseRenderer):
-    def __init__(self, engine: BaseTemplateEngine):
+class TestGetRenderer(Renderer):
+    def __init__(self, engine: TemplateEngine):
         self.engine = engine
 
     def render(self, model: Model, **kwargs: Any) -> str:
         return self.engine.render(TEST_GET_TEMPLATE, {"model": model, **kwargs})
 
 
-class TestGetIdRenderer(BaseRenderer):
-    def __init__(self, engine: BaseTemplateEngine):
+class TestGetIdRenderer(Renderer):
+    def __init__(self, engine: TemplateEngine):
         self.engine = engine
 
     def render(self, model: Model, **kwargs: Any) -> str:
         return self.engine.render(TEST_GET_ID_TEMPLATE, {"model": model, **kwargs})
 
 
-class TestPatchRenderer(BaseRenderer):
-    def __init__(self, engine: BaseTemplateEngine):
+class TestPatchRenderer(Renderer):
+    def __init__(self, engine: TemplateEngine):
         self.engine = engine
 
     def render(self, model: Model, **kwargs: Any) -> str:
         return self.engine.render(TEST_PATCH_TEMPLATE, {"model": model, **kwargs})
 
 
-class TestDeleteRenderer(BaseRenderer):
-    def __init__(self, engine: BaseTemplateEngine):
+class TestDeleteRenderer(Renderer):
+    def __init__(self, engine: TemplateEngine):
         self.engine = engine
 
     def render(self, model: Model, **kwargs: Any) -> str:
