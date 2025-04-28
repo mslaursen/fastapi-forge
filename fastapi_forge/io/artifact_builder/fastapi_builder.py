@@ -14,7 +14,7 @@ from fastapi_forge.schemas import (
 from fastapi_forge.utils.string_utils import camel_to_snake
 
 from ..file import FileWriter
-from .protocols import ProjectBuilder
+from .protocols import ArtifactBuilder
 
 TEST_RENDERERS: dict[HTTPMethodEnum, str] = {
     HTTPMethodEnum.GET: "test_get",
@@ -25,7 +25,7 @@ TEST_RENDERERS: dict[HTTPMethodEnum, str] = {
 }
 
 
-class FastAPIProjectBuilder(ProjectBuilder):
+class FastAPIArtifactBuilder(ArtifactBuilder):
     def __init__(
         self,
         project_spec: ProjectSpec,
@@ -43,6 +43,32 @@ class FastAPIProjectBuilder(ProjectBuilder):
             project_name=self.project_name
         )
         self._insert_relation_fields()
+
+    async def build_artifacts(self) -> None:
+        """Builds the project artifacts based on the project specification."""
+        logger.info(f"Building project artifacts for '{self.project_name}'...")
+        await self._init_project_directories()
+
+        tasks = []
+
+        if self.project_spec.custom_enums:
+            tasks.append(self._write_enums())
+
+        for model in self.project_spec.models:
+            tasks.append(self._write_artifact("models", model, "model"))
+
+            metadata = model.metadata
+            if metadata.create_dtos:
+                tasks.append(self._write_artifact("dtos", model, "dto"))
+            if metadata.create_daos:
+                tasks.append(self._write_artifact("daos", model, "dao"))
+            if metadata.create_endpoints:
+                tasks.append(self._write_artifact("routes", model, "router"))
+            if metadata.create_tests:
+                tasks.append(self._write_tests(model))
+
+        await asyncio.gather(*tasks)
+        logger.info(f"Project artifacts for '{self.project_name}' built successfully.")
 
     def _insert_relation_fields(self) -> None:
         """Adds ModelFields to a model, based on its relationships."""
@@ -116,29 +142,3 @@ class FastAPIProjectBuilder(ProjectBuilder):
         renderer = self.render_manager.get_renderer("enum")
         content = renderer.render(self.project_spec.custom_enums)
         await self.file_writer.write(path, content)
-
-    async def build_artifacts(self) -> None:
-        """Builds the project artifacts based on the project specification."""
-        logger.info(f"Building project artifacts for '{self.project_name}'...")
-        await self._init_project_directories()
-
-        tasks = []
-
-        if self.project_spec.custom_enums:
-            tasks.append(self._write_enums())
-
-        for model in self.project_spec.models:
-            tasks.append(self._write_artifact("models", model, "model"))
-
-            metadata = model.metadata
-            if metadata.create_dtos:
-                tasks.append(self._write_artifact("dtos", model, "dto"))
-            if metadata.create_daos:
-                tasks.append(self._write_artifact("daos", model, "dao"))
-            if metadata.create_endpoints:
-                tasks.append(self._write_artifact("routes", model, "router"))
-            if metadata.create_tests:
-                tasks.append(self._write_tests(model))
-
-        await asyncio.gather(*tasks)
-        logger.info(f"Project artifacts for '{self.project_name}' built successfully.")

@@ -2,7 +2,7 @@ from collections.abc import Callable
 from pathlib import Path
 from time import perf_counter
 
-from fastapi_forge.io import ProjectBuilder, create_fastapi_project_builder
+from fastapi_forge.io import ArtifactBuilder, create_fastapi_project_builder
 from fastapi_forge.logger import logger
 from fastapi_forge.schemas import ProjectSpec
 
@@ -14,7 +14,7 @@ from .template_processors import DefaultTemplateProcessor, TemplateProcessor
 class ProjectBuildDirector:
     def __init__(
         self,
-        builder: ProjectBuilder,
+        builder: ArtifactBuilder,
         template_processor: TemplateProcessor,
         template_generator: CookiecutterAdapter,
         template_resolver: Callable,
