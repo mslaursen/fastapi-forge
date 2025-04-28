@@ -19,6 +19,7 @@ from fastapi_forge.schemas import (
     ModelRelationship,
     ProjectSpec,
 )
+from fastapi_forge.type_info_registry import enum_registry
 
 
 class ProjectState(BaseModel):
@@ -170,6 +171,7 @@ class ProjectState(BaseModel):
     def delete_enum(self, enum: CustomEnum) -> None:
         """Remove an enum from the project."""
         self.custom_enums.remove(enum)
+        enum_registry.remove(enum.name)
         self._deselect_content()
         self._trigger_ui_refresh()
 
@@ -182,6 +184,7 @@ class ProjectState(BaseModel):
             notify_enum_exists(new_name)
             return
 
+        enum_registry.update_key(enum.name, new_name)
         enum.name = new_name
 
         if enum == self.selected_enum and self.select_enum_fn:
