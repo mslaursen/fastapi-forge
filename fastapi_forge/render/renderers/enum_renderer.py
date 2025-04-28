@@ -2,13 +2,13 @@ from typing import Any
 
 from fastapi_forge.schemas import CustomEnum
 
-from ..engines.base_engine import BaseTemplateEngine
+from ..engines.protocols import TemplateEngine
 from ..templates import ENUMS_TEMPLATE
-from .base_renderer import BaseRenderer
+from .protocols import Renderer
 
 
-class EnumRenderer(BaseRenderer):
-    def __init__(self, engine: BaseTemplateEngine):
+class EnumRenderer(Renderer):
+    def __init__(self, engine: TemplateEngine):
         self.engine = engine
 
     def render(self, enums: list[CustomEnum], **kwargs: Any) -> str:

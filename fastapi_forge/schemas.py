@@ -11,12 +11,12 @@ from pydantic import (
 
 from fastapi_forge.constants import TAB
 from fastapi_forge.enums import FieldDataTypeEnum, OnDeleteEnum
-from fastapi_forge.string_utils import (
+from fastapi_forge.type_info_registry import TypeInfo, enum_registry, registry
+from fastapi_forge.utils.string_utils import (
     camel_to_snake,
     pluralize,
     snake_to_camel,
 )
-from fastapi_forge.type_info_registry import TypeInfo, enum_registry, registry
 
 BoundedStr = Annotated[str, Field(..., min_length=1, max_length=100)]
 SnakeCaseStr = Annotated[BoundedStr, Field(..., pattern=r"^[a-z][a-z0-9_]*$")]

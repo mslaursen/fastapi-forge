@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
-from ..engines import BaseTemplateEngine
+from ..engines import TemplateEngine
 from ..registry import RendererRegistry
 from ..renderers import (
     DAORenderer,
@@ -17,12 +17,12 @@ from ..renderers import (
 )
 
 if TYPE_CHECKING:
-    from fastapi_forge.render.renderers.base_renderer import BaseRenderer
+    from fastapi_forge.render.renderers.protocols import Renderer
 
 
-class RendererFactory(ABC):
+class RendererFactory(Protocol):
     @abstractmethod
-    def create(self, engine: BaseTemplateEngine) -> "BaseRenderer":
+    def create(self, engine: TemplateEngine) -> "Renderer":
         raise NotImplementedError
 
 

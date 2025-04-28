@@ -1,4 +1,4 @@
-__all__ = ["BaseTemplateEngine", "Jinja2Engine"]
+__all__ = ["Jinja2Engine", "TemplateEngine"]
 
-from .base_engine import BaseTemplateEngine
 from .jinja2_engine import Jinja2Engine
+from .protocols import TemplateEngine

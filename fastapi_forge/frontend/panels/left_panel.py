@@ -11,7 +11,7 @@ from fastapi_forge.frontend.constants import (
 )
 from fastapi_forge.frontend.notifications import notify_validation_error
 from fastapi_forge.frontend.state import state
-from fastapi_forge.project_io import ProjectExporter
+from fastapi_forge.io import create_yaml_project_exporter
 
 
 class NavigationTabs(ui.row):
@@ -54,12 +54,12 @@ class ExportButton:
     async def _export_project(self) -> None:
         """Export the project configuration to a YAML file."""
         try:
-            project_input = state.get_project_spec()
-            exporter = ProjectExporter(project_input)
-            await exporter.export_project()
+            spec = state.get_project_spec()
+            exporter = create_yaml_project_exporter()
+            await exporter.export_project(spec)
             ui.notify(
                 "Project configuration exported to "
-                f"{Path.cwd() / project_input.project_name}.yaml",
+                f"{Path.cwd() / spec.project_name}.yaml",
                 type="positive",
             )
         except ValidationError as exc:

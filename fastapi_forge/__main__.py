@@ -3,7 +3,10 @@ from pathlib import Path
 import click
 
 from fastapi_forge.frontend.main import init
-from fastapi_forge.project_io import ProjectLoader
+from fastapi_forge.io import (
+    YamlProjectLoader,
+    create_postgres_project_loader,
+)
 
 
 @click.group()
@@ -38,7 +41,6 @@ def start(
     from_yaml: str | None = None,
     conn_string: str | None = None,
 ) -> None:
-    """Start the FastAPI Forge server and generate a new project."""
     option_count = sum([use_example, bool(from_yaml), bool(conn_string)])
     if option_count > 1:
         msg = "Only one of '--use-example', '--from-yaml', or '--conn-string' can be used."
@@ -54,16 +56,14 @@ def start(
         yaml_path = Path(from_yaml).expanduser().resolve()
         if not yaml_path.is_file():
             raise click.FileError(f"YAML file not found: {yaml_path}")
-        project_spec = ProjectLoader(project_path=yaml_path).load()
+        project_spec = YamlProjectLoader(project_path=yaml_path).load()
     elif conn_string:
-        project_spec = ProjectLoader.load_from_conn_string(
-            conn_string=conn_string,
-        )
+        project_spec = create_postgres_project_loader(conn_string).load()
     elif use_example:
         base_path = Path(__file__).parent / "example-projects"
         path = base_path / "game_zone.yaml"
 
-        project_spec = ProjectLoader(project_path=path).load()
+        project_spec = YamlProjectLoader(project_path=path).load()
 
     init(project_spec=project_spec, no_ui=no_ui)
 

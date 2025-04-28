@@ -5,10 +5,10 @@ from typing import Any
 from jinja2 import Environment
 
 from ..filters import JinjaFilters
-from .base_engine import BaseTemplateEngine
+from .protocols import TemplateEngine
 
 
-class Jinja2Engine(BaseTemplateEngine):
+class Jinja2Engine(TemplateEngine):
     def __init__(self):
         self.env = Environment()
         self._register_core_filters()
