@@ -129,23 +129,6 @@ def start(
 
     init(project_spec=project_spec, no_ui=no_ui, dry_run=dry_run)
 
-    click.secho("\n🎉 Project generated successfully!", fg="green", bold=True)
-    click.echo("\n🚀 Next steps to get started:\n")
-
-    steps = [
-        ("Navigate to your project directory", "cd your_project_name"),
-        ("Start the development environment", "make up  # or docker-compose up"),
-        ("(Optional) Run tests", "make test"),
-        ("Access the API documentation", "http://localhost:8000/docs"),
-    ]
-
-    for i, (desc, cmd) in enumerate(steps, 1):
-        click.echo(f"{i}. {desc}:")
-        click.secho(f"   {cmd}", fg="cyan")
-
-    click.echo("\n💡 Pro tip: Run 'make help' to see all available commands")
-    click.secho("\n✨ Happy coding with your new FastAPI project!", fg="magenta")
-
 
 if __name__ in {"__main__", "__mp_main__"}:
     main()
