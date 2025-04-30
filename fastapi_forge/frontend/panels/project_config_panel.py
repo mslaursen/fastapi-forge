@@ -15,7 +15,7 @@ from fastapi_forge.frontend.notifications import (
     notify_value_error,
 )
 from fastapi_forge.frontend.state import state
-from fastapi_forge.io import create_postgres_project_loader
+from fastapi_forge.project_io import create_postgres_project_loader
 from fastapi_forge.schemas import (
     CustomEnum,
     CustomEnumValue,
