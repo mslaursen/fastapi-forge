@@ -23,7 +23,7 @@ from fastapi_forge.schemas import ProjectSpec
 from .artifact_builder import ArtifactBuilder, FastAPIArtifactBuilder
 from .database import DatabaseInspector, PostgresInspector
 from .exporter import ProjectExporter, YamlProjectExporter
-from .file import AsyncDryRunWriter, AsyncIOWriter
+from .io import AsyncDryRunWriter, AsyncIOWriter
 from .loader import DatabaseProjectLoader, ProjectLoader, YamlProjectLoader
 
 

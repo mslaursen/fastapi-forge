@@ -4,7 +4,7 @@ import yaml
 
 from fastapi_forge.schemas import ProjectSpec
 
-from ..file import IOWriter
+from ..io import IOWriter
 from .protocols import ProjectExporter
 
 
