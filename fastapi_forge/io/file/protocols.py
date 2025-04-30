@@ -3,7 +3,11 @@ from pathlib import Path
 from typing import Protocol
 
 
-class FileWriter(Protocol):
+class IOWriter(Protocol):
     @abstractmethod
-    async def write(self, path: Path, content: str) -> None:
+    async def write_file(self, path: Path, content: str) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def write_directory(self, path: Path) -> None:
         raise NotImplementedError

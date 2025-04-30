@@ -16,6 +16,7 @@ dependencies = [
     "ruff",
     "psycopg2-binary>=2.9.10",
     "inflect>=7.5.0",
+    "pytest-cov>=6.1.1",
 ]
 authors = [{ name = "mslaursen", email = "mslaursendk@gmail.com" }]
 
@@ -47,6 +48,7 @@ ignore = [
 
     #### specific rules
     "A002",
+    "ARG002",
     "BLE001",
     "D100",
     "D101",
