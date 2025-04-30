@@ -1,20 +1,20 @@
 from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
-    from fastapi_forge.render.factories import RendererFactory
+    from .renderers import Renderer
 
 
 class RendererRegistry:
-    _factories: ClassVar[dict[str, type["RendererFactory"]]] = {}
+    _renderers: ClassVar[dict[str, type["Renderer"]]] = {}
 
     @classmethod
     def register(cls, name: str):
-        def decorator(factory_class: type["RendererFactory"]):
-            cls._factories[name] = factory_class
-            return factory_class
+        def decorator(renderer_class: type["Renderer"]):
+            cls._renderers[name] = renderer_class
+            return renderer_class
 
         return decorator
 
     @classmethod
-    def get_factories(cls) -> dict[str, type["RendererFactory"]]:
-        return cls._factories.copy()
+    def get_renderers(cls) -> dict[str, type["Renderer"]]:
+        return cls._renderers.copy()
