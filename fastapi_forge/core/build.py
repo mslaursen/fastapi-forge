@@ -6,7 +6,11 @@ from fastapi_forge.io import ArtifactBuilder, create_fastapi_project_builder
 from fastapi_forge.logger import logger
 from fastapi_forge.schemas import ProjectSpec
 
-from .cookiecutter_adapter import CookiecutterAdapter, OverwriteCookiecutterAdapter
+from .cookiecutter_adapter import (
+    CookiecutterAdapter,
+    DryRunCookiecutterAdapter,
+    OverwriteCookiecutterAdapter,
+)
 from .project_validators import ProjectNameValidator, ProjectValidator
 from .template_processors import DefaultTemplateProcessor, TemplateProcessor
 
@@ -19,12 +23,14 @@ class ProjectBuildDirector:
         template_generator: CookiecutterAdapter,
         template_resolver: Callable,
         project_validator: ProjectValidator | None = None,
+        dry_run: bool = False,
     ):
         self.builder = builder
         self.validator = project_validator
         self.template_processor = template_processor
         self.template_generator = template_generator
         self.template_resolver = template_resolver
+        self.dry_run = dry_run
 
     async def build(self, spec: ProjectSpec) -> None:
         if self.validator:
@@ -50,15 +56,22 @@ def _get_template_path() -> Path:
     return template_path
 
 
-async def build_fastapi_project(spec: ProjectSpec) -> None:
+async def build_fastapi_project(
+    spec: ProjectSpec,
+    dry_run: bool = False,
+) -> None:
     start_time = perf_counter()
+
+    template_generator = (
+        OverwriteCookiecutterAdapter() if not dry_run else DryRunCookiecutterAdapter()
+    )
 
     try:
         director = ProjectBuildDirector(
-            builder=create_fastapi_project_builder(spec),
+            builder=create_fastapi_project_builder(spec, dry_run=dry_run),
             project_validator=ProjectNameValidator(),
             template_processor=DefaultTemplateProcessor(),
-            template_generator=OverwriteCookiecutterAdapter(),
+            template_generator=template_generator,
             template_resolver=_get_template_path,
         )
 

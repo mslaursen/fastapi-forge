@@ -25,6 +25,7 @@ dependencies = [
     {%- endif %}
     "pytest>=8.3.4",
     "pytest-env>=1.1.5",
+    "pytest-cov>=6.1.1",
     "httpx==0.28.1",
     "factory-boy>=3.3.3",
     {%- if cookiecutter.use_redis -%}

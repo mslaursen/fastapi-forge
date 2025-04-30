@@ -49,11 +49,12 @@ def init(
     *,
     reload: bool = False,
     no_ui: bool = False,
+    dry_run: bool = False,
     project_spec: ProjectSpec | None = None,
 ) -> None:
     if project_spec:
         if no_ui:
-            asyncio.run(build_fastapi_project(project_spec))
+            asyncio.run(build_fastapi_project(project_spec, dry_run=dry_run))
             return
 
         state.initialize_from_project(project_spec)

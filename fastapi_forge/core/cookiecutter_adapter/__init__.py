@@ -1,4 +1,8 @@
-__all__ = ["CookiecutterAdapter", "OverwriteCookiecutterAdapter"]
+__all__ = [
+    "CookiecutterAdapter",
+    "DryRunCookiecutterAdapter",
+    "OverwriteCookiecutterAdapter",
+]
 
-from .adapters import OverwriteCookiecutterAdapter
+from .adapters import DryRunCookiecutterAdapter, OverwriteCookiecutterAdapter
 from .protocols import CookiecutterAdapter
