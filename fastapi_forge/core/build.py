@@ -2,8 +2,8 @@ from collections.abc import Callable
 from pathlib import Path
 from time import perf_counter
 
-from fastapi_forge.io import ArtifactBuilder, create_fastapi_project_builder
 from fastapi_forge.logger import logger
+from fastapi_forge.project_io import ArtifactBuilder, create_fastapi_project_builder
 from fastapi_forge.schemas import ProjectSpec
 
 from .cookiecutter_adapter import (
@@ -23,14 +23,12 @@ class ProjectBuildDirector:
         template_generator: CookiecutterAdapter,
         template_resolver: Callable,
         project_validator: ProjectValidator | None = None,
-        dry_run: bool = False,
     ):
         self.builder = builder
         self.validator = project_validator
         self.template_processor = template_processor
         self.template_generator = template_generator
         self.template_resolver = template_resolver
-        self.dry_run = dry_run
 
     async def build(self, spec: ProjectSpec) -> None:
         if self.validator:

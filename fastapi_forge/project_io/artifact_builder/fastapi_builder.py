@@ -13,7 +13,7 @@ from fastapi_forge.schemas import (
 )
 from fastapi_forge.utils.string_utils import camel_to_snake
 
-from ..file import IOWriter
+from ..io import IOWriter
 from .protocols import ArtifactBuilder
 
 TEST_RENDERERS: dict[HTTPMethodEnum, str] = {

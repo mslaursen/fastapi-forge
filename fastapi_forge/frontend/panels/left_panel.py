@@ -11,7 +11,7 @@ from fastapi_forge.frontend.constants import (
 )
 from fastapi_forge.frontend.notifications import notify_validation_error
 from fastapi_forge.frontend.state import state
-from fastapi_forge.io import create_yaml_project_exporter
+from fastapi_forge.project_io import create_yaml_project_exporter
 
 
 class NavigationTabs(ui.row):
