@@ -9,12 +9,22 @@ from fastapi_forge.io import (
 )
 
 
-@click.group()
-def main() -> None:
-    """FastAPI Forge CLI."""
+@click.group(
+    help="FastAPI Forge CLI - A tool for generating FastAPI projects.",
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
+@click.version_option(package_name="fastapi-forge")
+@click.option("-v", "--verbose", count=True, help="Increase verbosity level.")
+@click.pass_context
+def main(ctx: click.Context, verbose: int) -> None:
+    """FastAPI Forge CLI entry point."""
+    ctx.ensure_object(dict)
+    ctx.obj["verbose"] = verbose
 
 
-@main.command()
+@main.command(
+    help="Start FastAPI Forge - Generate a new FastAPI project.",
+)
 @click.option(
     "--use-example",
     is_flag=True,
@@ -23,11 +33,21 @@ def main() -> None:
 @click.option(
     "--no-ui",
     is_flag=True,
-    help="Generate the project directly in the terminal without launching the UI.",
+    help="Generate the project directly in the terminal without launching the UI (default: False).",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Perform a dry run without generating any files (requires --no-ui).",
 )
 @click.option(
     "--from-yaml",
-    type=click.Path(exists=True, dir_okay=False, readable=True),
+    type=click.Path(
+        exists=True,
+        dir_okay=False,
+        readable=True,
+        path_type=Path,
+    ),
     help="Generate a project using a custom configuration from a YAML file.",
 )
 @click.option(
@@ -35,45 +55,59 @@ def main() -> None:
     help="Generate a project from a PostgreSQL connection string "
     "(e.g., postgresql://user:password@host:port/dbname)",
 )
+@click.pass_context
 def start(
+    _: click.Context,
     use_example: bool = False,
     no_ui: bool = False,
-    from_yaml: str | None = None,
+    dry_run: bool = False,
+    from_yaml: Path | None = None,
     conn_string: str | None = None,
 ) -> None:
+    """Start FastAPI Forge."""
     option_count = sum([use_example, bool(from_yaml), bool(conn_string)])
     if option_count > 1:
-        msg = "Only one of '--use-example', '--from-yaml', or '--conn-string' can be used."
-        raise click.UsageError(msg)
+        raise click.UsageError(
+            "Only one of '--use-example', '--from-yaml', or '--conn-string' can be used."
+        )
 
     if no_ui and option_count < 1:
-        msg = "Option '--no-ui' requires one of '--use-example', '--from-yaml', or '--conn-string' to be set."
-        raise click.UsageError(msg)
+        raise click.UsageError(
+            "Option '--no-ui' requires one of '--use-example', '--from-yaml', or '--conn-string'."
+        )
+
+    if dry_run and not no_ui:
+        raise click.UsageError("Option '--dry-run' requires '--no-ui' to be set.")
 
     project_spec = None
 
     if from_yaml:
-        yaml_path = Path(from_yaml).expanduser().resolve()
-        if not yaml_path.is_file():
-            raise click.FileError(f"YAML file not found: {yaml_path}")
-        project_spec = YamlProjectLoader(project_path=yaml_path).load()
+        project_spec = YamlProjectLoader(project_path=from_yaml).load()
     elif conn_string:
         project_spec = create_postgres_project_loader(conn_string).load()
     elif use_example:
         base_path = Path(__file__).parent / "example-projects"
         path = base_path / "game_zone.yaml"
-
         project_spec = YamlProjectLoader(project_path=path).load()
 
-    init(project_spec=project_spec, no_ui=no_ui)
+    init(project_spec=project_spec, no_ui=no_ui, dry_run=dry_run)
 
+    click.secho("\n🎉 Project generated successfully!", fg="green", bold=True)
+    click.echo("\n🚀 Next steps to get started:\n")
 
-@main.command()
-def version() -> None:
-    """Print the version of FastAPI Forge."""
-    from importlib.metadata import version
+    steps = [
+        ("Navigate to your project directory", "cd your_project_name"),
+        ("Start the development environment", "make up  # or docker-compose up"),
+        ("(Optional) Run tests", "make test"),
+        ("Access the API documentation", "http://localhost:8000/docs"),
+    ]
 
-    click.echo(f"FastAPI Forge v{version('fastapi-forge')}.")
+    for i, (desc, cmd) in enumerate(steps, 1):
+        click.echo(f"{i}. {desc}:")
+        click.secho(f"   {cmd}", fg="cyan")
+
+    click.echo("\n💡 Pro tip: Run 'make help' to see all available commands")
+    click.secho("\n✨ Happy coding with your new FastAPI project!", fg="magenta")
 
 
 if __name__ in {"__main__", "__mp_main__"}:

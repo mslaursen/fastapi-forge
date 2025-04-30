@@ -4,13 +4,13 @@ import yaml
 
 from fastapi_forge.schemas import ProjectSpec
 
-from ..file import FileWriter
+from ..file import IOWriter
 from .protocols import ProjectExporter
 
 
 class YamlProjectExporter(ProjectExporter):
-    def __init__(self, file_writer: FileWriter):
-        self.file_writer = file_writer
+    def __init__(self, io_writer: IOWriter):
+        self.io_writer = io_writer
 
     async def export_project(self, project_spec: ProjectSpec) -> None:
         yaml_structure = {
@@ -19,7 +19,7 @@ class YamlProjectExporter(ProjectExporter):
             ),
         }
         file_path = Path.cwd() / f"{project_spec.project_name}.yaml"
-        await self.file_writer.write(
+        await self.io_writer.write_file(
             file_path,
             yaml.dump(
                 yaml_structure,

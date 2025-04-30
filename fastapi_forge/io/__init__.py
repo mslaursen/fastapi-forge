@@ -1,10 +1,10 @@
 __all__ = [
     "ArtifactBuilder",
-    "AsyncFileWriter",
+    "AsyncIOWriter",
     "DatabaseInspector",
     "DatabaseProjectLoader",
     "FastAPIArtifactBuilder",
-    "FileWriter",
+    "IOWriter",
     "PostgresInspector",
     "ProjectExporter",
     "ProjectLoader",
@@ -23,8 +23,7 @@ from fastapi_forge.schemas import ProjectSpec
 from .artifact_builder import ArtifactBuilder, FastAPIArtifactBuilder
 from .database import DatabaseInspector, PostgresInspector
 from .exporter import ProjectExporter, YamlProjectExporter
-from .file import FileWriter
-from .file.writer import AsyncFileWriter
+from .file import AsyncDryRunWriter, AsyncIOWriter
 from .loader import DatabaseProjectLoader, ProjectLoader, YamlProjectLoader
 
 
@@ -37,16 +36,18 @@ def load_from_database(conn_str: str, schema: str = "public") -> ProjectSpec:
     return DatabaseProjectLoader(inspector, schema).load()
 
 
-def create_fastapi_project_builder(spec: ProjectSpec) -> FastAPIArtifactBuilder:
+def create_fastapi_project_builder(
+    spec: ProjectSpec, dry_run: bool = False
+) -> FastAPIArtifactBuilder:
     return FastAPIArtifactBuilder(
         project_spec=spec,
-        file_writer=AsyncFileWriter(),
+        io_writer=AsyncDryRunWriter() if dry_run else AsyncIOWriter(),
     )
 
 
 def create_yaml_project_exporter() -> YamlProjectExporter:
     return YamlProjectExporter(
-        file_writer=AsyncFileWriter(),
+        io_writer=AsyncIOWriter(),
     )
 
 
