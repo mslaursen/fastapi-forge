@@ -3,6 +3,7 @@ __all__ = [
     "DTORenderer",
     "EnumRenderer",
     "ModelRenderer",
+    "Renderer",
     "RouterRenderer",
     "TestDeleteRenderer",
     "TestGetIdRenderer",
@@ -11,12 +12,13 @@ __all__ = [
     "TestPostRenderer",
 ]
 
-from .dao_renderer import DAORenderer
-from .dto_renderer import DTORenderer
-from .enum_renderer import EnumRenderer
-from .model_renderer import ModelRenderer
-from .router_renderer import RouterRenderer
-from .test_renderers import (
+from .renderers import (
+    DAORenderer,
+    DTORenderer,
+    EnumRenderer,
+    ModelRenderer,
+    Renderer,
+    RouterRenderer,
     TestDeleteRenderer,
     TestGetIdRenderer,
     TestGetRenderer,
