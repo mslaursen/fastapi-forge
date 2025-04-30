@@ -2,6 +2,8 @@ from collections.abc import Callable
 from pathlib import Path
 from time import perf_counter
 
+import click
+
 from fastapi_forge.logger import logger
 from fastapi_forge.project_io import ArtifactBuilder, create_fastapi_project_builder
 from fastapi_forge.schemas import ProjectSpec
@@ -76,7 +78,24 @@ async def build_fastapi_project(
         await director.build(spec)
 
         build_time = perf_counter() - start_time
-        logger.info(f"Project built successfully in {build_time:.2f} seconds.")
+        logger.info(f"Project build completed in {build_time:.2f} seconds")
+
+        click.secho("\n🎉 Project generated successfully !", fg="green", bold=True)
+        click.echo("\n🚀 Next steps to get started:\n")
+
+        steps = [
+            ("Navigate to your project directory", "cd your_project_name"),
+            ("Start the development environment", "make up  # or docker-compose up"),
+            ("(Optional) Run tests", "make test"),
+            ("Access the API documentation", "http://localhost:8000/docs"),
+        ]
+
+        for i, (desc, cmd) in enumerate(steps, 1):
+            click.echo(f"{i}. {desc}:")
+            click.secho(f"   {cmd}", fg="cyan")
+
+        click.echo("\n💡 Pro tip: Run 'make help' to see all available commands")
+        click.secho("\n✨ Happy coding with your new FastAPI project!", fg="magenta")
 
     except Exception as error:
         logger.error(f"Project build failed: {error}")
