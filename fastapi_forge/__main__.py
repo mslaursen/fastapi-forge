@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import click
@@ -7,6 +8,33 @@ from fastapi_forge.io import (
     YamlProjectLoader,
     create_postgres_project_loader,
 )
+
+
+def confirm_uv_installed() -> bool:
+    """Show UV requirement warning and get confirmation."""
+    click.secho(
+        "\n⚠️  Important Requirement (use the '--yes' option to skip)",
+        fg="yellow",
+        bold=True,
+    )
+    click.echo("Generated projects require UV to be installed.")
+    click.secho(
+        "GitHub: https://docs.astral.sh/uv/getting-started/installation",
+        fg="blue",
+        underline=True,
+    )
+
+    if not click.confirm(
+        "\nDo you have UV installed and ready to use?",
+        default=True,
+    ):
+        click.secho(
+            "\n❌ Please install UV first and restart this command.",
+            fg="red",
+        )
+        click.echo("Verify with: uv --version")
+        return False
+    return True
 
 
 @click.group(
@@ -51,6 +79,11 @@ def main(ctx: click.Context, verbose: int) -> None:
     help="Generate a project using a custom configuration from a YAML file.",
 )
 @click.option(
+    "--yes",
+    is_flag=True,
+    help="Automatically confirm all prompts (use with caution).",
+)
+@click.option(
     "--conn-string",
     help="Generate a project from a PostgreSQL connection string "
     "(e.g., postgresql://user:password@host:port/dbname)",
@@ -61,10 +94,14 @@ def start(
     use_example: bool = False,
     no_ui: bool = False,
     dry_run: bool = False,
+    yes: bool = False,
     from_yaml: Path | None = None,
     conn_string: str | None = None,
 ) -> None:
     """Start FastAPI Forge."""
+    if not yes and not confirm_uv_installed():
+        sys.exit(1)
+
     option_count = sum([use_example, bool(from_yaml), bool(conn_string)])
     if option_count > 1:
         raise click.UsageError(
