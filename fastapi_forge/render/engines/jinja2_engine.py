@@ -9,7 +9,7 @@ from .protocols import TemplateEngine
 
 
 class Jinja2Engine(TemplateEngine):
-    def __init__(self):
+    def __init__(self) -> None:
         self.env = Environment()
         self._register_core_filters()
 

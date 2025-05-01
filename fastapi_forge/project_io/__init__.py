@@ -10,7 +10,7 @@ __all__ = [
     "ProjectLoader",
     "YamlProjectExporter",
     "YamlProjectLoader",
-    "create_fastapi_project_builder",
+    "create_fastapi_artifact_builder",
     "create_postgres_project_loader",
     "create_yaml_project_exporter",
     "load_from_database",
@@ -36,7 +36,7 @@ def load_from_database(conn_str: str, schema: str = "public") -> ProjectSpec:
     return DatabaseProjectLoader(inspector, schema).load()
 
 
-def create_fastapi_project_builder(
+def create_fastapi_artifact_builder(
     spec: ProjectSpec, dry_run: bool = False
 ) -> FastAPIArtifactBuilder:
     return FastAPIArtifactBuilder(

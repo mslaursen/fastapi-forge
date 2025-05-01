@@ -1,3 +1,4 @@
+from typing import Any
 from urllib.parse import urlparse
 
 import psycopg2
@@ -38,7 +39,7 @@ class PostgresInspector(DatabaseInspector):
         )
         return dict(self.cursor.fetchall())
 
-    def fetch_enum_columns(self, schema: str) -> list[tuple]:
+    def fetch_enum_columns(self, schema: str) -> list[tuple[Any, ...]]:
         self.cursor.execute(
             """
             SELECT
@@ -65,7 +66,7 @@ class PostgresInspector(DatabaseInspector):
         )
         return self.cursor.fetchall()
 
-    def fetch_schema_tables(self, schema: str) -> list[tuple]:
+    def fetch_schema_tables(self, schema: str) -> list[tuple[Any, ...]]:
         self.cursor.execute(
             """
             SELECT
@@ -146,7 +147,7 @@ class PostgresInspector(DatabaseInspector):
     def get_db_name(self) -> str:
         return self.db_name
 
-    def __del__(self):
+    def __del__(self) -> None:
         if hasattr(self, "cursor"):
             self.cursor.close()
         if hasattr(self, "conn"):

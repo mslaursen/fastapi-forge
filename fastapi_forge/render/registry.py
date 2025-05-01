@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 if TYPE_CHECKING:
     from .renderers import Renderer
@@ -8,8 +8,8 @@ class RendererRegistry:
     _renderers: ClassVar[dict[str, type["Renderer"]]] = {}
 
     @classmethod
-    def register(cls, name: str):
-        def decorator(renderer_class: type["Renderer"]):
+    def register(cls, name: str) -> Any:
+        def decorator(renderer_class: type["Renderer"]) -> type["Renderer"]:
             cls._renderers[name] = renderer_class
             return renderer_class
 

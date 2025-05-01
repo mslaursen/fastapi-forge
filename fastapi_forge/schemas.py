@@ -297,7 +297,7 @@ class Model(_Base):
         create_daos = self.metadata.create_daos
         create_dtos = self.metadata.create_dtos
 
-        validation_rules = [
+        validation_rules: list[dict[str, Any]] = [
             {
                 "condition": create_endpoints,
                 "dependencies": {"DAOs": create_daos, "DTOs": create_dtos},

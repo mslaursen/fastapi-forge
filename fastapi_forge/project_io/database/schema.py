@@ -44,7 +44,9 @@ class SchemaInspector:
             raise ValueError(f"Database error: {e}") from e
 
     @staticmethod
-    def _build_enum_usage(enum_columns: list[tuple]) -> dict[str, list[dict[str, Any]]]:
+    def _build_enum_usage(
+        enum_columns: list[tuple[Any, ...]],
+    ) -> dict[str, list[dict[str, Any]]]:
         usage: dict[str, list[dict[str, Any]]] = {}
         for schema, table, column, data_type, enum_type in enum_columns:
             if enum_type not in usage:

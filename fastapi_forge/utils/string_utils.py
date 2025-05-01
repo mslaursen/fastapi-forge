@@ -5,7 +5,7 @@ import inflect
 p = inflect.engine()
 
 
-def camel_to_snake(s: str):
+def camel_to_snake(s: str) -> str:
     s = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", s)
     s = re.sub("__([A-Z])", r"_\1", s)
     s = re.sub("([a-z0-9])([A-Z])", r"\1_\2", s)
@@ -26,6 +26,6 @@ def pluralize(s: str) -> str:
 
 
 def number_to_word(v: int | str) -> str:
-    words = p.number_to_words(v)
+    words = p.number_to_words(v)  # type: ignore
     word: str = words[0] if isinstance(words, list) else words
     return word.replace(" ", "_")

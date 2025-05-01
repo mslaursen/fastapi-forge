@@ -62,8 +62,8 @@ class DatabaseProjectLoader(ProjectLoader):
         self,
         table_name: str,
         table_name_full: str,
-        columns_data: list[dict],
-        enum_column_lookup: dict,
+        columns_data: list[dict[str, Any]],
+        enum_column_lookup: dict[str, str],
     ) -> Model:
         fields = []
         relationships = []
@@ -101,7 +101,9 @@ class DatabaseProjectLoader(ProjectLoader):
         return Model(name=table_name, fields=fields, relationships=relationships)
 
     @staticmethod
-    def _process_column_defaults(column: dict[str, Any], data_type: Any) -> tuple:
+    def _process_column_defaults(
+        column: dict[str, Any], data_type: Any
+    ) -> tuple[str | None, dict[str, Any] | None]:
         default = None
         extra_kwargs = None
 
