@@ -12,6 +12,7 @@ dependencies = [
     "loguru>=0.7.3",
     "yarl>=1.18.3",
     "ruff>=0.9.4",
+    "mypy>=1.15.0",
     {%- if cookiecutter.use_postgres -%}
     "sqlalchemy[asyncio]>=2.0.37",
     "asyncpg>=0.30.0",
@@ -126,3 +127,15 @@ line-ending = "auto"
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "PT006"]
 "__init__.py" = ["F401"]
+
+[tool.mypy]
+warn_return_any = false
+namespace_packages = true
+strict = true
+ignore_missing_imports = true
+pretty = true
+show_error_codes = true
+implicit_reexport = true
+disable_error_code = ["prop-decorator", "override", "import-untyped"]
+plugins = ["pydantic.mypy", {% if cookiecutter.use_postgres -%}"sqlalchemy.ext.mypy.plugin"{% endif %}]
+exclude = ["migrations"]
