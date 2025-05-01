@@ -16,7 +16,7 @@ import sqlalchemy as sa
 
 
 PaginationType = PaginationParams | PaginationParamsSortBy
-QueryType = sa.Select[Any] | sa.Update[Any] | sa.Delete[Any]
+QueryType = sa.Select[Any] | sa.Update | sa.Delete
 
 
 class BaseDAO[
@@ -62,7 +62,7 @@ class BaseDAO[
 
         for key, value in filter_params.items():
             if hasattr(self.model, key):
-                query = query.filter(getattr(self.model, key) == value)
+                query = query.filter(getattr(self.model, key) == value)  # type: ignore
             else:
                 raise ValueError(f"Invalid filter parameter: {key}")
 

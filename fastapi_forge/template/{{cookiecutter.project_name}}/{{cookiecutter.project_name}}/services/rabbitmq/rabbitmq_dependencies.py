@@ -4,7 +4,7 @@ from typing import Annotated
 
 import aio_pika
 from aio_pika import ExchangeType, Message
-from aio_pika.abc import AbstractChannel
+from aio_pika.abc import AbstractChannel, AbstractExchange, AbstractQueue
 from aio_pika.pool import Pool
 from fastapi import Depends, Request
 from loguru import logger
@@ -142,7 +142,7 @@ async def _declare_exchange_and_queue(
     routing_key: str,
     exchange_type: ExchangeType = ExchangeType.TOPIC,
     queue_durable: bool = True,
-) -> tuple[aio_pika.Exchange, aio_pika.Queue]:
+) -> tuple[AbstractExchange, AbstractQueue]:
     """Declare an exchange and a queue, and bind them together."""
     exchange = await channel.declare_exchange(
         name=exchange_name,

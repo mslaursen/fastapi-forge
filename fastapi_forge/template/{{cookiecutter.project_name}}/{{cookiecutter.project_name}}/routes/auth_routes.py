@@ -44,7 +44,7 @@ async def login(
 async def register(
     input_dto: UserCreateDTO,
     daos: GetDAOs,
-) -> DataResponse:
+) -> DataResponse[CreatedResponse]:
     """Register by email and password."""
 
     user = await daos.{{ cookiecutter.auth_model.name }}.filter_first(email=input_dto.email)
@@ -60,7 +60,6 @@ async def register(
             ),
         )
     )
-
 
     return DataResponse(
         data=CreatedResponse(

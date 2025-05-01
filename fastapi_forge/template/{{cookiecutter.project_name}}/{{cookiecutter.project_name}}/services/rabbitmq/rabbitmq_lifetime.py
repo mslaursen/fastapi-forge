@@ -16,7 +16,7 @@ async def setup_rabbitmq(
     async def get_connection() -> AbstractRobustConnection:
         return await aio_pika.connect_robust(settings.rabbitmq.url)
 
-    connection_pool = Pool(
+    connection_pool: Pool[AbstractRobustConnection] = Pool(
         get_connection, max_size=settings.rabbitmq.connection_pool_size
     )
 
@@ -24,7 +24,7 @@ async def setup_rabbitmq(
         async with connection_pool.acquire() as connection:
             return await connection.channel()
 
-    channel_pool = Pool(get_channel, max_size=settings.rabbitmq.channel_pool_size)
+    channel_pool: Pool[aio_pika.Channel] = Pool(get_channel, max_size=settings.rabbitmq.channel_pool_size)
 
     for config in configs:
         await init_consumer(channel_pool, config)
