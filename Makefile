@@ -20,6 +20,7 @@ version: # Show the version of FastAPI Forge.
 lint: # Run linters on the codebase.
 	uv run ruff format
 	uv run ruff check . --fix --unsafe-fixes
+	uv run mypy fastapi_forge
 
 .PHONY: test
 test: # Run all tests in the codebase.
