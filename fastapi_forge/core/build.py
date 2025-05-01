@@ -5,7 +5,7 @@ from time import perf_counter
 import click
 
 from fastapi_forge.logger import logger
-from fastapi_forge.project_io import ArtifactBuilder, create_fastapi_project_builder
+from fastapi_forge.project_io import ArtifactBuilder, create_fastapi_artifact_builder
 from fastapi_forge.schemas import ProjectSpec
 
 from .cookiecutter_adapter import (
@@ -23,7 +23,7 @@ class ProjectBuildDirector:
         builder: ArtifactBuilder,
         template_processor: TemplateProcessor,
         template_generator: CookiecutterAdapter,
-        template_resolver: Callable,
+        template_resolver: Callable[[], Path],
         project_validator: ProjectValidator | None = None,
     ):
         self.builder = builder
@@ -68,7 +68,7 @@ async def build_fastapi_project(
 
     try:
         director = ProjectBuildDirector(
-            builder=create_fastapi_project_builder(spec, dry_run=dry_run),
+            builder=create_fastapi_artifact_builder(spec, dry_run=dry_run),
             project_validator=ProjectNameValidator(),
             template_processor=DefaultTemplateProcessor(),
             template_generator=template_generator,

@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Protocol
+from typing import Any, Protocol
 
 
 class DatabaseInspector(Protocol):
@@ -12,11 +12,11 @@ class DatabaseInspector(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    def fetch_enum_columns(self, schema: str) -> list[tuple]:
+    def fetch_enum_columns(self, schema: str) -> list[tuple[Any, ...]]:
         raise NotImplementedError
 
     @abstractmethod
-    def fetch_schema_tables(self, schema: str) -> list[tuple]:
+    def fetch_schema_tables(self, schema: str) -> list[tuple[Any, ...]]:
         raise NotImplementedError
 
     @abstractmethod

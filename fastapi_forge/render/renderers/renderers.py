@@ -24,10 +24,10 @@ class ModelRenderer(Renderer):
     def __init__(self, engine: TemplateEngine) -> None:
         self.engine = engine
 
-    def render(self, model: Model, **kwargs: Any) -> str:
+    def render(self, data: Model, **kwargs: Any) -> str:
         return self.engine.render(
             MODEL_TEMPLATE,
-            {"model": model, **kwargs},
+            {"model": data, **kwargs},
         )
 
 
@@ -36,10 +36,10 @@ class RouterRenderer(Renderer):
     def __init__(self, engine: TemplateEngine) -> None:
         self.engine = engine
 
-    def render(self, model: Model, **kwargs: Any) -> str:
+    def render(self, data: Model, **kwargs: Any) -> str:
         return self.engine.render(
             ROUTERS_TEMPLATE,
-            {"model": model, **kwargs},
+            {"model": data, **kwargs},
         )
 
 
@@ -48,10 +48,10 @@ class DAORenderer(Renderer):
     def __init__(self, engine: TemplateEngine) -> None:
         self.engine = engine
 
-    def render(self, model: Model, **kwargs: Any) -> str:
+    def render(self, data: Model, **kwargs: Any) -> str:
         return self.engine.render(
             DAO_TEMPLATE,
-            {"model": model, **kwargs},
+            {"model": data, **kwargs},
         )
 
 
@@ -60,10 +60,10 @@ class DTORenderer(Renderer):
     def __init__(self, engine: TemplateEngine) -> None:
         self.engine = engine
 
-    def render(self, model: Model, **kwargs: Any) -> str:
+    def render(self, data: Model, **kwargs: Any) -> str:
         return self.engine.render(
             DTO_TEMPLATE,
-            {"model": model, **kwargs},
+            {"model": data, **kwargs},
         )
 
 
@@ -72,10 +72,10 @@ class TestPostRenderer(Renderer):
     def __init__(self, engine: TemplateEngine) -> None:
         self.engine = engine
 
-    def render(self, model: Model, **kwargs: Any) -> str:
+    def render(self, data: Model, **kwargs: Any) -> str:
         return self.engine.render(
             TEST_POST_TEMPLATE,
-            {"model": model, **kwargs},
+            {"model": data, **kwargs},
         )
 
 
@@ -84,10 +84,10 @@ class TestGetRenderer(Renderer):
     def __init__(self, engine: TemplateEngine) -> None:
         self.engine = engine
 
-    def render(self, model: Model, **kwargs: Any) -> str:
+    def render(self, data: Model, **kwargs: Any) -> str:
         return self.engine.render(
             TEST_GET_TEMPLATE,
-            {"model": model, **kwargs},
+            {"model": data, **kwargs},
         )
 
 
@@ -96,10 +96,10 @@ class TestGetIdRenderer(Renderer):
     def __init__(self, engine: TemplateEngine) -> None:
         self.engine = engine
 
-    def render(self, model: Model, **kwargs: Any) -> str:
+    def render(self, data: Model, **kwargs: Any) -> str:
         return self.engine.render(
             TEST_GET_ID_TEMPLATE,
-            {"model": model, **kwargs},
+            {"model": data, **kwargs},
         )
 
 
@@ -108,10 +108,10 @@ class TestPatchRenderer(Renderer):
     def __init__(self, engine: TemplateEngine) -> None:
         self.engine = engine
 
-    def render(self, model: Model, **kwargs: Any) -> str:
+    def render(self, data: Model, **kwargs: Any) -> str:
         return self.engine.render(
             TEST_PATCH_TEMPLATE,
-            {"model": model, **kwargs},
+            {"model": data, **kwargs},
         )
 
 
@@ -120,10 +120,10 @@ class TestDeleteRenderer(Renderer):
     def __init__(self, engine: TemplateEngine) -> None:
         self.engine = engine
 
-    def render(self, model: Model, **kwargs: Any) -> str:
+    def render(self, data: Model, **kwargs: Any) -> str:
         return self.engine.render(
             TEST_DELETE_TEMPLATE,
-            {"model": model, **kwargs},
+            {"model": data, **kwargs},
         )
 
 
@@ -132,8 +132,8 @@ class EnumRenderer(Renderer):
     def __init__(self, engine: TemplateEngine) -> None:
         self.engine = engine
 
-    def render(self, enums: list[CustomEnum], **kwargs: Any) -> str:
+    def render(self, data: list[CustomEnum], **kwargs: Any) -> str:
         return self.engine.render(
             ENUMS_TEMPLATE,
-            {"enums": enums, **kwargs},
+            {"enums": data, **kwargs},
         )
