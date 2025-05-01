@@ -17,12 +17,14 @@ jobs:
         run: uv sync --all-extras --dev
       - name: Lint with Ruff
         run: uv run ruff check .
+      - name: Static type check with mypy
+        run: uv run mypy {{ cookiecutter.project_name }}
   {%- if cookiecutter.use_postgres %}
   test:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:13.8-bullseye
+        image: postgres:17.4-bookworm
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres

@@ -1,3 +1,4 @@
+from typing import Any
 import taskiq_fastapi
 from taskiq import AsyncBroker, InMemoryBroker
 from taskiq.serializers import ORJSONSerializer
@@ -11,7 +12,7 @@ broker: AsyncBroker
 if settings.env == "test":
     broker = InMemoryBroker(await_inplace=True)
 else:
-    result_backend = RedisAsyncResultBackend(str(settings.redis.url))
+    result_backend: RedisAsyncResultBackend[Any] = RedisAsyncResultBackend(str(settings.redis.url))
     broker = AioPikaBroker(
         str(settings.rabbitmq.url),
     ).with_result_backend(result_backend)
