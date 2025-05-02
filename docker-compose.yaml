@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:13.8-bullseye
+    image: postgres:17.4-bookworm
     hostname: forge
     container_name: forge
     environment:

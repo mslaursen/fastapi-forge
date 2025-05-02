@@ -3,15 +3,15 @@ from pathlib import Path
 from nicegui import ui
 from pydantic import ValidationError
 
-from fastapi_forge.frontend import EnumRow, ModelCreate, ModelRow
-from fastapi_forge.frontend.components.item_create import EnumCreate
+from fastapi_forge.frontend.components.item_create import EnumCreate, ModelCreate
+from fastapi_forge.frontend.components.item_row import EnumRow, ModelRow
 from fastapi_forge.frontend.constants import (
     SELECTED_ENUM_TEXT_COLOR,
     SELECTED_MODEL_TEXT_COLOR,
 )
 from fastapi_forge.frontend.notifications import notify_validation_error
 from fastapi_forge.frontend.state import state
-from fastapi_forge.project_io import ProjectExporter
+from fastapi_forge.project_io import create_yaml_project_exporter
 
 
 class NavigationTabs(ui.row):
@@ -54,12 +54,12 @@ class ExportButton:
     async def _export_project(self) -> None:
         """Export the project configuration to a YAML file."""
         try:
-            project_input = state.get_project_spec()
-            exporter = ProjectExporter(project_input)
-            await exporter.export_project()
+            spec = state.get_project_spec()
+            exporter = create_yaml_project_exporter()
+            await exporter.export_project(spec)
             ui.notify(
                 "Project configuration exported to "
-                f"{Path.cwd() / project_input.project_name}.yaml",
+                f"{Path.cwd() / spec.project_name}.yaml",
                 type="positive",
             )
         except ValidationError as exc:

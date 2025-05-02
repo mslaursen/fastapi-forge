@@ -1,7 +1,8 @@
 # 🚀 FastAPI-Forge  
 ⚡ UI Based FastAPI Project Generator  
 
-✨ *Define your database models through a UI, select services, and get a complete production-ready containerized project with tests and endpoints!*  
+✨ *Define your database models through a UI, select services, and get a complete production-ready containerized project with tests and endpoints!* 
+
 
 ## 🔥 Features  
 
@@ -18,7 +19,7 @@
 - 📦 [Pydantic](https://github.com/pydantic/pydantic) Schemas  
 - 🌐 RESTful Endpoints (CRUD + more)  
 - 🧪 Comprehensive Test Suite (pytest)  
-- 🏗️ DAOs (Database Access Objects)  
+- 🏗️ DAOs (Database Access Objects)
 - 🏭 [Factory Boy](https://github.com/FactoryBoy/factory_boy) Test Factories  
 - 🐳 [Docker Compose](https://github.com/docker/compose) Setup  
 

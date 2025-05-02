@@ -4,16 +4,8 @@ from nicegui import ui
 from nicegui.events import ValueChangeEventArguments
 from pydantic import ValidationError
 
-from fastapi_forge.dtos import (
-    CustomEnum,
-    CustomEnumValue,
-    Model,
-    ModelField,
-    ModelFieldMetadata,
-    ModelMetadata,
-)
+from fastapi_forge.core.build import build_fastapi_project
 from fastapi_forge.enums import FieldDataTypeEnum
-from fastapi_forge.forge import build_project
 from fastapi_forge.frontend.constants import (
     DEFAULT_AUTH_USER_FIELDS,
     DEFAULT_AUTH_USER_ROLE_ENUM_NAME,
@@ -23,7 +15,15 @@ from fastapi_forge.frontend.notifications import (
     notify_value_error,
 )
 from fastapi_forge.frontend.state import state
-from fastapi_forge.project_io import ProjectLoader
+from fastapi_forge.project_io import create_postgres_project_loader
+from fastapi_forge.schemas import (
+    CustomEnum,
+    CustomEnumValue,
+    Model,
+    ModelField,
+    ModelFieldMetadata,
+    ModelMetadata,
+)
 from fastapi_forge.type_info_registry import enum_registry
 
 
@@ -63,9 +63,8 @@ class ProjectConfigPanel(ui.right_drawer):
                 return
 
             enum_registry.clear()
-            project_spec = ProjectLoader.load_from_conn_string(
-                conn_string=conn_string,
-            )
+            postgres_loader = create_postgres_project_loader(conn_string=conn_string)
+            project_spec = postgres_loader.load()
 
             state.initialize_from_project(project_spec)
             self.upload_menu.close()
@@ -425,7 +424,7 @@ class ProjectConfigPanel(ui.right_drawer):
             state.use_prometheus = self.use_prometheus.value
 
             project_spec = state.get_project_spec()
-            await build_project(project_spec)
+            await build_fastapi_project(project_spec)
 
             ui.notify(
                 "Project successfully generated at: "

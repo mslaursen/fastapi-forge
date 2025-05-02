@@ -1,7 +1,7 @@
 from typing import Any
 
-from fastapi_forge.dtos import ModelField
 from fastapi_forge.enums import FieldDataTypeEnum
+from fastapi_forge.schemas import ModelField
 
 SELECTED_MODEL_TEXT_COLOR = "text-black-500 dark:text-amber-300"
 SELECTED_ENUM_TEXT_COLOR = "text-black-500 dark:text-amber-300"

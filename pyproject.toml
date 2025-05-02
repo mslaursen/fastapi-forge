@@ -16,6 +16,8 @@ dependencies = [
     "ruff",
     "psycopg2-binary>=2.9.10",
     "inflect>=7.5.0",
+    "pytest-cov>=6.1.1",
+    "mypy>=1.15.0",
 ]
 authors = [{ name = "mslaursen", email = "mslaursendk@gmail.com" }]
 
@@ -28,7 +30,7 @@ Repository = "https://github.com/mslaursen/fastapi-forge.git"
 fastapi-forge = "fastapi_forge.__main__:main"
 
 [tool.ruff]
-exclude = ["template", "__init__.py"]
+exclude = ["template"]
 target-version = "py312"
 line-length = 88
 indent-width = 4
@@ -47,6 +49,7 @@ ignore = [
 
     #### specific rules
     "A002",
+    "ARG002",
     "BLE001",
     "D100",
     "D101",
@@ -65,6 +68,7 @@ ignore = [
     "D415",
     "E402",
     "E501",
+    "EM101",
     "EM102",
     "ERA001",
     "FBT001",
@@ -87,14 +91,30 @@ ignore = [
 ]
 
 [tool.ruff.format]
+skip-magic-trailing-comma = false
 quote-style = "double"
 indent-style = "space"
-skip-magic-trailing-comma = false
 line-ending = "auto"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "PT006"]
 "__init__.py" = ["F401"]
+
+[tool.mypy]
+warn_return_any = false
+namespace_packages = true
+strict = true
+ignore_missing_imports = true
+pretty = true
+show_error_codes = true
+implicit_reexport = true
+disable_error_code = ["prop-decorator", "override", "import-untyped"]
+plugins = ["pydantic.mypy"]
+exclude = ["fastapi_forge/frontend", "fastapi_forge/template"]
+
+[[tool.mypy.overrides]]
+module = ["fastapi_forge/frontend.*"]
+follow_imports = "silent"
 
 [tool.pytest]
 testpaths = ["tests", "integration"]

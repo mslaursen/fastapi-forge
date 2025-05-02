@@ -2,14 +2,6 @@ from collections.abc import Callable
 
 from pydantic import BaseModel, ValidationError
 
-from fastapi_forge.dtos import (
-    CustomEnum,
-    CustomEnumValue,
-    Model,
-    ModelField,
-    ModelRelationship,
-    ProjectSpec,
-)
 from fastapi_forge.enums import FieldDataTypeEnum
 from fastapi_forge.frontend.notifications import (
     notify_enum_exists,
@@ -17,6 +9,17 @@ from fastapi_forge.frontend.notifications import (
     notify_something_went_wrong,
     notify_validation_error,
 )
+from fastapi_forge.render import create_jinja_render_manager
+from fastapi_forge.render.manager import RenderManager
+from fastapi_forge.schemas import (
+    CustomEnum,
+    CustomEnumValue,
+    Model,
+    ModelField,
+    ModelRelationship,
+    ProjectSpec,
+)
+from fastapi_forge.type_info_registry import enum_registry
 
 
 class ProjectState(BaseModel):
@@ -52,6 +55,10 @@ class ProjectState(BaseModel):
     use_rabbitmq: bool = False
     use_taskiq: bool = False
     use_prometheus: bool = False
+
+    def get_render_manager(self) -> RenderManager:
+        """Get the render manager for the current project."""
+        return create_jinja_render_manager(project_name=self.project_name)
 
     def switch_item_editor(
         self,
@@ -164,6 +171,7 @@ class ProjectState(BaseModel):
     def delete_enum(self, enum: CustomEnum) -> None:
         """Remove an enum from the project."""
         self.custom_enums.remove(enum)
+        enum_registry.remove(enum.name)
         self._deselect_content()
         self._trigger_ui_refresh()
 
@@ -176,6 +184,7 @@ class ProjectState(BaseModel):
             notify_enum_exists(new_name)
             return
 
+        enum_registry.update_key(enum.name, new_name)
         enum.name = new_name
 
         if enum == self.selected_enum and self.select_enum_fn:

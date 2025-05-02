@@ -1,6 +1,7 @@
 from nicegui import ui
 
-from fastapi_forge.frontend import EnumEditorPanel, ModelEditorPanel
+from fastapi_forge.frontend.panels.enum_editor_panel import EnumEditorPanel
+from fastapi_forge.frontend.panels.model_editor_panel import ModelEditorPanel
 from fastapi_forge.frontend.state import state
 
 
