@@ -9,6 +9,7 @@ dependencies = [
     "uvicorn>=0.34.0",
     "pydantic-settings>=2.7.1",
     "pydantic>=2.10.6",
+    "email-validator>=2.2.0",
     "loguru>=0.7.3",
     "yarl>=1.18.3",
     "ruff>=0.9.4",

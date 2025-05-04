@@ -18,12 +18,12 @@ router = APIRouter(prefix="/{{ model.name_plural_hyphen }}")
 async def create_{{ model.name }}(
     input_dto: {{ model.name_cc }}InputDTO,
     daos: GetDAOs,
-) -> DataResponse[CreatedResponse]:
+) -> DataResponse[{{ model.name_cc }}DTO]:
     \"\"\"Create a new {{ model.name_cc }}.\"\"\"
 
-    created_id = await daos.{{ model.name }}.create(input_dto)
+    created_obj = await daos.{{ model.name }}.create(input_dto)
     return DataResponse(
-        data=CreatedResponse(id=created_id),
+        data={{ model.name_cc }}DTO.model_validate(created_obj)
     )
 
 
@@ -55,7 +55,7 @@ async def get_{{ model.name }}_paginated(
     daos: GetDAOs,
     pagination: Pagination,
 ) -> OffsetResults[{{ model.name_cc }}DTO]:
-    \"\"\"Get all {{ model.name_cc }}s paginated.\"\"\"
+    \"\"\"Get all {{ model.name_plural_cc }} paginated.\"\"\"
 
     return await daos.{{ model.name }}.get_offset_results(
         out_dto={{ model.name_cc }}DTO,

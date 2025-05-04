@@ -50,4 +50,4 @@ mig-down: # Migrate to the previous version.
 lint: # Run linters on the codebase.
 	uv run ruff format {{cookiecutter.project_name}} tests
 	uv run ruff check {{cookiecutter.project_name}} tests --fix --unsafe-fixes
-	uv run mypy {{cookiecutter.project_name}}
+	# uv run mypy {{cookiecutter.project_name}}

@@ -10,10 +10,10 @@ from uuid import UUID
 URI = "/api/v1/{{ model.name_plural_hyphen }}/"
 
 @pytest.mark.anyio
-async def test_get_{{ model.name }}s(client: AsyncClient,) -> None:
+async def test_get_{{ model.name_plural }}(client: AsyncClient,) -> None:
     \"\"\"Test get {{ model.name_cc }}: 200.\"\"\"
 
-    {{ model.name }}s = await factories.{{ model.name_cc }}Factory.create_batch(3)
+    {{ model.name_plural }} = await factories.{{ model.name_cc }}Factory.create_batch(3)
 
     response = await client.get(URI)
     assert response.status_code == 200
@@ -21,8 +21,10 @@ async def test_get_{{ model.name }}s(client: AsyncClient,) -> None:
     response_data = response.json()["data"]
     assert len(response_data) == 3
 
-    for {{ model.name }} in {{ model.name }}s:
-        assert any({{ model.name }}.id == UUID(item["id"]) for item in response_data)
+    for {{ model.name }},  data in zip({{ model.name_plural }}, response_data, strict=True):
+        {% for field in model.primary_key_fields %}
+        assert {{ model.name }}.{{ field.name }} == {% if field.type_info.encapsulate_assert %}{{ field.type_info.encapsulate_assert }}(data["{{ field.name }}"]){% else %}data["{{ field.name }}"]{% endif %}
+        {%- endfor %}
 """
 
 
@@ -81,12 +83,12 @@ async def test_post_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> Non
     {%- endfor %}
 
     input_json = {
-        {%- for field in model.fields  if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or field.primary_key or not field.type_info.test_value) -%}
-        {%- if not field.primary_key and field.name.endswith('_id') and field.metadata.is_foreign_key -%}
+        {%- for field in model.fields  if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or (field.primary_key and not model.is_composite) or not field.type_info.test_value) -%}
+        {% if field.metadata.is_foreign_key %}
         "{{ field.name }}": str({{ field.name | replace('_id', '.id') }}),
-        {%- elif not field.primary_key %}
+        {% else %}
         "{{ field.name }}": {{ field.type_info.test_value }}{{ field.type_info.test_func if field.type_info.test_func else '' }},
-        {%- endif %}
+        {% endif %}
         {%- endfor %}
     }
 
@@ -94,7 +96,11 @@ async def test_post_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> Non
     assert response.status_code == 201
 
     response_data = response.json()["data"]
-    db_{{ model.name }} = await daos.{{ model.name }}.filter_first(id=response_data["id"])
+    db_{{ model.name }} = await daos.{{ model.name }}.filter_first(
+        {% for field in model.primary_key_fields %}
+        {{ field.name }}=response_data["{{ field.name }}"],
+        {%- endfor %}
+    )
 
     assert db_{{ model.name }} is not None
     {%- for field in model.fields if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or field.primary_key or not field.type_info.test_value) %}

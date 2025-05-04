@@ -59,13 +59,11 @@ class BaseDAO[
         T: QueryType,
     ](self, query: T, **filter_params: Any) -> T:
         """Apply filters to query."""
-
         for key, value in filter_params.items():
             if hasattr(self.model, key):
                 query = query.filter(getattr(self.model, key) == value)  # type: ignore
             else:
                 raise ValueError(f"Invalid filter parameter: {key}")
-
         return query
 
     def _apply_base_filter(
@@ -75,15 +73,11 @@ class BaseDAO[
         **filter_params: Any,
     ) -> sa.Select[tuple[Model]]:
         """Get records by filter parameters."""
-
         if query is None:
             query = sa.select(self.model)
-
         query = self._apply_param_filters(query, **filter_params)
-
         if loads is not None:
             query = query.options(*loads)
-
         return query
 
     def _apply_sort(
@@ -93,14 +87,11 @@ class BaseDAO[
         sort_order: str,
     ) -> sa.Select[tuple[Model]]:
         """Apply sorting to query."""
-
         if hasattr(self.model, sort_by) is False:
             raise ValueError(f"Invalid sort parameter: {sort_by}")
-
         query = query.order_by(
             getattr(sa, sort_order)(getattr(self.model, sort_by)),
         )
-
         return query
 
     async def _compute_offset_pagination(
@@ -108,7 +99,6 @@ class BaseDAO[
         query: sa.Select[tuple[Model]],
     ) -> OffsetPaginationMetadata:
         """Compute offset pagination metadata."""
-
         count_query = sa.select(sa.func.count()).select_from(query.subquery())
         result = await self.session.execute(count_query)
         total = result.scalar_one_or_none() or 0
@@ -122,15 +112,11 @@ class BaseDAO[
         self,
         input_dto: InputDTO,
     ) -> Model:
-        """Create a new record, returning its ID."""
-
-        id = uuid4()
+        """Create and return a new record."""
         record = self.model(
-            id=id,
             **input_dto.model_dump(),
         )
         self.session.add(record)
-
         await self.session.commit()
         return record
 
@@ -140,9 +126,7 @@ class BaseDAO[
         **filter_params: Any,
     ) -> Sequence[Model] | None:
         """Get records by filter parameters."""
-
         query = self._apply_base_filter(loads=loads, **filter_params)
-
         result = await self.session.execute(query)
         return result.scalars().all()
 
@@ -152,10 +136,8 @@ class BaseDAO[
         **filter_params: Any,
     ) -> Model | None:
         """Get a single record by filter parameters."""
-
         query = self._apply_base_filter(loads=loads, **filter_params)
         query = query.limit(1)
-
         result = await self.session.execute(query)
         return result.scalars().first()
 
@@ -165,7 +147,6 @@ class BaseDAO[
         update_dto: UpdateDTO,
     ) -> None:
         """Update a record by ID."""
-
         update_dict = update_dto.model_dump(exclude_none=True)
         if not update_dict:
             return
@@ -184,11 +165,8 @@ class BaseDAO[
         **filter_params: Any,
     ) -> None:
         """Delete records by filter parameters."""
-
         query = sa.delete(self.model)
-
         query = self._apply_param_filters(query, **filter_params)
-
         await self.session.execute(query)
         await self.session.commit()
 
@@ -221,26 +199,3 @@ class BaseDAO[
             data=[out_dto.model_validate(row) for row in results.scalars()],
             pagination=computed_pagination,
         )
-
-
-class BaseCompositeDAO[
-    Model: Base,
-    InputDTO: BaseModel,
-    UpdateDTO: BaseModel,
-](
-    BaseDAO[
-        Model,
-        InputDTO,
-        UpdateDTO,
-    ]
-):
-    """Base class for models with composite keys."""
-
-    async def create(self, input_dto: InputDTO) -> Model:
-        record = self.model(
-            **input_dto.model_dump(),
-        )
-        self.session.add(record)
-
-        await self.session.commit()
-        return record
