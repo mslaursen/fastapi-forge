@@ -59,6 +59,12 @@ RELATIONSHIP_COLUMNS: list[dict[str, Any]] = [
         "align": "left",
     },
     {
+        "name": "primary_key",
+        "label": "Composite Key",
+        "field": "primary_key",
+        "align": "center",
+    },
+    {
         "name": "on_delete",
         "label": "On Delete",
         "field": "on_delete",

@@ -1,20 +1,19 @@
 import asyncio
 from pathlib import Path
 
-from fastapi_forge.enums import FieldDataTypeEnum, HTTPMethodEnum
+from fastapi_forge.enums import HTTPMethodEnum
 from fastapi_forge.logger import logger
 from fastapi_forge.render import create_jinja_render_manager
 from fastapi_forge.render.manager import RenderManager
 from fastapi_forge.schemas import (
     Model,
-    ModelField,
-    ModelFieldMetadata,
     ProjectSpec,
 )
 from fastapi_forge.utils.string_utils import camel_to_snake
 
 from ..io import IOWriter
 from .protocols import ArtifactBuilder
+from .utils import insert_relation_fields
 
 TEST_RENDERERS: dict[HTTPMethodEnum, str] = {
     HTTPMethodEnum.GET: "test_get",
@@ -42,7 +41,7 @@ class FastAPIArtifactBuilder(ArtifactBuilder):
         self.render_manager = render_manager or create_jinja_render_manager(
             project_name=self.project_name
         )
-        self._insert_relation_fields()
+        insert_relation_fields(self.project_spec)
 
     async def build_artifacts(self) -> None:
         """Builds the project artifacts based on the project specification."""
@@ -69,25 +68,6 @@ class FastAPIArtifactBuilder(ArtifactBuilder):
 
         await asyncio.gather(*tasks)
         logger.info(f"Project artifacts for '{self.project_name}' built successfully.")
-
-    def _insert_relation_fields(self) -> None:
-        """Adds ModelFields to a model, based on its relationships."""
-        for model in self.project_spec.models:
-            field_names_set = {field.name for field in model.fields}
-            for relation in model.relationships:
-                if relation.field_name in field_names_set:
-                    continue
-                model.fields.append(
-                    ModelField(
-                        name=relation.field_name,
-                        type=FieldDataTypeEnum.UUID,
-                        primary_key=False,
-                        nullable=relation.nullable,
-                        unique=relation.unique,
-                        index=relation.index,
-                        metadata=ModelFieldMetadata(is_foreign_key=True),
-                    ),
-                )
 
     async def _init_project_directories(self) -> None:
         await self.io_writer.write_directory(self.project_dir)

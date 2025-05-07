@@ -93,9 +93,6 @@ class DatabaseProjectLoader(ProjectLoader):
                 self._process_column_defaults(column, data_type)
             )
 
-            if column["primary_key"]:
-                column["name"] = "id"
-
             fields.append(ModelField(**column))
 
         return Model(name=table_name, fields=fields, relationships=relationships)

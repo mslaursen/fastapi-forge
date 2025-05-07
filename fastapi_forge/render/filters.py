@@ -6,9 +6,6 @@ class JinjaFilters:
     def generate_field(
         field: ModelField, relationships: list[ModelRelationship] | None = None
     ) -> str:
-        if field.primary_key:
-            return ""
-
         target = None
         if field.metadata.is_foreign_key and relationships is not None:
             target = next(

@@ -189,6 +189,8 @@ class ModelRelationship(_Base):
     target_model: ModelName
     back_populates: BackPopulates | None = None
     on_delete: OnDeleteEnum
+    # a relation can be a primary key, if it makes up a composite key
+    primary_key: bool = False
     nullable: bool = False
     unique: bool = False
     index: bool = False
@@ -217,7 +219,6 @@ class ModelMetadata(_Base):
     create_tests: bool = True
     create_daos: bool = True
     create_dtos: bool = True
-
     is_auth_model: bool = False
 
 
@@ -236,8 +237,49 @@ class Model(_Base):
 
     @computed_field
     @property
+    def name_plural(self) -> str:
+        return pluralize(self.name)
+
+    @computed_field
+    @property
     def name_plural_hyphen(self) -> str:
-        return pluralize(self.name.replace("_", "-"))
+        return self.name_plural.replace("_", "-")
+
+    @computed_field
+    @property
+    def name_plural_cc(self) -> str:
+        return snake_to_camel(self.name_plural)
+
+    @computed_field
+    @property
+    def primary_key_fields(self) -> list[ModelField]:
+        return [field for field in self.fields if field.primary_key]
+
+    @computed_field
+    @property
+    def primary_key_fields_repr(self) -> str:
+        return ", ".join([f"{field.name}" for field in self.primary_key_fields])
+
+    @computed_field
+    @property
+    def is_composite(self) -> bool:
+        return len(self.primary_key_fields) > 1
+
+    @computed_field
+    @property
+    def table_args(self) -> str:
+        """Returns the __table_args__ section for SQLAlchemy model."""
+        if not self.is_composite:
+            return ""
+        args = []
+        if self.is_composite:
+            primary_keys = [
+                f'"{field.name}"' for field in self.fields if field.primary_key
+            ]
+            args.append(
+                f"__table_args__ = (sa.PrimaryKeyConstraint({', '.join(primary_keys)}),)"
+            )
+        return "\n".join(args)
 
     @property
     def fields_sorted(self) -> list[ModelField]:
@@ -262,13 +304,44 @@ class Model(_Base):
         return primary_keys + other_fields + created_at + updated_at + foreign_keys
 
     @model_validator(mode="after")
+    def _validate_primary_key(self) -> Self:
+        """
+        Validates that the model has a properly configured primary key:
+        - At least one PK field must exist.
+        - If using only relation-based PKs, at least two are required (for composite keys).
+        - A single relation-based PK is allowed only if a non-relation PK also exists.
+        """
+        pk_fields = self.primary_key_fields
+        if not pk_fields:
+            raise ValueError(
+                f"Model '{self.name}' has no primary key defined. "
+                "At least one primary key field is required."
+            )
+        relation_w_pks = {
+            relation.field_name
+            for relation in self.relationships
+            if relation.primary_key
+        }
+        all_pks = {field.name for field in pk_fields}
+        # primary key fields that do not stem from a relation
+        non_relation_pks = all_pks.difference(relation_w_pks)
+
+        # no non-relation field primary key(s),
+        # and not enough primary keys to make up a composite key
+        if not non_relation_pks and len(all_pks) <= 1:
+            raise ValueError(
+                f"Model '{self.name}' has insufficient primary keys. "
+                "Either add a non-relation primary key field or "
+                "at least two relation-based primary keys for a composite key."
+            )
+
+        return self
+
+    @model_validator(mode="after")
     def _validate(self) -> Self:
         field_names = [field.name for field in self.fields]
         if len(field_names) != len(set(field_names)):
             raise ValueError(f"Model '{self.name}' contains duplicate fields.")
-
-        if sum(field.primary_key for field in self.fields) != 1:
-            raise ValueError(f"Model '{self.name}' must have exactly one primary key.")
 
         unique_relationships = [
             relationship.field_name for relationship in self.relationships
@@ -342,7 +415,7 @@ class Model(_Base):
                 ModelField(
                     name=relation.field_name,
                     type=FieldDataTypeEnum.UUID,
-                    primary_key=False,
+                    primary_key=relation.primary_key,
                     nullable=relation.nullable,
                     unique=relation.unique,
                     index=relation.index,

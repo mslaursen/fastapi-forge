@@ -3,6 +3,7 @@ import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import JSONB
 from uuid import UUID
+import uuid
 from typing import Any, Annotated
 from datetime import datetime, timezone,  timedelta
 from {{ project_name }} import enums
@@ -28,4 +29,6 @@ class {{ model.name_cc }}(Base):
     {% for relation in model.relationships -%}
     {{ relation | generate_relationship(model.name_cc == relation.target) }}
     {% endfor %}
+
+    {{ model.table_args }}
 """

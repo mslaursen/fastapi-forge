@@ -318,6 +318,7 @@ class ModelEditorPanel(ui.card):
         field_name: str,
         target_model: str,
         on_delete: OnDeleteEnum,
+        primary_key: bool,
         nullable: bool,
         index: bool,
         unique: bool,
@@ -354,6 +355,7 @@ class ModelEditorPanel(ui.card):
                 field_name=field_name,
                 target_model=target_model_instance.name,
                 back_populates=back_populates,
+                primary_key=primary_key,
                 nullable=nullable,
                 index=index,
                 unique=unique,
@@ -485,14 +487,6 @@ class ModelEditorPanel(ui.card):
             self._deselect_field()
             return
 
-        if name == "id":
-            self._deselect_field()
-            ui.notify(
-                "Cannot edit the 'id' field, it is automatically generated.",
-                type="warning",
-            )
-            return
-
         state.selected_field = next(
             (field for field in state.selected_model.fields if field.name == name), None
         )
@@ -528,15 +522,11 @@ class ModelEditorPanel(ui.card):
         if not state.selected_model or not state.selected_field:
             return
 
-        exclude_set = {"id"}
         if (
             state.selected_model
             and state.selected_model.metadata.is_auth_model
             and state.use_builtin_auth
         ):
-            exclude_set.update({"email", "password"})
-
-        if name in exclude_set:
             return
 
         try:
@@ -644,11 +634,7 @@ class ModelEditorPanel(ui.card):
             self._refresh_relationship_table(state.selected_model.relationships)
 
     def _delete_field(self) -> None:
-        if (
-            state.selected_model
-            and state.selected_field
-            and state.selected_field.name != "id"
-        ):
+        if state.selected_model and state.selected_field:
             self._delete(state.selected_field)
 
     def set_selected_model(self, model: Model) -> None:
