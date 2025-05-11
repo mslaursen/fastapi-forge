@@ -117,7 +117,7 @@ class BaseDAO[
             **input_dto.model_dump(),
         )
         self.session.add(record)
-        await self.session.commit()
+        await self.session.flush()
         return record
 
     async def filter(
@@ -158,7 +158,6 @@ class BaseDAO[
             )
         )
         await self.session.execute(query)
-        await self.session.commit()
 
     async def delete(
         self,
@@ -168,7 +167,6 @@ class BaseDAO[
         query = sa.delete(self.model)
         query = self._apply_param_filters(query, **filter_params)
         await self.session.execute(query)
-        await self.session.commit()
 
     async def get_offset_results[
         T: BaseModel
