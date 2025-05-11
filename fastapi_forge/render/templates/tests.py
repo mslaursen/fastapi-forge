@@ -45,11 +45,11 @@ async def test_get_{{ model.name }}_by_id(client: AsyncClient,) -> None:
 
     {{ model.name }} = await factories.{{ model.name_cc }}Factory.create()
 
-    response = await client.get(URI.format({{ model.name }}_id={{ model.name }}.id))
+    response = await client.get(URI.format({{ model.name }}_id={{ model.name }}.{{ model.primary_key.name }}))
     assert response.status_code == 200
 
     response_data = response.json()["data"]
-    assert response_data["id"] == str({{ model.name }}.id)
+    assert response_data["{{ model.primary_key.name }}"] == str({{ model.name }}.{{ model.primary_key.name }})
     {%- for field in model.fields %}
     {%- if not field.primary_key and field.name.endswith('_id') %}
     assert response_data["{{ field.name }}"] == str({{ model.name }}.{{ field.name }})
@@ -83,7 +83,7 @@ async def test_post_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> Non
     {%- endfor %}
 
     input_json = {
-        {%- for field in model.fields  if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or (field.primary_key and not model.is_composite) or not field.type_info.test_value) -%}
+        {%- for field in model.fields  if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or not field.type_info.test_value) -%}
         {% if field.metadata.is_foreign_key %}
         "{{ field.name }}": str({{ field.name | replace('_id', '.id') }}),
         {% else %}
@@ -154,10 +154,10 @@ async def test_patch_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> No
         {%- endfor %}
     }
 
-    response = await client.patch(URI.format({{ model.name }}_id={{ model.name }}.id), json=input_json)
+    response = await client.patch(URI.format({{ model.name }}_id={{ model.name }}.{{ model.primary_key.name }}), json=input_json)
     assert response.status_code == 200
 
-    db_{{ model.name }} = await daos.{{ model.name }}.filter_first(id={{ model.name }}.id)
+    db_{{ model.name }} = await daos.{{ model.name }}.filter_first({{ model.primary_key.name }}={{ model.name }}.{{ model.primary_key.name }})
 
     assert db_{{ model.name }} is not None
     {%- for field in model.fields if not (field.metadata.is_created_at_timestamp or field.metadata.is_updated_at_timestamp or field.primary_key or not field.type_info.test_value) %}
@@ -196,9 +196,9 @@ async def test_delete_{{ model.name }}(client: AsyncClient, daos: AllDAOs,) -> N
 
     {{ model.name }} = await factories.{{ model.name_cc }}Factory.create()
 
-    response = await client.delete(URI.format({{ model.name }}_id={{ model.name }}.id))
+    response = await client.delete(URI.format({{ model.name }}_id={{ model.name }}.{{ model.primary_key.name }}))
     assert response.status_code == 200
 
-    db_{{ model.name }} = await daos.{{ model.name }}.filter_first(id={{ model.name }}.id)
+    db_{{ model.name }} = await daos.{{ model.name }}.filter_first({{ model.primary_key.name }}={{ model.name }}.{{ model.primary_key.name }})
     assert db_{{ model.name }} is None
 """

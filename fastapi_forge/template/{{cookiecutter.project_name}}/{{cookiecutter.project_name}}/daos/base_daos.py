@@ -152,7 +152,7 @@ class BaseDAO[
             return
         query = (
             sa.update(self.model)
-            .where(self.model.id == id)
+            .where(self.model.get_primary_key_column() == id)
             .values(
                 **update_dict,
             )

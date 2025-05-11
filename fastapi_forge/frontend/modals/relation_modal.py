@@ -39,7 +39,6 @@ class BaseRelationModal(ui.dialog, ABC):
                     )
 
                 with ui.row().classes("w-full justify-between gap-4"):
-                    self.primary_key = ui.checkbox("Composite Key").props("dense")
                     self.nullable = ui.checkbox("Nullable").props("dense")
                     self.index = ui.checkbox("Index").props("dense")
                     self.unique = ui.checkbox("Unique").props("dense")
@@ -56,7 +55,6 @@ class BaseRelationModal(ui.dialog, ABC):
         self.target_model.value = None
         self.back_populates.value = ""
         self.on_delete.value = None
-        self.primary_key.value = False
         self.nullable.value = False
         self.index.value = False
         self.unique.value = False
@@ -82,7 +80,6 @@ class AddRelationModal(BaseRelationModal):
                 field_name=self.field_name.value,
                 target_model=self.target_model.value,
                 back_populates=self.back_populates.value or None,
-                primary=self.primary_key.value,
                 nullable=self.nullable.value,
                 index=self.index.value,
                 unique=self.unique.value,

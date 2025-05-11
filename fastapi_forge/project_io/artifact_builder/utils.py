@@ -13,7 +13,6 @@ def insert_relation_fields(project_spec: ProjectSpec) -> None:
                 ModelField(
                     name=relation.field_name,
                     type=FieldDataTypeEnum.UUID,
-                    primary_key=relation.primary_key,
                     nullable=relation.nullable,
                     unique=relation.unique,
                     index=relation.index,

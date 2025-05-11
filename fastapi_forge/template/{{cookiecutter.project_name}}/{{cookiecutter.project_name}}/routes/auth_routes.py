@@ -33,7 +33,7 @@ async def login(
 
     token = auth_utils.create_access_token(
         data=TokenData(
-            user_id=user.{{ cookiecutter.auth_model.primary_key_fields_repr }}
+            user_id=user.{{ cookiecutter.auth_model.primary_key.name }}
         )
     )
 

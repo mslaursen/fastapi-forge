@@ -46,7 +46,7 @@ async def delete_{{ model.name }}(
 ) -> EmptyResponse:
     \"\"\"Delete a {{ model.name_cc }} by id.\"\"\"
 
-    await daos.{{ model.name }}.delete(id={{ model.name }}_id)
+    await daos.{{ model.name }}.delete({{ model.primary_key.name }}={{ model.name }}_id)
     return EmptyResponse()
 
 
@@ -70,6 +70,6 @@ async def get_{{ model.name }}(
 ) -> DataResponse[{{ model.name_cc }}DTO]:
     \"\"\"Get a {{ model.name_cc }} by id.\"\"\"
 
-    {{ model.name }} = await daos.{{ model.name }}.filter_first(id={{ model.name }}_id)
+    {{ model.name }} = await daos.{{ model.name }}.filter_first({{ model.primary_key.name }}={{ model.name }}_id)
     return DataResponse(data={{ model.name_cc }}DTO.model_validate({{ model.name }}))
 """

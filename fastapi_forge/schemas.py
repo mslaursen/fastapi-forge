@@ -189,8 +189,6 @@ class ModelRelationship(_Base):
     target_model: ModelName
     back_populates: BackPopulates | None = None
     on_delete: OnDeleteEnum
-    # a relation can be a primary key, if it makes up a composite key
-    primary_key: bool = False
     nullable: bool = False
     unique: bool = False
     index: bool = False
@@ -257,13 +255,13 @@ class Model(_Base):
 
     @computed_field
     @property
-    def primary_key_fields_repr(self) -> str:
-        return ", ".join([f"{field.name}" for field in self.primary_key_fields])
+    def primary_key(self) -> ModelField:
+        return self.primary_key_fields[0]
 
     @computed_field
     @property
     def is_composite(self) -> bool:
-        return len(self.primary_key_fields) > 1
+        return False
 
     @computed_field
     @property
@@ -305,34 +303,14 @@ class Model(_Base):
 
     @model_validator(mode="after")
     def _validate_primary_key(self) -> Self:
-        """
-        Validates that the model has a properly configured primary key:
-        - At least one PK field must exist.
-        - If using only relation-based PKs, at least two are required (for composite keys).
-        - A single relation-based PK is allowed only if a non-relation PK also exists.
-        """
         pk_fields = self.primary_key_fields
         if not pk_fields:
-            raise ValueError(
-                f"Model '{self.name}' has no primary key defined. "
-                "At least one primary key field is required."
-            )
-        relation_w_pks = {
-            relation.field_name
-            for relation in self.relationships
-            if relation.primary_key
-        }
-        all_pks = {field.name for field in pk_fields}
-        # primary key fields that do not stem from a relation
-        non_relation_pks = all_pks.difference(relation_w_pks)
+            raise ValueError(f"Model '{self.name}' has no primary key defined. ")
 
-        # no non-relation field primary key(s),
-        # and not enough primary keys to make up a composite key
-        if not non_relation_pks and len(all_pks) <= 1:
+        if len(pk_fields) > 1:
             raise ValueError(
-                f"Model '{self.name}' has insufficient primary keys. "
-                "Either add a non-relation primary key field or "
-                "at least two relation-based primary keys for a composite key."
+                f"Model '{self.name}' has multiple primary keys. "
+                "Currently only 1 is supported."
             )
 
         return self
@@ -415,7 +393,6 @@ class Model(_Base):
                 ModelField(
                     name=relation.field_name,
                     type=FieldDataTypeEnum.UUID,
-                    primary_key=relation.primary_key,
                     nullable=relation.nullable,
                     unique=relation.unique,
                     index=relation.index,

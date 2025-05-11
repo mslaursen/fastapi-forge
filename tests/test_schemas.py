@@ -327,87 +327,6 @@ def test_project_spec_auth_requires_postgres() -> None:
 #########
 
 
-def test_model_primary_key_relation_composite() -> None:
-    Model(
-        name="test",
-        fields=[
-            ModelField(
-                name="other_id",
-                type=FieldDataTypeEnum.UUID,
-                primary_key=True,
-            ),
-            ModelField(
-                name="other2_id",
-                type=FieldDataTypeEnum.UUID,
-                primary_key=True,
-            ),
-        ],
-        relationships=[
-            ModelRelationship(
-                field_name="other_id",
-                target_model="other",
-                on_delete=OnDeleteEnum.CASCADE,
-                primary_key=True,
-            ),
-            ModelRelationship(
-                field_name="other2_id",
-                target_model="other2",
-                on_delete=OnDeleteEnum.CASCADE,
-                primary_key=True,
-            ),
-        ],
-    )
-
-
-def test_model_primary_key_mixed_composite() -> None:
-    Model(
-        name="test",
-        fields=[
-            ModelField(
-                name="id",
-                type=FieldDataTypeEnum.UUID,
-                primary_key=True,
-            ),
-            ModelField(
-                name="other_id",
-                type=FieldDataTypeEnum.UUID,
-                primary_key=True,
-            ),
-        ],
-        relationships=[
-            ModelRelationship(
-                field_name="other_id",
-                target_model="other",
-                on_delete=OnDeleteEnum.CASCADE,
-                primary_key=True,
-            ),
-        ],
-    )
-
-
-def test_model_primary_key_single_relation_composite() -> None:
-    with pytest.raises(ValidationError) as exc_info:
-        Model(
-            name="test",
-            fields=[
-                ModelField(
-                    name="other_id",
-                    type=FieldDataTypeEnum.UUID,
-                    primary_key=True,
-                ),
-            ],
-            relationships=[
-                ModelRelationship(
-                    field_name="other_id",
-                    target_model="other",
-                    on_delete=OnDeleteEnum.CASCADE,
-                    primary_key=True,
-                ),
-            ],
-        )
-    assert "Model 'test' has insufficient primary keys." in str(exc_info.value)
-
-
 def test_model_missing_primary_key() -> None:
     with pytest.raises(ValidationError) as exc_info:
         Model(
@@ -420,3 +339,23 @@ def test_model_missing_primary_key() -> None:
             ],
         )
     assert "Model 'test' has no primary key defined." in str(exc_info.value)
+
+
+def test_model_multiple_primary_keys() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        Model(
+            name="test",
+            fields=[
+                ModelField(
+                    name="id0",
+                    type=FieldDataTypeEnum.UUID,
+                    primary_key=True,
+                ),
+                ModelField(
+                    name="id1",
+                    type=FieldDataTypeEnum.UUID,
+                    primary_key=True,
+                ),
+            ],
+        )
+    assert "Model 'test' has multiple primary keys." in str(exc_info.value)
