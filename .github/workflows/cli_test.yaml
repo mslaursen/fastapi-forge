@@ -17,4 +17,8 @@ jobs:
         run: uv sync --all-extras --dev
       - name: Generate example project
         run: uv run -m fastapi_forge start --use-example --no-ui --yes
+      - name: Run
+        working-directory: ./game_zone
+        run: make up
+      - name: Run tests
       
