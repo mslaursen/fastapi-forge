@@ -5,6 +5,20 @@ on: [push]
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17.4-bookworm
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432
+        options: >-
+          --health-cmd "pg_isready"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - name: Install uv
@@ -17,9 +31,9 @@ jobs:
         run: uv sync --all-extras --dev
       - name: Generate example project
         run: uv run -m fastapi_forge start --use-example --no-ui --yes
-      - name: Run
-        working-directory: ./game_zone
-        run: make up
       - name: Run tests
         working-directory: ./game_zone
-        run: make test
+        env:
+          GAME_ZONE_PG_HOST: localhost
+          GAME_ZONE_PG_PORT: ${{ job.services.postgres.ports['5432'] }}
+        run: uv run pytest ./tests -v -s
