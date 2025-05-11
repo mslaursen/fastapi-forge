@@ -1,7 +1,8 @@
-import sqlalchemy as sa
-import uuid
+from typing import Any
 
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+import sqlalchemy as sa
+from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.sql.elements import NamedColumn
 
 
 meta = sa.MetaData()
@@ -14,8 +15,7 @@ class Base(DeclarativeBase):
 
     __tablename__: str
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        sa.UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid.uuid4,
-    )
+    @classmethod
+    def get_primary_key_column(cls) -> NamedColumn[Any]:
+        return next(iter(cls.__table__.primary_key))
+

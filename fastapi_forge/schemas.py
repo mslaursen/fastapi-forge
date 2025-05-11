@@ -217,7 +217,6 @@ class ModelMetadata(_Base):
     create_tests: bool = True
     create_daos: bool = True
     create_dtos: bool = True
-
     is_auth_model: bool = False
 
 
@@ -236,8 +235,49 @@ class Model(_Base):
 
     @computed_field
     @property
+    def name_plural(self) -> str:
+        return pluralize(self.name)
+
+    @computed_field
+    @property
     def name_plural_hyphen(self) -> str:
-        return pluralize(self.name.replace("_", "-"))
+        return self.name_plural.replace("_", "-")
+
+    @computed_field
+    @property
+    def name_plural_cc(self) -> str:
+        return snake_to_camel(self.name_plural)
+
+    @computed_field
+    @property
+    def primary_key_fields(self) -> list[ModelField]:
+        return [field for field in self.fields if field.primary_key]
+
+    @computed_field
+    @property
+    def primary_key(self) -> ModelField:
+        return self.primary_key_fields[0]
+
+    @computed_field
+    @property
+    def is_composite(self) -> bool:
+        return False
+
+    @computed_field
+    @property
+    def table_args(self) -> str:
+        """Returns the __table_args__ section for SQLAlchemy model."""
+        if not self.is_composite:
+            return ""
+        args = []
+        if self.is_composite:
+            primary_keys = [
+                f'"{field.name}"' for field in self.fields if field.primary_key
+            ]
+            args.append(
+                f"__table_args__ = (sa.PrimaryKeyConstraint({', '.join(primary_keys)}),)"
+            )
+        return "\n".join(args)
 
     @property
     def fields_sorted(self) -> list[ModelField]:
@@ -262,13 +302,24 @@ class Model(_Base):
         return primary_keys + other_fields + created_at + updated_at + foreign_keys
 
     @model_validator(mode="after")
+    def _validate_primary_key(self) -> Self:
+        pk_fields = self.primary_key_fields
+        if not pk_fields:
+            raise ValueError(f"Model '{self.name}' has no primary key defined. ")
+
+        if len(pk_fields) > 1:
+            raise ValueError(
+                f"Model '{self.name}' has multiple primary keys. "
+                "Currently only 1 is supported."
+            )
+
+        return self
+
+    @model_validator(mode="after")
     def _validate(self) -> Self:
         field_names = [field.name for field in self.fields]
         if len(field_names) != len(set(field_names)):
             raise ValueError(f"Model '{self.name}' contains duplicate fields.")
-
-        if sum(field.primary_key for field in self.fields) != 1:
-            raise ValueError(f"Model '{self.name}' must have exactly one primary key.")
 
         unique_relationships = [
             relationship.field_name for relationship in self.relationships
@@ -342,7 +393,6 @@ class Model(_Base):
                 ModelField(
                     name=relation.field_name,
                     type=FieldDataTypeEnum.UUID,
-                    primary_key=False,
                     nullable=relation.nullable,
                     unique=relation.unique,
                     index=relation.index,
