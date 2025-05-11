@@ -36,4 +36,7 @@ jobs:
         env:
           GAME_ZONE_PG_HOST: localhost
           GAME_ZONE_PG_PORT: ${{ job.services.postgres.ports['5432'] }}
+          GAME_ZONE_PG_USER: postgres
+          GAME_ZONE_PG_PASSWORD: postgres
+          GAME_ZONE_PG_DATABASE: postgres
         run: uv run pytest ./tests -v -s
