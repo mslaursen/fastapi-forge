@@ -13,6 +13,7 @@ __all__ = [
     "create_fastapi_artifact_builder",
     "create_postgres_project_loader",
     "create_yaml_project_exporter",
+    "insert_relation_fields",
     "load_from_database",
     "load_from_yaml",
 ]
@@ -20,7 +21,11 @@ from pathlib import Path
 
 from fastapi_forge.schemas import ProjectSpec
 
-from .artifact_builder import ArtifactBuilder, FastAPIArtifactBuilder
+from .artifact_builder import (
+    ArtifactBuilder,
+    FastAPIArtifactBuilder,
+    insert_relation_fields,
+)
 from .database import DatabaseInspector, PostgresInspector
 from .exporter import ProjectExporter, YamlProjectExporter
 from .io import AsyncDryRunWriter, AsyncIOWriter

@@ -186,6 +186,13 @@ class ModelEditorPanel(ui.card):
                         .tooltip("Quick-Add"),
                         ui.menu(),
                     ):
+                        self.primary_key_item = ui.menu_item(
+                            "Primary Key",
+                            on_click=lambda: self._toggle_quick_add(
+                                "id",
+                                is_primary_key=True,
+                            ),
+                        )
                         self.created_at_item = ui.menu_item(
                             "Created At",
                             on_click=lambda: self._toggle_quick_add(
@@ -259,10 +266,30 @@ class ModelEditorPanel(ui.card):
     def _toggle_quick_add(
         self,
         name: str,
+        is_primary_key: bool = False,
         is_created_at_timestamp: bool = False,
         is_updated_at_timestamp: bool = False,
     ) -> None:
         if not state.selected_model:
+            return
+
+        if is_primary_key:
+            existing_pk = next(
+                (field for field in state.selected_model.fields if field.primary_key),
+                None,
+            )
+            if existing_pk:
+                self._delete(existing_pk)
+                return
+
+            self._add_field(
+                name=name,
+                type="UUID",
+                primary_key=True,
+                nullable=False,
+                unique=True,
+                index=True,
+            )
             return
 
         attr = (
@@ -378,6 +405,7 @@ class ModelEditorPanel(ui.card):
             return
         self.table.rows = [field.model_dump() for field in fields]
 
+        quick_add_primary_key_enabled = any(field.primary_key for field in fields)
         quick_add_created_at_enabled = any(
             field.metadata.is_created_at_timestamp for field in fields
         )
@@ -385,6 +413,7 @@ class ModelEditorPanel(ui.card):
             field.metadata.is_updated_at_timestamp for field in fields
         )
 
+        self.primary_key_item.enabled = not quick_add_primary_key_enabled
         self.created_at_item.enabled = not quick_add_created_at_enabled
         self.updated_at_item.enabled = not quick_add_updated_at_enabled
 
@@ -485,14 +514,6 @@ class ModelEditorPanel(ui.card):
             self._deselect_field()
             return
 
-        if name == "id":
-            self._deselect_field()
-            ui.notify(
-                "Cannot edit the 'id' field, it is automatically generated.",
-                type="warning",
-            )
-            return
-
         state.selected_field = next(
             (field for field in state.selected_model.fields if field.name == name), None
         )
@@ -528,15 +549,11 @@ class ModelEditorPanel(ui.card):
         if not state.selected_model or not state.selected_field:
             return
 
-        exclude_set = {"id"}
         if (
             state.selected_model
             and state.selected_model.metadata.is_auth_model
             and state.use_builtin_auth
         ):
-            exclude_set.update({"email", "password"})
-
-        if name in exclude_set:
             return
 
         try:
@@ -644,11 +661,7 @@ class ModelEditorPanel(ui.card):
             self._refresh_relationship_table(state.selected_model.relationships)
 
     def _delete_field(self) -> None:
-        if (
-            state.selected_model
-            and state.selected_field
-            and state.selected_field.name != "id"
-        ):
+        if state.selected_model and state.selected_field:
             self._delete(state.selected_field)
 
     def set_selected_model(self, model: Model) -> None:

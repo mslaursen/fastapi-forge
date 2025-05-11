@@ -320,3 +320,42 @@ def test_project_spec_auth_requires_postgres() -> None:
     assert "Cannot use built-in auth if PostgreSQL is not enabled." in str(
         exc_info.value
     )
+
+
+#########
+# Model #
+#########
+
+
+def test_model_missing_primary_key() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        Model(
+            name="test",
+            fields=[
+                ModelField(
+                    name="test",
+                    type=FieldDataTypeEnum.STRING,
+                ),
+            ],
+        )
+    assert "Model 'test' has no primary key defined." in str(exc_info.value)
+
+
+def test_model_multiple_primary_keys() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        Model(
+            name="test",
+            fields=[
+                ModelField(
+                    name="id0",
+                    type=FieldDataTypeEnum.UUID,
+                    primary_key=True,
+                ),
+                ModelField(
+                    name="id1",
+                    type=FieldDataTypeEnum.UUID,
+                    primary_key=True,
+                ),
+            ],
+        )
+    assert "Model 'test' has multiple primary keys." in str(exc_info.value)

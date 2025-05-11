@@ -1,6 +1,6 @@
 {%- if cookiecutter.use_builtin_auth %}
 from fastapi import APIRouter
-from {{cookiecutter.project_name}}.dtos.auth_dtos import UserLoginDTO, UserCreateDTO, LoginResponse, TokenData
+from {{cookiecutter.project_name}}.dtos.auth_dtos import UserLoginDTO, UserCreateDTO, UserCreateResponseDTO, LoginResponse, TokenData
 from {{cookiecutter.project_name}}.dtos.{{ cookiecutter.auth_model.name }}_dtos import {{ cookiecutter.auth_model.name_cc }}DTO, {{ cookiecutter.auth_model.name_cc }}InputDTO
 from {{cookiecutter.project_name}}.dtos import DataResponse, CreatedResponse
 from {{cookiecutter.project_name}}.daos import GetDAOs
@@ -33,7 +33,7 @@ async def login(
 
     token = auth_utils.create_access_token(
         data=TokenData(
-            user_id=user.id,
+            user_id=user.{{ cookiecutter.auth_model.primary_key.name }}
         )
     )
 
@@ -44,15 +44,15 @@ async def login(
 async def register(
     input_dto: UserCreateDTO,
     daos: GetDAOs,
-) -> DataResponse[CreatedResponse]:
+) -> DataResponse[UserCreateResponseDTO]:
     """Register by email and password."""
 
-    user = await daos.{{ cookiecutter.auth_model.name }}.filter_first(email=input_dto.email)
+    existing_obj = await daos.{{ cookiecutter.auth_model.name }}.filter_first(email=input_dto.email)
 
-    if user:
+    if existing_obj:
         raise exceptions.Http401("User already exists")
 
-    user_id = await daos.{{ cookiecutter.auth_model.name }}.create(
+    created_obj = await daos.{{ cookiecutter.auth_model.name }}.create(
         {{ cookiecutter.auth_model.name_cc }}InputDTO(
             email=input_dto.email,
             password=auth_utils.hash_password(
@@ -62,9 +62,7 @@ async def register(
     )
 
     return DataResponse(
-        data=CreatedResponse(
-            id=user_id,
-        )
+        data=UserCreateResponseDTO.model_validate(created_obj)
     )
 
 
