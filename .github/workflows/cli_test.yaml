@@ -1,4 +1,4 @@
-name: CLI Test
+name: Test CLI Generated Project
 
 on: [push]
 
