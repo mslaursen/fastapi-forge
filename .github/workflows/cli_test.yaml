@@ -3,7 +3,7 @@ name: CLI Test
 on: [push]
 
 jobs:
-  tempo:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
