@@ -1,0 +1,42 @@
+name: Test CLI Generated Project
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17.4-bookworm
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432
+        options: >-
+          --health-cmd "pg_isready"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: "pyproject.toml"
+      - name: Install the project
+        run: uv sync --all-extras --dev
+      - name: Generate example project
+        run: uv run -m fastapi_forge start --use-example --no-ui --yes
+      - name: Run tests
+        working-directory: ./game_zone
+        env:
+          GAME_ZONE_PG_HOST: localhost
+          GAME_ZONE_PG_PORT: ${{ job.services.postgres.ports['5432'] }}
+          GAME_ZONE_PG_USER: postgres
+          GAME_ZONE_PG_PASSWORD: postgres
+          GAME_ZONE_PG_DATABASE: postgres
+        run: uv run pytest ./tests -v -s
