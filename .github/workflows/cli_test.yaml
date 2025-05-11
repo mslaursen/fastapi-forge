@@ -21,4 +21,5 @@ jobs:
         working-directory: ./game_zone
         run: make up
       - name: Run tests
-      
+        working-directory: ./game_zone
+        run: make test
