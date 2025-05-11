@@ -15,3 +15,6 @@ jobs:
           python-version-file: "pyproject.toml"
       - name: Install the project
         run: uv sync --all-extras --dev
+      - name: Generate example project
+        run: python -m fastapi_forge start --use-example --no-ui --yes
+      
