@@ -56,7 +56,7 @@
 
 
 
-  ## ✅ Requirements
+## ✅ Requirements
 - Python 3.12+
 - UV
 - Docker and Docker Compose (for running the generated project)
