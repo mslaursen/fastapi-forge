@@ -414,6 +414,7 @@ class ProjectSpec(_Base):
     use_rabbitmq: bool = False
     use_taskiq: bool = False
     use_prometheus: bool = False
+    use_logfire: bool = False
     models: list[Model] = []
     custom_enums: list[CustomEnum] = []
 

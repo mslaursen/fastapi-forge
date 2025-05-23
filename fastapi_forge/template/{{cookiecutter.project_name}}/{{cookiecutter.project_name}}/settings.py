@@ -102,15 +102,31 @@ class JWTSettings(BaseSettings):
 
     secret: SecretStr = SecretStr("")
     algorithm: str = "HS256"
+
+    model_config = SettingsConfigDict(
+        env_file=".env", env_prefix=f"{PREFIX}JWT_"
+    )
 {% endif %}
 
 {% if cookiecutter.use_prometheus %}
 class PrometheusSettings(BaseSettings):
     enabled: bool = True
+
     model_config = SettingsConfigDict(
         env_file=".env", env_prefix=f"{PREFIX}PROMETHEUS_"
     )
 {% endif %}
+
+{% if cookiecutter.use_logfire %}
+class LogfireSettings(BaseSettings):
+    enabled: bool = True
+    write_token: SecretStr = SecretStr("")
+    
+    model_config = SettingsConfigDict(
+        env_file=".env", env_prefix=f"{PREFIX}LOGFIRE_"
+    )
+{% endif %}
+
 
 class Settings(BaseSettings):
     """Main settings."""
@@ -134,8 +150,11 @@ class Settings(BaseSettings):
     {%- if cookiecutter.use_rabbitmq -%}
     rabbitmq: RabbitMQSettings = RabbitMQSettings()
     {% endif %}
-    {% if cookiecutter.use_prometheus %}
+    {%- if cookiecutter.use_prometheus -%}
     prometheus: PrometheusSettings = PrometheusSettings()
+    {% endif %}
+    {%- if cookiecutter.use_logfire -%}
+    logfire: LogfireSettings = LogfireSettings()
     {% endif %}
     model_config = SettingsConfigDict(
         env_file=DOTENV,
