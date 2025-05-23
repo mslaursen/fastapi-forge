@@ -6,6 +6,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 {% endif %}
 {% if cookiecutter.use_logfire %}
 import logfire
+from loguru import logger
 {% endif %}
 
 def _add_cors_middleware(app: FastAPI) -> None:
@@ -30,6 +31,8 @@ def _add_logfire_middleware(app: FastAPI) -> None:
         )
         logfire.instrument_fastapi(app, capture_headers=True)
         logfire.instrument_asyncpg()
+        logfire.instrument_system_metrics()
+        logger.configure(handlers=[logfire.loguru_handler()])
 {% endif %}
 def add_middleware(app: FastAPI) -> None:
     """Add all middlewares."""

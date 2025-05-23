@@ -48,7 +48,7 @@ dependencies = [
     "prometheus-fastapi-instrumentator>=7.1.0",
     {%- endif %}
     {%- if cookiecutter.use_logfire -%}
-    "logfire[asyncpg,fastapi]>=3.16.0",
+    "logfire[aio-pika,asyncpg,fastapi,httpx,sqlalchemy,system-metrics]>=3.16.0",
     {%- endif %}
 ]
 
