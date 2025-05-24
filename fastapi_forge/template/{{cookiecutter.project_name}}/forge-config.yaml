@@ -39,6 +39,11 @@ paths:
     paths:
       - observability/prometheus
 
+  use_logfire:
+    enabled: {{cookiecutter.use_logfire | lower}}
+    paths:
+      - observability/logfire
+
   constants:
     requires_all:
       - use_builtin_auth
@@ -49,6 +54,7 @@ paths:
   observability:
     requires_all:
       - use_prometheus
+      - use_logfire
     paths:
       - observability
 

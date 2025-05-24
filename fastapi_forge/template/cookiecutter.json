@@ -23,6 +23,9 @@
     "use_prometheus": {
         "default": true
     },
+    "use_logfire": {
+        "default": true
+    },
     "models": {
         "models": []
     },

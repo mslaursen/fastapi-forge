@@ -13,7 +13,7 @@ services:
       - "5432:5432"
     restart: always
     healthcheck:
-      test: pg_isready -U forge
+      test: pg_isready -U postgres
       interval: 2s
       timeout: 3s
       retries: 40

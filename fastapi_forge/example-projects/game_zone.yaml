@@ -7,6 +7,7 @@ project:
   use_rabbitmq: true
   use_taskiq: true
   use_prometheus: true
+  use_logfire: true
 
   custom_enums:
     - name: UserRole
