@@ -206,12 +206,17 @@ class ProjectConfigPanel(ui.right_drawer):
                 )
 
             with ui.column().classes("w-full gap-2"):
-                ui.label("Metrics").classes("text-lg font-bold")
+                ui.label("Observability").classes("text-lg font-bold")
                 self.use_prometheus = (
                     ui.checkbox("Prometheus", value=state.use_prometheus)
                     .classes("w-full")
                     .bind_value_from(state, "use_prometheus")
                     .tooltip("Collect and query metrics with Prometheus")
+                )
+                self.use_logfire = (
+                    ui.checkbox("Logfire", value=state.use_logfire)
+                    .classes("w-full")
+                    .bind_value_from(state, "use_logfire")
                 )
 
             with ui.column().classes("w-full gap-2"):
@@ -247,6 +252,7 @@ class ProjectConfigPanel(ui.right_drawer):
         )
         self.use_taskiq.bind_value_to(state, "use_taskiq")
         self.use_prometheus.bind_value_to(state, "use_prometheus")
+        self.use_logfire.bind_value_to(state, "use_logfire")
 
     def _update_taskiq_state(self, *_) -> None:
         """Enable or disable Taskiq based on Redis and RabbitMQ."""
@@ -422,6 +428,7 @@ class ProjectConfigPanel(ui.right_drawer):
             state.use_rabbitmq = self.use_rabbitmq.value
             state.use_taskiq = self.use_taskiq.value
             state.use_prometheus = self.use_prometheus.value
+            state.use_logfire = self.use_logfire.value
 
             project_spec = state.get_project_spec()
             await build_fastapi_project(project_spec)

@@ -55,6 +55,7 @@ class ProjectState(BaseModel):
     use_rabbitmq: bool = False
     use_taskiq: bool = False
     use_prometheus: bool = False
+    use_logfire: bool = False
 
     def get_render_manager(self) -> RenderManager:
         """Get the render manager for the current project."""
@@ -88,6 +89,7 @@ class ProjectState(BaseModel):
         self.use_rabbitmq = project.use_rabbitmq
         self.use_taskiq = project.use_taskiq
         self.use_prometheus = project.use_prometheus
+        self.use_logfire = project.use_logfire
         self.models = project.models.copy()
         self.custom_enums = project.custom_enums.copy()
 
@@ -203,6 +205,7 @@ class ProjectState(BaseModel):
             use_rabbitmq=self.use_rabbitmq,
             use_taskiq=self.use_taskiq,
             use_prometheus=self.use_prometheus,
+            use_logfire=self.use_logfire,
             models=self.models,
             custom_enums=self.custom_enums,
         )
