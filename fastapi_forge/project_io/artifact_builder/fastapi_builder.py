@@ -5,6 +5,7 @@ from fastapi_forge.enums import HTTPMethodEnum
 from fastapi_forge.logger import logger
 from fastapi_forge.render import create_jinja_render_manager
 from fastapi_forge.render.manager import RenderManager
+from fastapi_forge.render.renderers.enums import RendererType
 from fastapi_forge.schemas import (
     Model,
     ProjectSpec,
@@ -15,12 +16,12 @@ from ..io import IOWriter
 from .protocols import ArtifactBuilder
 from .utils import insert_relation_fields
 
-TEST_RENDERERS: dict[HTTPMethodEnum, str] = {
-    HTTPMethodEnum.GET: "test_get",
-    HTTPMethodEnum.GET_ID: "test_get_id",
-    HTTPMethodEnum.POST: "test_post",
-    HTTPMethodEnum.PATCH: "test_patch",
-    HTTPMethodEnum.DELETE: "test_delete",
+TEST_RENDERERS: dict[HTTPMethodEnum, RendererType] = {
+    HTTPMethodEnum.GET: RendererType.TEST_GET,
+    HTTPMethodEnum.GET_ID: RendererType.TEST_GET_ID,
+    HTTPMethodEnum.POST: RendererType.TEST_POST,
+    HTTPMethodEnum.PATCH: RendererType.TEST_PATCH,
+    HTTPMethodEnum.DELETE: RendererType.TEST_DELETE,
 }
 
 
@@ -54,15 +55,15 @@ class FastAPIArtifactBuilder(ArtifactBuilder):
             tasks.append(self._write_enums())
 
         for model in self.project_spec.models:
-            tasks.append(self._write_artifact("models", model, "model"))
+            tasks.append(self._write_artifact("models", model, RendererType.MODEL))
 
             metadata = model.metadata
             if metadata.create_dtos:
-                tasks.append(self._write_artifact("dtos", model, "dto"))
+                tasks.append(self._write_artifact("dtos", model, RendererType.DTO))
             if metadata.create_daos:
-                tasks.append(self._write_artifact("daos", model, "dao"))
+                tasks.append(self._write_artifact("daos", model, RendererType.DAO))
             if metadata.create_endpoints:
-                tasks.append(self._write_artifact("routes", model, "router"))
+                tasks.append(self._write_artifact("routes", model, RendererType.ROUTER))
             if metadata.create_tests:
                 tasks.append(self._write_tests(model))
 
@@ -79,7 +80,7 @@ class FastAPIArtifactBuilder(ArtifactBuilder):
         return path
 
     async def _write_artifact(
-        self, module: str, model: Model, renderer_type: str
+        self, module: str, model: Model, renderer_type: RendererType
     ) -> None:
         path = await self._create_module_path(module)
         file_name = f"{camel_to_snake(model.name)}_{module}.py"
@@ -114,6 +115,6 @@ class FastAPIArtifactBuilder(ArtifactBuilder):
 
     async def _write_enums(self) -> None:
         path = self.package_dir / "enums.py"
-        renderer = self.render_manager.get_renderer("enum")
+        renderer = self.render_manager.get_renderer(RendererType.ENUM)
         content = renderer.render(self.project_spec.custom_enums)
         await self.io_writer.write_file(path, content)
