@@ -14,7 +14,11 @@ from fastapi_forge.schemas import (
 )
 from fastapi_forge.utils.string_utils import number_to_word, snake_to_camel
 
-from ..database import DatabaseInspector, SchemaInspectionResult, SchemaInspector
+from ..database import (
+    DatabaseInspector,
+    SchemaInspectionResult,
+    SchemaInspector,
+)
 from .protocols import ProjectLoader
 
 
@@ -95,7 +99,9 @@ class DatabaseProjectLoader(ProjectLoader):
 
             fields.append(ModelField(**column))
 
-        return Model(name=table_name, fields=fields, relationships=relationships)
+        return Model(
+            name=table_name, fields=fields, relationships=relationships
+        )
 
     @staticmethod
     def _process_column_defaults(
@@ -113,7 +119,9 @@ class DatabaseProjectLoader(ProjectLoader):
 
         return default, extra_kwargs
 
-    def _create_custom_enums(self, db_enums: dict[str, Any]) -> list[CustomEnum]:
+    def _create_custom_enums(
+        self, db_enums: dict[str, Any]
+    ) -> list[CustomEnum]:
         custom_enums = []
         for enum_name, enum_values in db_enums.items():
             enum_name_processed = snake_to_camel(enum_name)
@@ -125,7 +133,9 @@ class DatabaseProjectLoader(ProjectLoader):
             custom_enums.append(custom_enum)
         return custom_enums
 
-    def _create_enum_values(self, enum_values: list[str]) -> list[CustomEnumValue]:
+    def _create_enum_values(
+        self, enum_values: list[str]
+    ) -> list[CustomEnumValue]:
         custom_enum_values = []
         for value_name in enum_values:
             try:
@@ -133,7 +143,9 @@ class DatabaseProjectLoader(ProjectLoader):
                 if self._is_int_convertible(value_name):
                     name = number_to_word(value_name)
 
-                custom_enum_values.append(CustomEnumValue(name=name, value="auto()"))
+                custom_enum_values.append(
+                    CustomEnumValue(name=name, value="auto()")
+                )
             except ValidationError:
                 err_msg = f"Validation error for enum values: {enum_values}"
                 logger.error(err_msg)

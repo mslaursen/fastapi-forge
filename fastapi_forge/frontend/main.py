@@ -7,7 +7,9 @@ from fastapi_forge.enums import FieldDataTypeEnum
 from fastapi_forge.frontend.components.header import Header
 from fastapi_forge.frontend.panels.item_editor_panel import ItemEditorPanel
 from fastapi_forge.frontend.panels.left_panel import LeftPanel
-from fastapi_forge.frontend.panels.project_config_panel import ProjectConfigPanel
+from fastapi_forge.frontend.panels.project_config_panel import (
+    ProjectConfigPanel,
+)
 from fastapi_forge.frontend.state import state
 from fastapi_forge.schemas import (
     CustomEnum,

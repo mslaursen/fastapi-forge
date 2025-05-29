@@ -47,7 +47,9 @@ class EnumEditorPanel(ui.card):
         with self:
             with ui.row().classes("w-full justify-between items-center"):
                 with ui.row().classes("gap-4 items-center"):
-                    self.enum_name_display = ui.label().classes("text-lg font-bold")
+                    self.enum_name_display = ui.label().classes(
+                        "text-lg font-bold"
+                    )
                     ui.button(
                         icon="visibility",
                         on_click=self._show_code_preview,
@@ -80,7 +82,9 @@ class EnumEditorPanel(ui.card):
     def refresh(self) -> None:
         if state.selected_enum is None:
             return
-        self.table.rows = [value.model_dump() for value in state.selected_enum.values]
+        self.table.rows = [
+            value.model_dump() for value in state.selected_enum.values
+        ]
         self.add_value_modal.close()
 
     def set_selected_enum(self, enum: CustomEnum) -> None:
@@ -110,7 +114,8 @@ class EnumEditorPanel(ui.card):
 
     def _enum_value_exists(self, value_name: str) -> bool:
         return any(
-            enum_value.name == value_name for enum_value in state.selected_enum.values
+            enum_value.name == value_name
+            for enum_value in state.selected_enum.values
         )
 
     def _handle_modal_add_value(self, *, name: str, value: str) -> None:
@@ -118,7 +123,9 @@ class EnumEditorPanel(ui.card):
             return
 
         try:
-            validation.raise_if_missing_fields([("Name", name), ("Value", value)])
+            validation.raise_if_missing_fields(
+                [("Name", name), ("Value", value)]
+            )
         except ValueError as exc:
             raise exc
 
@@ -142,7 +149,9 @@ class EnumEditorPanel(ui.card):
             return
 
         try:
-            validation.raise_if_missing_fields([("Name", name), ("Value", value)])
+            validation.raise_if_missing_fields(
+                [("Name", name), ("Value", value)]
+            )
         except ValueError as exc:
             raise exc
 
@@ -156,7 +165,9 @@ class EnumEditorPanel(ui.card):
                 value=value,
             )
 
-            enum_index = state.selected_enum.values.index(state.selected_enum_value)
+            enum_index = state.selected_enum.values.index(
+                state.selected_enum_value
+            )
             state.selected_enum.values[enum_index] = enum_value_input
             self.refresh()
         except ValidationError as exc:

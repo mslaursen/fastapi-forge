@@ -114,7 +114,9 @@ def start(
         )
 
     if dry_run and not no_ui:
-        raise click.UsageError("Option '--dry-run' requires '--no-ui' to be set.")
+        raise click.UsageError(
+            "Option '--dry-run' requires '--no-ui' to be set."
+        )
 
     project_spec = None
 

@@ -1,6 +1,17 @@
 from typing import Self
 
+from option_configs import (
+    AlembicConfig,
+    AuthConfig,
+    LogfireConfig,
+    PostgresConfig,
+    PrometheusConfig,
+    RabbitMQConfig,
+    RedisConfig,
+    TaskIQConfig,
+)
 from pydantic import (
+    computed_field,
     model_validator,
 )
 
@@ -20,20 +31,23 @@ class ProjectSpec(BaseSchema):
     """Represents a project specification with models and configurations."""
 
     project_name: ProjectName
-    use_postgres: bool = False
-    use_alembic: bool = False
-    use_builtin_auth: bool = False
-    use_redis: bool = False
-    use_rabbitmq: bool = False
-    use_taskiq: bool = False
-    use_prometheus: bool = False
-    use_logfire: bool = False
     models: list[Model] = []
     custom_enums: list[CustomEnum] = []
 
+    postgres_config: PostgresConfig | None = None
+    alembic_config: AlembicConfig | None = None
+    auth_config: AuthConfig | None = None
+    redis_config: RedisConfig | None = None
+    rabbitmq_config: RabbitMQConfig | None = None
+    taskiq_config: TaskIQConfig | None = None
+    prometheus_config: PrometheusConfig | None = None
+    logfire_config: LogfireConfig | None = None
+
     @model_validator(mode="after")
     def _validate_enums(self) -> Self:
-        valid_enum_names = {custom_enum.name for custom_enum in self.custom_enums}
+        valid_enum_names = {
+            custom_enum.name for custom_enum in self.custom_enums
+        }
 
         invalid_fields = [
             (model.name, field.name, field.type_enum)
@@ -41,7 +55,10 @@ class ProjectSpec(BaseSchema):
             for field in model.fields
             if (
                 field.type == FieldDataTypeEnum.ENUM
-                and (field.type_enum is None or field.type_enum not in valid_enum_names)
+                and (
+                    field.type_enum is None
+                    or field.type_enum not in valid_enum_names
+                )
             )
         ]
 
@@ -117,3 +134,53 @@ class ProjectSpec(BaseSchema):
             if model.metadata.is_auth_model:
                 return model
         return None
+
+    @computed_field
+    @property
+    def use_postgres(self) -> bool:
+        """Check if PostgreSQL is enabled."""
+        return self.postgres_config is not None
+
+    @computed_field
+    @property
+    def use_alembic(self) -> bool:
+        """Check if Alembic is enabled."""
+        return self.alembic_config is not None
+
+    @computed_field
+    @property
+    def use_builtin_auth(self) -> bool:
+        """Check if built-in authentication is enabled."""
+        return (
+            self.auth_config is not None and self.auth_config.use_builtin_auth
+        )
+
+    @computed_field
+    @property
+    def use_redis(self) -> bool:
+        """Check if Redis is enabled."""
+        return self.redis_config is not None
+
+    @computed_field
+    @property
+    def use_rabbitmq(self) -> bool:
+        """Check if RabbitMQ is enabled."""
+        return self.rabbitmq_config is not None
+
+    @computed_field
+    @property
+    def use_taskiq(self) -> bool:
+        """Check if TaskIQ is enabled."""
+        return self.taskiq_config is not None
+
+    @computed_field
+    @property
+    def use_prometheus(self) -> bool:
+        """Check if Prometheus is enabled."""
+        return self.prometheus_config is not None
+
+    @computed_field
+    @property
+    def use_logfire(self) -> bool:
+        """Check if Logfire is enabled."""
+        return self.logfire_config is not None

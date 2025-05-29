@@ -1,4 +1,8 @@
-__all__ = ["ArtifactBuilder", "FastAPIArtifactBuilder", "insert_relation_fields"]
+__all__ = [
+    "ArtifactBuilder",
+    "FastAPIArtifactBuilder",
+    "insert_relation_fields",
+]
 
 from .fastapi_builder import FastAPIArtifactBuilder
 from .protocols import ArtifactBuilder

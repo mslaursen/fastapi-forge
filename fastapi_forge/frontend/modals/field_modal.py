@@ -32,7 +32,9 @@ class BaseFieldModal(ui.dialog, ABC):
 
     def _build(self) -> None:
         with self, ui.card().classes("w-full max-w-2xl no-shadow rounded-lg"):
-            with ui.row().classes("w-full justify-between items-center p-4 border-b"):
+            with ui.row().classes(
+                "w-full justify-between items-center p-4 border-b"
+            ):
                 ui.label(self.title).classes("text-xl font-semibold")
                 ui.button(
                     icon="visibility",
@@ -49,7 +51,9 @@ class BaseFieldModal(ui.dialog, ABC):
                         label="Field Type",
                         on_change=self._handle_type_change,
                     ).props("outlined dense")
-                    self.default_value_container = ui.column().classes("w-full")
+                    self.default_value_container = ui.column().classes(
+                        "w-full"
+                    )
                     with self.default_value_container:
                         self.default_value_input = (
                             ui.input(label="Default Value")
@@ -69,7 +73,9 @@ class BaseFieldModal(ui.dialog, ABC):
                     )
 
                 with ui.row().classes("w-full justify-between gap-4"):
-                    self.primary_key = ui.checkbox("Primary Key").props("dense")
+                    self.primary_key = ui.checkbox("Primary Key").props(
+                        "dense"
+                    )
                     self.nullable = ui.checkbox("Nullable").props("dense")
                     self.unique = ui.checkbox("Unique").props("dense")
                     self.index = ui.checkbox("Index").props("dense")
@@ -80,27 +86,37 @@ class BaseFieldModal(ui.dialog, ABC):
                     .bind_visibility_from(self, "show_metadata")
                 )
                 with self.metadata_card:
-                    with ui.row().classes("w-full justify-between items-center mb-2"):
-                        ui.label("Field Metadata").classes("text-md font-medium")
+                    with ui.row().classes(
+                        "w-full justify-between items-center mb-2"
+                    ):
+                        ui.label("Field Metadata").classes(
+                            "text-md font-medium"
+                        )
 
                     with ui.row().classes("w-full gap-4"):
-                        self.created_at = ui.checkbox("Created At Timestamp").props(
-                            "dense"
-                        )
-                        self.updated_at = ui.checkbox("Updated At Timestamp").props(
-                            "dense"
-                        )
+                        self.created_at = ui.checkbox(
+                            "Created At Timestamp"
+                        ).props("dense")
+                        self.updated_at = ui.checkbox(
+                            "Updated At Timestamp"
+                        ).props("dense")
 
                 with ui.card().classes("w-full p-4 border rounded-lg"):
-                    with ui.row().classes("w-full justify-between items-center"):
+                    with ui.row().classes(
+                        "w-full justify-between items-center"
+                    ):
                         ui.label("Extra Column Arguments").classes(
                             "text-md font-medium"
                         )
                         ui.button(
-                            "Add Argument", icon="add", on_click=self._add_kwarg_row
+                            "Add Argument",
+                            icon="add",
+                            on_click=self._add_kwarg_row,
                         )
 
-                    self.kwargs_container = ui.column().classes("w-full gap-2 mt-2")
+                    self.kwargs_container = ui.column().classes(
+                        "w-full gap-2 mt-2"
+                    )
 
             with ui.row().classes("w-full justify-end p-4 border-t gap-2"):
                 self._build_action_buttons()
@@ -109,14 +125,25 @@ class BaseFieldModal(ui.dialog, ABC):
         if not self.enum_selector.value:
             return []
         selected_enum = next(
-            (e for e in state.custom_enums if e.name == self.enum_selector.value), None
+            (
+                e
+                for e in state.custom_enums
+                if e.name == self.enum_selector.value
+            ),
+            None,
         )
         return [v.name for v in selected_enum.values] if selected_enum else []
 
     def _handle_type_change(self) -> None:
-        self.show_metadata = self.field_type.value == FieldDataTypeEnum.DATETIME
-        self.show_enum_selector = self.field_type.value == FieldDataTypeEnum.ENUM
-        self.show_enum_defaults = self.field_type.value == FieldDataTypeEnum.ENUM
+        self.show_metadata = (
+            self.field_type.value == FieldDataTypeEnum.DATETIME
+        )
+        self.show_enum_selector = (
+            self.field_type.value == FieldDataTypeEnum.ENUM
+        )
+        self.show_enum_defaults = (
+            self.field_type.value == FieldDataTypeEnum.ENUM
+        )
 
         if self.show_enum_selector:
             self.enum_selector.options = [e.name for e in state.custom_enums]
@@ -190,7 +217,10 @@ class BaseFieldModal(ui.dialog, ABC):
                 else self.default_value_input.value
             ) or None
 
-            with ui.dialog() as modal, ui.card().classes("no-shadow border-[1px]"):
+            with (
+                ui.dialog() as modal,
+                ui.card().classes("no-shadow border-[1px]"),
+            ):
                 preview_field = ModelField(
                     name=self.field_name.value,
                     type=self.field_type.value,
@@ -203,15 +233,21 @@ class BaseFieldModal(ui.dialog, ABC):
                     extra_kwargs=self.extra_kwargs or None,
                     metadata=ModelFieldMetadata(
                         is_created_at_timestamp=(
-                            self.created_at.value if self.show_metadata else False
+                            self.created_at.value
+                            if self.show_metadata
+                            else False
                         ),
                         is_updated_at_timestamp=(
-                            self.updated_at.value if self.show_metadata else False
+                            self.updated_at.value
+                            if self.show_metadata
+                            else False
                         ),
                         is_foreign_key=False,
                     ),
                 )
-                ui.code(JinjaFilters.generate_field(preview_field)).classes("w-full")
+                ui.code(JinjaFilters.generate_field(preview_field)).classes(
+                    "w-full"
+                )
                 modal.open()
         except ValidationError as exc:
             notify_validation_error(exc)
@@ -367,7 +403,9 @@ class UpdateFieldModal(BaseFieldModal):
         self.updated_at.value = field.metadata.is_updated_at_timestamp
         self.show_metadata = field.type == FieldDataTypeEnum.DATETIME
         self.show_enum_selector = field.type == FieldDataTypeEnum.ENUM
-        self.extra_kwargs = field.extra_kwargs.copy() if field.extra_kwargs else {}
+        self.extra_kwargs = (
+            field.extra_kwargs.copy() if field.extra_kwargs else {}
+        )
         self.kwargs_container.clear()
 
         if field.extra_kwargs:

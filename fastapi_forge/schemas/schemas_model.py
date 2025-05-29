@@ -87,7 +87,8 @@ class ModelField(BaseSchema):
 
         metadata = self.metadata
         if (
-            metadata.is_created_at_timestamp or metadata.is_updated_at_timestamp
+            metadata.is_created_at_timestamp
+            or metadata.is_updated_at_timestamp
         ) and self.type != FieldDataTypeEnum.DATETIME:
             msg = "Create/update timestamp fields must be of type DateTime."
             raise ValueError(
@@ -225,13 +226,21 @@ class Model(BaseSchema):
             else:
                 other_fields.append(field)
 
-        return primary_keys + other_fields + created_at + updated_at + foreign_keys
+        return (
+            primary_keys
+            + other_fields
+            + created_at
+            + updated_at
+            + foreign_keys
+        )
 
     @model_validator(mode="after")
     def _validate_primary_key(self) -> Self:
         pk_fields = self.primary_key_fields
         if not pk_fields:
-            raise ValueError(f"Model '{self.name}' has no primary key defined. ")
+            raise ValueError(
+                f"Model '{self.name}' has no primary key defined. "
+            )
 
         if len(pk_fields) > 1:
             raise ValueError(
@@ -255,12 +264,22 @@ class Model(BaseSchema):
                 f"Model '{self.name}' contains duplicate relationship field names.",
             )
 
-        if sum(field.metadata.is_created_at_timestamp for field in self.fields) > 1:
+        if (
+            sum(
+                field.metadata.is_created_at_timestamp for field in self.fields
+            )
+            > 1
+        ):
             raise ValueError(
                 f"Model '{self.name}' has more than one 'created_at_timestamp' fields."
             )
 
-        if sum(field.metadata.is_updated_at_timestamp for field in self.fields) > 1:
+        if (
+            sum(
+                field.metadata.is_updated_at_timestamp for field in self.fields
+            )
+            > 1
+        ):
             raise ValueError(
                 f"Model '{self.name}' has more than one 'updated_at_timestamp' fields."
             )

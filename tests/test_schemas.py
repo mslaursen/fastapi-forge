@@ -58,7 +58,9 @@ def test_invalid_field_name(invalid_name: str) -> None:
             name=invalid_name,
             type=FieldDataTypeEnum.STRING,
         )
-    assert "String should match pattern '^[a-z][a-z0-9_]*$'" in str(exc_info.value)
+    assert "String should match pattern '^[a-z][a-z0-9_]*$'" in str(
+        exc_info.value
+    )
 
 
 @pytest.mark.parametrize(
@@ -129,7 +131,9 @@ def test_field_name_not_endswith_id() -> None:
             target_model="restaurant",
             on_delete=OnDeleteEnum.CASCADE,
         )
-    assert "Relationship field names must end with '_id'." in str(exc_info.value)
+    assert "Relationship field names must end with '_id'." in str(
+        exc_info.value
+    )
 
 
 ##############
@@ -178,7 +182,9 @@ def test_project_spec_non_existing_target_model() -> None:
     model = Model(
         name="restaurant",
         fields=[
-            ModelField(name="id", type=FieldDataTypeEnum.UUID, primary_key=True),
+            ModelField(
+                name="id", type=FieldDataTypeEnum.UUID, primary_key=True
+            ),
         ],
         relationships=[
             ModelRelationship(
@@ -202,11 +208,19 @@ def test_project_spec_non_existing_target_model() -> None:
 def test_project_spec_duplicate_model_names() -> None:
     model1 = Model(
         name="duplicate",
-        fields=[ModelField(name="id", type=FieldDataTypeEnum.UUID, primary_key=True)],
+        fields=[
+            ModelField(
+                name="id", type=FieldDataTypeEnum.UUID, primary_key=True
+            )
+        ],
     )
     model2 = Model(
         name="duplicate",
-        fields=[ModelField(name="id", type=FieldDataTypeEnum.UUID, primary_key=True)],
+        fields=[
+            ModelField(
+                name="id", type=FieldDataTypeEnum.UUID, primary_key=True
+            )
+        ],
     )
     with pytest.raises(ValidationError) as exc_info:
         ProjectSpec(
@@ -220,7 +234,9 @@ def test_project_spec_invalid_enum_reference() -> None:
     model = Model(
         name="test",
         fields=[
-            ModelField(name="id", type=FieldDataTypeEnum.UUID, primary_key=True),
+            ModelField(
+                name="id", type=FieldDataTypeEnum.UUID, primary_key=True
+            ),
             ModelField(
                 name="status",
                 type=FieldDataTypeEnum.ENUM,
@@ -242,12 +258,20 @@ def test_project_spec_invalid_enum_reference() -> None:
 def test_project_spec_multiple_auth_models() -> None:
     model1 = Model(
         name="user1",
-        fields=[ModelField(name="id", type=FieldDataTypeEnum.UUID, primary_key=True)],
+        fields=[
+            ModelField(
+                name="id", type=FieldDataTypeEnum.UUID, primary_key=True
+            )
+        ],
         metadata=ModelMetadata(is_auth_model=True),
     )
     model2 = Model(
         name="user2",
-        fields=[ModelField(name="id", type=FieldDataTypeEnum.UUID, primary_key=True)],
+        fields=[
+            ModelField(
+                name="id", type=FieldDataTypeEnum.UUID, primary_key=True
+            )
+        ],
         metadata=ModelMetadata(is_auth_model=True),
     )
     with pytest.raises(ValidationError) as exc_info:
@@ -261,7 +285,11 @@ def test_project_spec_multiple_auth_models() -> None:
 def test_project_spec_get_auth_model() -> None:
     auth_model = Model(
         name="user",
-        fields=[ModelField(name="id", type=FieldDataTypeEnum.UUID, primary_key=True)],
+        fields=[
+            ModelField(
+                name="id", type=FieldDataTypeEnum.UUID, primary_key=True
+            )
+        ],
         metadata=ModelMetadata(is_auth_model=True),
     )
     project_spec = ProjectSpec(
@@ -276,7 +304,11 @@ def test_project_spec_get_auth_model() -> None:
 def test_project_spec_no_auth_model_when_not_using_auth() -> None:
     model = Model(
         name="user",
-        fields=[ModelField(name="id", type=FieldDataTypeEnum.UUID, primary_key=True)],
+        fields=[
+            ModelField(
+                name="id", type=FieldDataTypeEnum.UUID, primary_key=True
+            )
+        ],
         metadata=ModelMetadata(is_auth_model=True),
     )
     project_spec = ProjectSpec(
@@ -295,7 +327,9 @@ def test_project_spec_taskiq_dependencies() -> None:
             use_redis=False,
             use_rabbitmq=False,
         )
-    assert "TaskIQ is enabled, but the following are missing" in str(exc_info.value)
+    assert "TaskIQ is enabled, but the following are missing" in str(
+        exc_info.value
+    )
     assert "RabbitMQ" in str(exc_info.value)
     assert "Redis" in str(exc_info.value)
 
@@ -307,7 +341,9 @@ def test_project_spec_alembic_requires_postgres() -> None:
             use_alembic=True,
             use_postgres=False,
         )
-    assert "Cannot use Alembic if PostgreSQL is not enabled." in str(exc_info.value)
+    assert "Cannot use Alembic if PostgreSQL is not enabled." in str(
+        exc_info.value
+    )
 
 
 def test_project_spec_auth_requires_postgres() -> None:

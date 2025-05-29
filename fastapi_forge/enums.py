@@ -64,7 +64,11 @@ class FieldDataTypeEnum(StrEnum):
 
         for field_type, patterns in cls.get_type_mappings().items():
             if any(pattern in db_type for pattern in patterns):
-                return field_type if isinstance(field_type, cls) else cls(field_type)
+                return (
+                    field_type
+                    if isinstance(field_type, cls)
+                    else cls(field_type)
+                )
 
         raise ValueError(
             f"Unsupported database type: {db_type}. "

@@ -22,7 +22,9 @@ class JinjaFilters:
             target_data = (target.target_model, target.on_delete)
 
         if relationships is not None and target is None:
-            raise ValueError(f"Target was not found for Foreign Key {field.name}")
+            raise ValueError(
+                f"Target was not found for Foreign Key {field.name}"
+            )
 
         type_info = field.type_info
         args = [
@@ -42,7 +44,9 @@ class JinjaFilters:
             args.append("index=True")
         if field.default_value:
             if field.type_enum:
-                args.append(f"default=enums.{field.type_enum}.{field.default_value}")
+                args.append(
+                    f"default=enums.{field.type_enum}.{field.default_value}"
+                )
             else:
                 args.append(f"default={field.default_value}")
         if field.extra_kwargs:
@@ -67,7 +71,9 @@ class JinjaFilters:
         args.append("uselist=False")
 
         target_repr = (
-            relation.target if not is_self_reference else f'"{relation.target}"'
+            relation.target
+            if not is_self_reference
+            else f'"{relation.target}"'
         )
         return f"""
         {relation.field_name_no_id}: Mapped[{target_repr}] = relationship(

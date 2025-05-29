@@ -17,7 +17,9 @@ class BaseRelationModal(ui.dialog, ABC):
 
     def _build_common_ui(self) -> None:
         with self, ui.card().classes("w-full max-w-2xl shadow-lg rounded-lg"):
-            with ui.row().classes("w-full justify-between items-center p-4 border-b"):
+            with ui.row().classes(
+                "w-full justify-between items-center p-4 border-b"
+            ):
                 ui.label(self.title).classes("text-xl font-semibold")
 
             with ui.column().classes("w-full p-6 space-y-4"):
@@ -34,9 +36,9 @@ class BaseRelationModal(ui.dialog, ABC):
                         options=list(OnDeleteEnum),
                         value=OnDeleteEnum.CASCADE,
                     ).props("outlined dense")
-                    self.back_populates = ui.input(label="Back Populates").props(
-                        "outlined dense"
-                    )
+                    self.back_populates = ui.input(
+                        label="Back Populates"
+                    ).props("outlined dense")
 
                 with ui.row().classes("w-full justify-between gap-4"):
                     self.nullable = ui.checkbox("Nullable").props("dense")
@@ -148,7 +150,11 @@ class UpdateRelationModal(BaseRelationModal):
             self._set_relation(relation)
             self.target_model.options = [model.name for model in models]
             default_target_model = next(
-                (model for model in models if model.name == relation.target_model),
+                (
+                    model
+                    for model in models
+                    if model.name == relation.target_model
+                ),
                 None,
             )
             if default_target_model:

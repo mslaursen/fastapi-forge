@@ -22,8 +22,18 @@ FIELD_COLUMNS: list[dict[str, Any]] = [
         "field": "primary_key",
         "align": "center",
     },
-    {"name": "nullable", "label": "Nullable", "field": "nullable", "align": "center"},
-    {"name": "unique", "label": "Unique", "field": "unique", "align": "center"},
+    {
+        "name": "nullable",
+        "label": "Nullable",
+        "field": "nullable",
+        "align": "center",
+    },
+    {
+        "name": "unique",
+        "label": "Unique",
+        "field": "unique",
+        "align": "center",
+    },
     {"name": "index", "label": "Index", "field": "index", "align": "center"},
 ]
 
@@ -64,9 +74,19 @@ RELATIONSHIP_COLUMNS: list[dict[str, Any]] = [
         "field": "on_delete",
         "align": "left",
     },
-    {"name": "nullable", "label": "Nullable", "field": "nullable", "align": "center"},
+    {
+        "name": "nullable",
+        "label": "Nullable",
+        "field": "nullable",
+        "align": "center",
+    },
     {"name": "index", "label": "Index", "field": "index", "align": "center"},
-    {"name": "unique", "label": "Unique", "field": "unique", "align": "center"},
+    {
+        "name": "unique",
+        "label": "Unique",
+        "field": "unique",
+        "align": "center",
+    },
 ]
 
 

@@ -3,7 +3,10 @@ from pathlib import Path
 from nicegui import ui
 from pydantic import ValidationError
 
-from fastapi_forge.frontend.components.item_create import EnumCreate, ModelCreate
+from fastapi_forge.frontend.components.item_create import (
+    EnumCreate,
+    ModelCreate,
+)
 from fastapi_forge.frontend.components.item_row import EnumRow, ModelRow
 from fastapi_forge.frontend.constants import (
     SELECTED_ENUM_TEXT_COLOR,
@@ -92,7 +95,9 @@ class LeftPanel(ui.left_drawer):
         with ui.column():
             EnumCreate() if state.show_enums else ModelCreate()
 
-        self.content_list = ui.column().classes("items-align content-start w-full")
+        self.content_list = ui.column().classes(
+            "items-align content-start w-full"
+        )
 
         if state.show_models:
             self._render_models_list()

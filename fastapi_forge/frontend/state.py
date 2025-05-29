@@ -144,7 +144,9 @@ class ProjectState(BaseModel):
         self.select_model_fn(model)  # type: ignore
         self._trigger_ui_refresh()
 
-    def _enum_exists(self, name: str, exclude: CustomEnum | None = None) -> bool:
+    def _enum_exists(
+        self, name: str, exclude: CustomEnum | None = None
+    ) -> bool:
         return any(
             enum.name.lower() == name.lower()
             for enum in self.custom_enums
@@ -226,7 +228,9 @@ class ProjectState(BaseModel):
             ],
         )
 
-    def _cleanup_relationships_for_deleted_model(self, deleted_model_name: str) -> None:
+    def _cleanup_relationships_for_deleted_model(
+        self, deleted_model_name: str
+    ) -> None:
         """Remove relationships pointing to deleted models."""
         for model in self.models:
             model.relationships = [
@@ -235,7 +239,9 @@ class ProjectState(BaseModel):
                 if rel.target_model != deleted_model_name
             ]
 
-    def _update_relationships_for_rename(self, old_name: str, new_name: str) -> None:
+    def _update_relationships_for_rename(
+        self, old_name: str, new_name: str
+    ) -> None:
         """Update relationships when a model is renamed."""
         for model in self.models:
             for relationship in model.relationships:
@@ -244,7 +250,9 @@ class ProjectState(BaseModel):
 
     def _model_exists(self, name: str, exclude: Model | None = None) -> bool:
         """Check if a model with the given name already exists."""
-        return any(model.name == name for model in self.models if model != exclude)
+        return any(
+            model.name == name for model in self.models if model != exclude
+        )
 
     def _validate_model_operation(self, model: Model) -> bool:
         """Validate conditions for model operations."""

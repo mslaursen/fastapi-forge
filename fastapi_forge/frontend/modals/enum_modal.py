@@ -21,7 +21,9 @@ class BaseEnumValueModal(ui.dialog, ABC):
 
     def _build(self) -> None:
         with self, ui.card().classes("w-full max-w-md no-shadow rounded-lg"):
-            with ui.row().classes("w-full justify-between items-center p-4 border-b"):
+            with ui.row().classes(
+                "w-full justify-between items-center p-4 border-b"
+            ):
                 ui.label(self.title).classes("text-xl font-semibold")
 
             with (
@@ -29,10 +31,14 @@ class BaseEnumValueModal(ui.dialog, ABC):
                 ui.grid(columns=2).classes("w-full gap-4"),
             ):
                 self.value_name = (
-                    ui.input(label="Name").props("outlined dense").classes("w-full")
+                    ui.input(label="Name")
+                    .props("outlined dense")
+                    .classes("w-full")
                 )
                 self.value_value = (
-                    ui.input(label="Value").props("outlined dense").classes("w-full")
+                    ui.input(label="Value")
+                    .props("outlined dense")
+                    .classes("w-full")
                 ).tooltip(
                     "Set to auto(), or any string value without including quotes."
                 )

@@ -15,7 +15,9 @@ class ItemEditorPanel:
 
     @ui.refreshable
     def _display_item_editor_panel(self) -> None:
-        with ui.column().classes("w-full h-full items-center justify-center mt-4"):
+        with ui.column().classes(
+            "w-full h-full items-center justify-center mt-4"
+        ):
             if state.show_models:
                 ModelEditorPanel().classes(
                     "shadow-2xl dark:shadow-none min-w-[700px] max-w-[800px]"

@@ -5,7 +5,10 @@ from time import perf_counter
 import click
 
 from fastapi_forge.logger import logger
-from fastapi_forge.project_io import ArtifactBuilder, create_fastapi_artifact_builder
+from fastapi_forge.project_io import (
+    ArtifactBuilder,
+    create_fastapi_artifact_builder,
+)
 from fastapi_forge.schemas import ProjectSpec
 
 from .cookiecutter_adapter import (
@@ -52,7 +55,9 @@ def _get_template_path() -> Path:
     if not template_path.exists():
         raise RuntimeError(f"Template directory not found: {template_path}")
     if not template_path.is_dir():
-        raise RuntimeError(f"Template path is not a directory: {template_path}")
+        raise RuntimeError(
+            f"Template path is not a directory: {template_path}"
+        )
     return template_path
 
 
@@ -63,7 +68,9 @@ async def build_fastapi_project(
     start_time = perf_counter()
 
     template_generator = (
-        OverwriteCookiecutterAdapter() if not dry_run else DryRunCookiecutterAdapter()
+        OverwriteCookiecutterAdapter()
+        if not dry_run
+        else DryRunCookiecutterAdapter()
     )
 
     try:
@@ -80,12 +87,17 @@ async def build_fastapi_project(
         build_time = perf_counter() - start_time
         logger.info(f"Project build completed in {build_time:.2f} seconds")
 
-        click.secho("\n🎉 Project generated successfully !", fg="green", bold=True)
+        click.secho(
+            "\n🎉 Project generated successfully !", fg="green", bold=True
+        )
         click.echo("\n🚀 Next steps to get started:\n")
 
         steps = [
             ("Navigate to your project directory", "cd your_project_name"),
-            ("Start the development environment", "make up  # or docker-compose up"),
+            (
+                "Start the development environment",
+                "make up  # or docker-compose up",
+            ),
             ("(Optional) Run tests", "make test"),
             ("Access the API documentation", "http://localhost:8000/docs"),
         ]
@@ -94,8 +106,12 @@ async def build_fastapi_project(
             click.echo(f"{i}. {desc}:")
             click.secho(f"   {cmd}", fg="cyan")
 
-        click.echo("\n💡 Pro tip: Run 'make help' to see all available commands")
-        click.secho("\n✨ Happy coding with your new FastAPI project!", fg="magenta")
+        click.echo(
+            "\n💡 Pro tip: Run 'make help' to see all available commands"
+        )
+        click.secho(
+            "\n✨ Happy coding with your new FastAPI project!", fg="magenta"
+        )
 
     except Exception as error:
         logger.error(f"Project build failed: {error}")

@@ -37,7 +37,9 @@ class ProjectConfigPanel(ui.right_drawer):
     async def _confirm_upload(self) -> bool:
         dialog = ui.dialog()
         with dialog, ui.card().classes("w-full max-w-md p-6 text-center"):
-            ui.icon("warning", color="orange-500").classes("text-4xl self-center")
+            ui.icon("warning", color="orange-500").classes(
+                "text-4xl self-center"
+            )
             ui.markdown(
                 "⚠️ Current project configuration will be overwritten!\n\n"
                 "It is **highly recommended** to export the current project before proceeding."
@@ -63,7 +65,9 @@ class ProjectConfigPanel(ui.right_drawer):
                 return
 
             enum_registry.clear()
-            postgres_loader = create_postgres_project_loader(conn_string=conn_string)
+            postgres_loader = create_postgres_project_loader(
+                conn_string=conn_string
+            )
             project_spec = postgres_loader.load()
 
             state.initialize_from_project(project_spec)
@@ -105,9 +109,9 @@ class ProjectConfigPanel(ui.right_drawer):
                             ),
                         ).props("unelevated")
 
-                    ui.button(icon="upload", on_click=self.upload_menu.open).props(
-                        "round"
-                    ).tooltip("Upload from database")
+                    ui.button(
+                        icon="upload", on_click=self.upload_menu.open
+                    ).props("round").tooltip("Upload from database")
 
                 self.project_name = (
                     ui.input(
@@ -256,7 +260,9 @@ class ProjectConfigPanel(ui.right_drawer):
 
     def _update_taskiq_state(self, *_) -> None:
         """Enable or disable Taskiq based on Redis and RabbitMQ."""
-        self.use_taskiq.set_enabled(self.use_redis.value and self.use_rabbitmq.value)
+        self.use_taskiq.set_enabled(
+            self.use_redis.value and self.use_rabbitmq.value
+        )
         if (
             not (self.use_redis.value and self.use_rabbitmq.value)
             and self.use_taskiq.value
@@ -267,7 +273,9 @@ class ProjectConfigPanel(ui.right_drawer):
     async def _auth_dialog(self) -> bool:
         dialog = ui.dialog()
         with dialog, ui.card().classes("w-full max-w-md p-6 text-center"):
-            ui.icon("security", color="green-500").classes("text-4xl self-center")
+            ui.icon("security", color="green-500").classes(
+                "text-4xl self-center"
+            )
             ui.markdown(
                 "JWT Auth needs a model with 'email' and 'password' fields. "
                 "Select any model as auth model later, or create one now (optional)."
@@ -282,7 +290,9 @@ class ProjectConfigPanel(ui.right_drawer):
                 ui.button(
                     "Proceed",
                     color="primary",
-                    on_click=lambda: dialog.submit(create_model_checkbox.value),
+                    on_click=lambda: dialog.submit(
+                        create_model_checkbox.value
+                    ),
                 )
 
         return await dialog
@@ -356,21 +366,29 @@ class ProjectConfigPanel(ui.right_drawer):
                         name="created_at",
                         type=FieldDataTypeEnum.DATETIME,
                         default_value="datetime.now(timezone.utc)",
-                        metadata=ModelFieldMetadata(is_created_at_timestamp=True),
+                        metadata=ModelFieldMetadata(
+                            is_created_at_timestamp=True
+                        ),
                     ),
                     ModelField(
                         name="updated_at",
                         type=FieldDataTypeEnum.DATETIME,
                         default_value="datetime.now(timezone.utc)",
-                        extra_kwargs={"onupdate": "datetime.now(timezone.utc)"},
-                        metadata=ModelFieldMetadata(is_updated_at_timestamp=True),
+                        extra_kwargs={
+                            "onupdate": "datetime.now(timezone.utc)"
+                        },
+                        metadata=ModelFieldMetadata(
+                            is_updated_at_timestamp=True
+                        ),
                     ),
                 ],
             )
             state.models.append(auth_user_model)
             if state.render_content_fn:
                 state.render_content_fn.refresh()
-            ui.notify("The 'auth_user' model has been created.", type="positive")
+            ui.notify(
+                "The 'auth_user' model has been created.", type="positive"
+            )
         except ValidationError as exc:
             notify_validation_error(exc)
 
@@ -378,7 +396,9 @@ class ProjectConfigPanel(ui.right_drawer):
         """Show a confirmation dialog if the project already exists."""
         dialog = ui.dialog()
         with dialog, ui.card().classes("w-full max-w-md p-6 text-center"):
-            ui.icon("warning", color="orange-500").classes("text-4xl self-center")
+            ui.icon("warning", color="orange-500").classes(
+                "text-4xl self-center"
+            )
             ui.markdown(
                 f"Project '{state.project_name}' already exists!\n\n"
                 "This will **permanently overwrite** the existing project directory.\n"
@@ -388,7 +408,9 @@ class ProjectConfigPanel(ui.right_drawer):
             with ui.row().classes("w-full justify-center gap-4 mt-4"):
                 ui.button("Cancel", color="primary", on_click=dialog.close)
                 ui.button(
-                    "Overwrite", color="negative", on_click=lambda: dialog.submit(True)
+                    "Overwrite",
+                    color="negative",
+                    on_click=lambda: dialog.submit(True),
                 )
 
         return await dialog
@@ -412,7 +434,9 @@ class ProjectConfigPanel(ui.right_drawer):
                     ui.notify("Project generation cancelled.", type="warning")
                     return
             except Exception as e:
-                ui.notify(f"Error displaying confirmation: {e}", type="negative")
+                ui.notify(
+                    f"Error displaying confirmation: {e}", type="negative"
+                )
                 return
 
         self.create_button.classes("hidden")

@@ -39,7 +39,9 @@ class _ItemRow[T: BaseModel](ui.row):
         self.on("click", lambda: self.on_select(self.item))
         base_classes = "w-full flex items-center justify-between cursor-pointer p-2 rounded transition-all"
         if self.is_selected_row:
-            base_classes += " bg-blue-100 dark:bg-blue-900 border-l-4 border-blue-500"
+            base_classes += (
+                " bg-blue-100 dark:bg-blue-900 border-l-4 border-blue-500"
+            )
         else:
             base_classes += " hover:bg-gray-100 dark:hover:bg-gray-800"
 
@@ -75,7 +77,9 @@ class _ItemRow[T: BaseModel](ui.row):
                 .classes("self-center")
                 .bind_visibility_from(self, "is_editing")
             )
-            self.name_label.bind_visibility_from(self, "is_editing", lambda x: not x)
+            self.name_label.bind_visibility_from(
+                self, "is_editing", lambda x: not x
+            )
 
             with ui.row().classes("flex-nowrap gap-2 min-w-fit"):
                 self.edit_button = (

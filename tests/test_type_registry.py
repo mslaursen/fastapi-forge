@@ -2,7 +2,11 @@ import pytest
 
 from fastapi_forge.enums import FieldDataTypeEnum
 from fastapi_forge.schemas import CustomEnum, CustomEnumValue
-from fastapi_forge.type_info_registry import TypeInfo, TypeInfoRegistry, enum_registry
+from fastapi_forge.type_info_registry import (
+    TypeInfo,
+    TypeInfoRegistry,
+    enum_registry,
+)
 
 ##########################
 # TypeInfoRegistry tests #
@@ -70,7 +74,10 @@ def test_custom_enum_register() -> None:
     assert len(enum_registry.all()) == 1
 
     type_info = enum_registry.get(enum.name)
-    assert type_info.sqlalchemy_type == 'Enum(enums.HTTPMethod, name="http_method")'
+    assert (
+        type_info.sqlalchemy_type
+        == 'Enum(enums.HTTPMethod, name="http_method")'
+    )
     assert type_info.faker_field_value is None
 
 
@@ -84,7 +91,10 @@ def test_custom_enum_register_w_values() -> None:
     )
 
     type_info = enum_registry.get(enum.name)
-    assert type_info.sqlalchemy_type == 'Enum(enums.HTTPMethod, name="http_method")'
+    assert (
+        type_info.sqlalchemy_type
+        == 'Enum(enums.HTTPMethod, name="http_method")'
+    )
     assert type_info.faker_field_value == "enums.HTTPMethod.GET"
 
 

@@ -61,8 +61,12 @@ class ModelEditorPanel(ui.card):
                 ui.dialog() as modal,
                 ui.card().classes("no-shadow border-[1px]"),
             ):
-                model_renderer = state.get_render_manager().get_renderer("model")
-                code = model_renderer.render(state.selected_model.get_preview())
+                model_renderer = state.get_render_manager().get_renderer(
+                    "model"
+                )
+                code = model_renderer.render(
+                    state.selected_model.get_preview()
+                )
                 code = code.split("class ")[1]
                 code = f"# ID is inherited from the `Base` class\nclass {code}"
                 ui.code(code).classes("w-full")
@@ -76,7 +80,8 @@ class ModelEditorPanel(ui.card):
             m.metadata.is_auth_model for m in state.models
         ):
             ui.notify(
-                "Cannot have more than one authentication model.", type="negative"
+                "Cannot have more than one authentication model.",
+                type="negative",
             )
             return
 
@@ -98,7 +103,9 @@ class ModelEditorPanel(ui.card):
 
     def _remove_auth_fields(self, model: Model) -> None:
         for field_name in ("email", "password"):
-            if field := next((f for f in model.fields if f.name == field_name), None):
+            if field := next(
+                (f for f in model.fields if f.name == field_name), None
+            ):
                 model.fields.remove(field)
 
     def _setup_auth_model_fields(self, model: Model) -> None:
@@ -130,7 +137,9 @@ class ModelEditorPanel(ui.card):
         with self:
             with ui.row().classes("w-full justify-between items-center"):
                 with ui.row().classes("gap-4 items-center"):
-                    self.model_name_display = ui.label().classes("text-lg font-bold")
+                    self.model_name_display = ui.label().classes(
+                        "text-lg font-bold"
+                    )
                     ui.button(
                         icon="visibility",
                         on_click=self._show_code_preview,
@@ -275,7 +284,11 @@ class ModelEditorPanel(ui.card):
 
         if is_primary_key:
             existing_pk = next(
-                (field for field in state.selected_model.fields if field.primary_key),
+                (
+                    field
+                    for field in state.selected_model.fields
+                    if field.primary_key
+                ),
                 None,
             )
             if existing_pk:
@@ -405,7 +418,9 @@ class ModelEditorPanel(ui.card):
             return
         self.table.rows = [field.model_dump() for field in fields]
 
-        quick_add_primary_key_enabled = any(field.primary_key for field in fields)
+        quick_add_primary_key_enabled = any(
+            field.primary_key for field in fields
+        )
         quick_add_created_at_enabled = any(
             field.metadata.is_created_at_timestamp for field in fields
         )
@@ -431,7 +446,9 @@ class ModelEditorPanel(ui.card):
         self._deselect_relation()
 
     def _field_name_exists(self, field_name: str) -> bool:
-        return any(field.name == field_name for field in state.selected_model.fields)
+        return any(
+            field.name == field_name for field in state.selected_model.fields
+        )
 
     def _add_field(
         self,
@@ -515,7 +532,12 @@ class ModelEditorPanel(ui.card):
             return
 
         state.selected_field = next(
-            (field for field in state.selected_model.fields if field.name == name), None
+            (
+                field
+                for field in state.selected_model.fields
+                if field.name == name
+            ),
+            None,
         )
 
     def _on_select_relation(self, selection: list[dict[str, Any]]) -> None:
@@ -585,7 +607,9 @@ class ModelEditorPanel(ui.card):
                 metadata=metadata,
             )
 
-            model_index = state.selected_model.fields.index(state.selected_field)
+            model_index = state.selected_model.fields.index(
+                state.selected_field
+            )
             state.selected_model.fields[model_index] = field_input
             self._refresh_table(state.selected_model.fields)
 
@@ -644,7 +668,9 @@ class ModelEditorPanel(ui.card):
             notify_validation_error(exc)
             return
 
-        model_index = state.selected_model.relationships.index(state.selected_relation)
+        model_index = state.selected_model.relationships.index(
+            state.selected_relation
+        )
         state.selected_model.relationships[model_index] = relationship
         self._refresh_relationship_table(state.selected_model.relationships)
 
@@ -658,7 +684,9 @@ class ModelEditorPanel(ui.card):
     def _delete_relation(self) -> None:
         if state.selected_model and state.selected_relation:
             state.selected_model.relationships.remove(state.selected_relation)
-            self._refresh_relationship_table(state.selected_model.relationships)
+            self._refresh_relationship_table(
+                state.selected_model.relationships
+            )
 
     def _delete_field(self) -> None:
         if state.selected_model and state.selected_field:

@@ -6,4 +6,7 @@ __all__ = [
 ]
 
 from .build import ProjectBuildDirector, build_fastapi_project
-from .cookiecutter_adapter import CookiecutterAdapter, OverwriteCookiecutterAdapter
+from .cookiecutter_adapter import (
+    CookiecutterAdapter,
+    OverwriteCookiecutterAdapter,
+)
