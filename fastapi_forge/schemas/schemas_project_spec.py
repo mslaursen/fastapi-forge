@@ -138,19 +138,16 @@ class ProjectSpec(BaseSchema):
     @computed_field
     @property
     def use_postgres(self) -> bool:
-        """Check if PostgreSQL is enabled."""
         return self.postgres_config is not None
 
     @computed_field
     @property
     def use_alembic(self) -> bool:
-        """Check if Alembic is enabled."""
         return self.alembic_config is not None
 
     @computed_field
     @property
     def use_builtin_auth(self) -> bool:
-        """Check if built-in authentication is enabled."""
         return (
             self.auth_config is not None and self.auth_config.use_builtin_auth
         )
@@ -158,29 +155,24 @@ class ProjectSpec(BaseSchema):
     @computed_field
     @property
     def use_redis(self) -> bool:
-        """Check if Redis is enabled."""
         return self.redis_config is not None
 
     @computed_field
     @property
     def use_rabbitmq(self) -> bool:
-        """Check if RabbitMQ is enabled."""
         return self.rabbitmq_config is not None
 
     @computed_field
     @property
     def use_taskiq(self) -> bool:
-        """Check if TaskIQ is enabled."""
         return self.taskiq_config is not None
 
     @computed_field
     @property
     def use_prometheus(self) -> bool:
-        """Check if Prometheus is enabled."""
         return self.prometheus_config is not None
 
     @computed_field
     @property
     def use_logfire(self) -> bool:
-        """Check if Logfire is enabled."""
         return self.logfire_config is not None
