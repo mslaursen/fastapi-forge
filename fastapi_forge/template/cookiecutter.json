@@ -26,6 +26,9 @@
     "use_logfire": {
         "default": true
     },
+    "use_s3": {
+        "default": true
+    },
     "models": {
         "models": []
     },

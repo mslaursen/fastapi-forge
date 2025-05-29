@@ -172,7 +172,12 @@ class ProjectConfigPanel(ui.right_drawer):
                     .classes("w-full")
                     .bind_value_from(state, "use_rabbitmq")
                 )
-
+                self.use_sqs = (
+                    ui.checkbox("SQS")
+                    .classes("w-full")
+                    .tooltip("Coming soon!")
+                    .set_enabled(False)
+                )
             with ui.column().classes("w-full gap-2"):
                 ui.label("Task Queues").classes("text-lg font-bold")
                 self.use_taskiq = (
@@ -221,10 +226,36 @@ class ProjectConfigPanel(ui.right_drawer):
 
             with ui.column().classes("w-full gap-2"):
                 ui.label("Object Storage").classes("text-lg font-bold")
-                self.use_elasticsearch = (
-                    ui.checkbox("S3")
+                # self.use_s3 = (
+                #     ui.checkbox("S3")
+                #     .classes("w-full")
+                #     .tooltip("Coming soon!")
+                #     .set_enabled(False)
+                # )
+
+            with ui.column().classes("w-full gap-2"):
+                ui.label("AWS").classes("text-lg font-bold")
+                self.use_s3 = (
+                    ui.checkbox("S3", value=state.use_s3)
                     .classes("w-full")
-                    .tooltip("Coming soon!")
+                    .bind_value_from(state, "use_s3")
+                )
+                self.use_sqs = (
+                    ui.checkbox("SQS")
+                    .classes("w-full")
+                    .tooltip("Amazon Simple Queue Service - Coming soon!")
+                    .set_enabled(False)
+                )
+                self.use_sns = (
+                    ui.checkbox("SNS")
+                    .classes("w-full")
+                    .tooltip("Amazon Simple Notification Service - Coming soon!")
+                    .set_enabled(False)
+                )
+                self.use_ses = (
+                    ui.checkbox("SES")
+                    .classes("w-full")
+                    .tooltip("Anazon Simple Email Service - Coming soon!")
                     .set_enabled(False)
                 )
 
@@ -253,6 +284,7 @@ class ProjectConfigPanel(ui.right_drawer):
         self.use_taskiq.bind_value_to(state, "use_taskiq")
         self.use_prometheus.bind_value_to(state, "use_prometheus")
         self.use_logfire.bind_value_to(state, "use_logfire")
+        self.use_s3.bind_value_to(state, "use_s3")
 
     def _update_taskiq_state(self, *_) -> None:
         """Enable or disable Taskiq based on Redis and RabbitMQ."""
@@ -429,6 +461,7 @@ class ProjectConfigPanel(ui.right_drawer):
             state.use_taskiq = self.use_taskiq.value
             state.use_prometheus = self.use_prometheus.value
             state.use_logfire = self.use_logfire.value
+            state.use_s3 = self.use_s3.value
 
             project_spec = state.get_project_spec()
             await build_fastapi_project(project_spec)

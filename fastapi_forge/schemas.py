@@ -415,6 +415,7 @@ class ProjectSpec(_Base):
     use_taskiq: bool = False
     use_prometheus: bool = False
     use_logfire: bool = False
+    use_s3: bool = False
     models: list[Model] = []
     custom_enums: list[CustomEnum] = []
 
