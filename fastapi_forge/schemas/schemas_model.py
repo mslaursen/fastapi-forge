@@ -1,46 +1,28 @@
-from typing import Annotated, Any, Self
+from typing import Any, Self
 
 from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
     computed_field,
     field_validator,
     model_validator,
 )
 
-from fastapi_forge.constants import TAB
 from fastapi_forge.enums import FieldDataTypeEnum, OnDeleteEnum
 from fastapi_forge.type_info_registry import TypeInfo, enum_registry, registry
 from fastapi_forge.utils.string_utils import (
-    camel_to_snake,
     pluralize,
     snake_to_camel,
 )
 
-BoundedStr = Annotated[str, Field(..., min_length=1, max_length=100)]
-SnakeCaseStr = Annotated[BoundedStr, Field(..., pattern=r"^[a-z][a-z0-9_]*$")]
-ModelName = SnakeCaseStr
-FieldName = SnakeCaseStr
-BackPopulates = Annotated[str, Field(..., pattern=r"^[a-z][a-z0-9_]*$")]
-ProjectName = Annotated[
-    BoundedStr,
-    Field(..., pattern=r"^[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9])?$"),
-]
-EnumStr = Annotated[
-    BoundedStr,
-    Field(
-        ...,
-        pattern=r"^[a-zA-Z][a-zA-Z0-9_]*$",
-    ),
-]
+from .base import BaseSchema
+from .types import (
+    BackPopulates,
+    EnumStr,
+    FieldName,
+    ModelName,
+)
 
 
-class _Base(BaseModel):
-    model_config = ConfigDict(use_enum_values=True)
-
-
-class ModelFieldMetadata(_Base):
+class ModelFieldMetadata(BaseSchema):
     """Metadata for a model field."""
 
     is_created_at_timestamp: bool = False
@@ -48,63 +30,7 @@ class ModelFieldMetadata(_Base):
     is_foreign_key: bool = False
 
 
-class CustomEnumValue(_Base):
-    """Represents a single name/value pair in a custom enum."""
-
-    name: EnumStr
-    value: BoundedStr
-
-
-class CustomEnum(_Base):
-    """Represents a custom PostgreSQL ENUM type."""
-
-    name: EnumStr
-    values: list[CustomEnumValue] = []
-
-    def __init__(self, **kwargs: Any):
-        super().__init__(**kwargs)
-        # dynamically register in the enum registry on instantiation
-        enum_repr = f"enums.{self.name}"
-        enum_value_repr = (
-            None if not self.values else f"{enum_repr}.{self.values[0].name}"
-        )
-        enum_registry.register(
-            self.name,
-            TypeInfo(
-                sqlalchemy_type=f'Enum({enum_repr}, name="{camel_to_snake(self.name)}")',
-                sqlalchemy_prefix=True,
-                python_type=enum_repr,
-                faker_field_value=enum_value_repr,
-                test_value=enum_value_repr,
-            ),
-        )
-
-    @model_validator(mode="after")
-    def _validate_enum(self) -> Self:
-        names = [v.name for v in self.values]
-
-        if len(names) != len(set(names)):
-            raise ValueError(f"Enum '{self.name}' has duplicate names.")
-        return self
-
-    @computed_field
-    @property
-    def class_definition(self) -> str:
-        """Returns a string representing the Python Enum class definition."""
-        lines: list[str] = []
-        lines.extend([f"class {self.name}(StrEnum):"])
-        lines.extend([f'{TAB}"""{self.name} Enum."""\n'])
-
-        value_lines: list[str] = []
-        for v in self.values:
-            value_repr = v.value if v.value == "auto()" else f'"{v.value}"'
-            value_lines.extend([f"{TAB}{v.name} = {value_repr}"])
-
-        lines.extend(value_lines)
-        return "\n".join(lines)
-
-
-class ModelField(_Base):
+class ModelField(BaseSchema):
     """Represents a field in a model with validation and computed properties."""
 
     name: FieldName
@@ -182,7 +108,7 @@ class ModelField(_Base):
         return self
 
 
-class ModelRelationship(_Base):
+class ModelRelationship(BaseSchema):
     """Represents a relationship between models."""
 
     field_name: FieldName
@@ -212,7 +138,7 @@ class ModelRelationship(_Base):
         return snake_to_camel(self.target_model)
 
 
-class ModelMetadata(_Base):
+class ModelMetadata(BaseSchema):
     create_endpoints: bool = True
     create_tests: bool = True
     create_daos: bool = True
@@ -220,7 +146,7 @@ class ModelMetadata(_Base):
     is_auth_model: bool = False
 
 
-class Model(_Base):
+class Model(BaseSchema):
     """Represents a model with fields and relationships."""
 
     name: ModelName
@@ -401,106 +327,3 @@ class Model(_Base):
             )
 
         return preview_model
-
-
-class ProjectSpec(_Base):
-    """Represents a project specification with models and configurations."""
-
-    project_name: ProjectName
-    use_postgres: bool = False
-    use_alembic: bool = False
-    use_builtin_auth: bool = False
-    use_redis: bool = False
-    use_rabbitmq: bool = False
-    use_taskiq: bool = False
-    use_prometheus: bool = False
-    use_logfire: bool = False
-    models: list[Model] = []
-    custom_enums: list[CustomEnum] = []
-
-    @model_validator(mode="after")
-    def _validate_enums(self) -> Self:
-        valid_enum_names = {custom_enum.name for custom_enum in self.custom_enums}
-
-        invalid_fields = [
-            (model.name, field.name, field.type_enum)
-            for model in self.models
-            for field in model.fields
-            if (
-                field.type == FieldDataTypeEnum.ENUM
-                and (field.type_enum is None or field.type_enum not in valid_enum_names)
-            )
-        ]
-
-        if invalid_fields:
-            error_lines = [
-                f"• {model_name}.{field_name} (ref: '{type_enum}')"
-                for model_name, field_name, type_enum in invalid_fields
-            ]
-            raise ValueError(
-                f"Invalid enum references ({len(invalid_fields)}):\n"
-                + "\n".join(error_lines)
-                + f"\nValid enums: {', '.join(sorted(valid_enum_names)) or 'none'}"
-            )
-
-        return self
-
-    @model_validator(mode="after")
-    def _validate_models(self) -> Self:
-        model_names = [model.name for model in self.models]
-        model_names_set = set(model_names)
-        if len(model_names) != len(model_names_set):
-            msg = "Model names must be unique."
-            raise ValueError(msg)
-
-        enum_names = [enum.name for enum in self.custom_enums]
-        if len(enum_names) != len(set(enum_names)):
-            msg = "Enum names must be unique."
-            raise ValueError(msg)
-
-        if self.use_alembic and not self.use_postgres:
-            msg = "Cannot use Alembic if PostgreSQL is not enabled."
-            raise ValueError(msg)
-
-        if self.use_builtin_auth and not self.use_postgres:
-            msg = "Cannot use built-in auth if PostgreSQL is not enabled."
-            raise ValueError(msg)
-
-        if self.use_builtin_auth and self.get_auth_model() is None:
-            msg = "Cannot use built-in auth if no auth model is defined."
-            raise ValueError(msg)
-
-        for model in self.models:
-            for relationship in model.relationships:
-                if relationship.target_model not in model_names_set:
-                    raise ValueError(
-                        f"Model '{model.name}' has a relationship to "
-                        f"'{relationship.target_model}', which does not exist.",
-                    )
-
-        if sum(model.metadata.is_auth_model for model in self.models) > 1:
-            msg = "Only one model can be an auth user."
-            raise ValueError(msg)
-
-        if self.use_taskiq and not (self.use_redis and self.use_rabbitmq):
-            missing = []
-            if not self.use_rabbitmq:
-                missing.append("RabbitMQ")
-            if not self.use_redis:
-                missing.append("Redis")
-
-            if missing:
-                raise ValueError(
-                    "TaskIQ is enabled, but the following are missing and required "
-                    f"for its operation: {', '.join(missing)}."
-                )
-
-        return self
-
-    def get_auth_model(self) -> Model | None:
-        if not self.use_builtin_auth:
-            return None
-        for model in self.models:
-            if model.metadata.is_auth_model:
-                return model
-        return None
