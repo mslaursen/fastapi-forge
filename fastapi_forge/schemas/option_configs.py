@@ -7,29 +7,35 @@ from pydantic import (
 from .base import BaseSchema
 
 
-class PostgresConfig(BaseSchema):
+class _BaseConfig(BaseSchema):
+    """Base configuration schema for options."""
+
+    enabled: bool = False
+
+
+class PostgresConfig(_BaseConfig):
     """Configuration for the PostgreSQL."""
 
 
-class AlembicConfig(BaseSchema):
+class AlembicConfig(_BaseConfig):
     """Configuration for the Alembic option."""
 
 
-class AuthConfig(BaseSchema):
+class AuthConfig(_BaseConfig):
     """Configuration for the authentication option."""
 
     use_builtin_auth: bool = False
 
 
-class RedisConfig(BaseSchema):
+class RedisConfig(_BaseConfig):
     """Configuration for the Redis option."""
 
 
-class RabbitMQConfig(BaseSchema):
+class RabbitMQConfig(_BaseConfig):
     """Configuration for the RabbitMQ option."""
 
 
-class TaskIQConfig(BaseSchema):
+class TaskIQConfig(_BaseConfig):
     """Configuration for the TaskIQ option."""
 
     # Backends
@@ -69,9 +75,9 @@ class TaskIQConfig(BaseSchema):
         return self
 
 
-class PrometheusConfig(BaseSchema):
+class PrometheusConfig(_BaseConfig):
     """Configuration for the Prometheus option."""
 
 
-class LogfireConfig(BaseSchema):
+class LogfireConfig(_BaseConfig):
     """Configuration for the Logfire option."""

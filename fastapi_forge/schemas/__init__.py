@@ -18,15 +18,15 @@ __all__ = [
 ]
 
 from .base import BaseSchema
-from .schemas_custom_enum import CustomEnum, CustomEnumValue
-from .schemas_model import (
+from .custom_enum import CustomEnum, CustomEnumValue
+from .model import (
     Model,
     ModelField,
     ModelFieldMetadata,
     ModelMetadata,
     ModelRelationship,
 )
-from .schemas_project_spec import ProjectSpec
+from .project_spec import ProjectSpec
 from .types import (
     BackPopulates,
     BoundedStr,

@@ -1,6 +1,6 @@
 from typing import Self
 
-from option_configs import (
+from .option_configs import (
     AlembicConfig,
     AuthConfig,
     LogfireConfig,
@@ -18,8 +18,8 @@ from pydantic import (
 from fastapi_forge.enums import FieldDataTypeEnum
 
 from .base import BaseSchema
-from .schemas_custom_enum import CustomEnum
-from .schemas_model import (
+from .custom_enum import CustomEnum
+from .model import (
     Model,
 )
 from .types import (
@@ -34,20 +34,18 @@ class ProjectSpec(BaseSchema):
     models: list[Model] = []
     custom_enums: list[CustomEnum] = []
 
-    postgres_config: PostgresConfig | None = None
-    alembic_config: AlembicConfig | None = None
-    auth_config: AuthConfig | None = None
-    redis_config: RedisConfig | None = None
-    rabbitmq_config: RabbitMQConfig | None = None
-    taskiq_config: TaskIQConfig | None = None
-    prometheus_config: PrometheusConfig | None = None
-    logfire_config: LogfireConfig | None = None
+    postgres_config: PostgresConfig = PostgresConfig()
+    alembic_config: AlembicConfig = AlembicConfig()
+    auth_config: AuthConfig = AuthConfig()
+    redis_config: RedisConfig = RedisConfig()
+    rabbitmq_config: RabbitMQConfig = RabbitMQConfig()
+    taskiq_config: TaskIQConfig = TaskIQConfig()
+    prometheus_config: PrometheusConfig = PrometheusConfig()
+    logfire_config: LogfireConfig = LogfireConfig()
 
     @model_validator(mode="after")
     def _validate_enums(self) -> Self:
-        valid_enum_names = {
-            custom_enum.name for custom_enum in self.custom_enums
-        }
+        valid_enum_names = {custom_enum.name for custom_enum in self.custom_enums}
 
         invalid_fields = [
             (model.name, field.name, field.type_enum)
@@ -55,10 +53,7 @@ class ProjectSpec(BaseSchema):
             for field in model.fields
             if (
                 field.type == FieldDataTypeEnum.ENUM
-                and (
-                    field.type_enum is None
-                    or field.type_enum not in valid_enum_names
-                )
+                and (field.type_enum is None or field.type_enum not in valid_enum_names)
             )
         ]
 
@@ -148,9 +143,7 @@ class ProjectSpec(BaseSchema):
     @computed_field
     @property
     def use_builtin_auth(self) -> bool:
-        return (
-            self.auth_config is not None and self.auth_config.use_builtin_auth
-        )
+        return self.auth_config is not None and self.auth_config.use_builtin_auth
 
     @computed_field
     @property

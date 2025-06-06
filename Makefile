@@ -6,11 +6,11 @@ help: # Show help for each of the Makefile recipes.
 
 .PHONY: start
 start: # Start the FastAPI Forge application.
-	python -m fastapi_forge start
+	python -m fastapi_forge start --yes
 
 .PHONY: start-example
 start-example: # Start the FastAPI Forge application with an example project.
-	python -m fastapi_forge start --use-example
+	python -m fastapi_forge start --use-example --yes
 
 .PHONY: version
 version: # Show the version of FastAPI Forge.
