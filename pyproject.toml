@@ -24,7 +24,8 @@ authors = [{ name = "mslaursen", email = "mslaursendk@gmail.com" }]
 [project.urls]
 Repository = "https://github.com/mslaursen/fastapi-forge.git"
 
-[tool.setuptools_scm]
+[tool.setuptools]
+py-modules = ["fastapi_forge"]
 
 [project.scripts]
 fastapi-forge = "fastapi_forge.__main__:main"

@@ -303,7 +303,7 @@ wheels = [
 
 [[package]]
 name = "fastapi-forge"
-version = "0.1.dev213+g48eaca0.d20250524"
+version = "0.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
