@@ -14,13 +14,12 @@
     </div>
 
     <div class="step-actions">
-      <button v-if="currentStep > 0" @click="prevStep" class="btn prev-btn">Previous</button>
       <button v-if="currentStep < steps.length - 1" @click="nextStep" class="btn next-btn">
         Next
       </button>
-      <button v-if="currentStep === steps.length - 1" @click="finish" class="btn finish-btn">
+      <!-- <button v-if="currentStep === steps.length - 1" @click="finish" class="btn finish-btn">
         Finish
-      </button>
+      </button> -->
     </div>
   </div>
 </template>
@@ -75,6 +74,7 @@ const finish = () => {
   margin-bottom: 1rem;
 }
 .step {
+  caret-color: transparent;
   width: 50px;
   height: 50px;
   border-radius: 50%;
@@ -101,6 +101,27 @@ const finish = () => {
 }
 
 .step-content {
-  margin-bottom: 1rem;
+  margin-bottom: 3rem;
+}
+
+.next-btn,
+.prev-btn,
+.finish-btn {
+  caret-color: transparent;
+  padding: 0.5rem 1rem;
+  border: 2px solid black;
+  border-radius: 4px;
+  background-color: #f4f4f0;
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 1);
+  transition: transform 0.1s ease-in-out, box-shadow 0.1s;
+  font-weight: bold;
+}
+
+.next-btn:hover,
+.prev-btn:hover,
+.finish-btn:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px rgba(0, 0, 0, 1);
+  cursor: pointer;
 }
 </style>
