@@ -33,8 +33,9 @@
 import Stepper from './components/Stepper.vue'
 import Step1 from './components/steps/Step1.vue'
 import Step2 from './components/steps/Step2.vue'
+import Step3 from './components/steps/Step3.vue'
 
-const steps = [Step1, Step2]
+const steps = [Step1, Step2, Step3]
 </script>
 
 

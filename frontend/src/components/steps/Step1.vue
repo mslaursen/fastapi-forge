@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <main class="container">
     <h1>Choose a Project Name</h1>
     <br />
     <div class="input-group">
@@ -34,7 +34,7 @@
         {{ errorMessage }}
       </div>
     </div>
-  </div>
+  </main>
 </template>
 
 <script setup>

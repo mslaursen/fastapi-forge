@@ -1,146 +1,47 @@
 <template>
-  <div class="container">
+  <main class="container">
     <h1>Choose a Database</h1>
     <br />
-  </div>
+    <div class="db-grid-container">
+      <div class="db-grid">
+        <div
+          class="db-item"
+          v-for="db in databases"
+          :key="db"
+          :class="{
+            confirmed: store.getDatabase() === db,
+            disabled: db !== 'PostgreSQL',
+            enabled: db === 'PostgreSQL',
+          }"
+          @click="handleDatabaseClick(db)"
+        >
+          <span>{{ db }}</span>
+        </div>
+      </div>
+    </div>
+  </main>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { useProjectStore } from '@/stores/store'
 
 const store = useProjectStore()
-const localProjectName = ref('')
-const showError = ref(false)
-const errorMessage = ref('')
+const databases = ['PostgreSQL', 'MySQL', 'SQLite']
 
-const isValidProjectName = (name) => {
-  return /^[a-zA-Z_][a-zA-Z0-9_-]*$/.test(name)
-}
-
-const handleInputChange = (event) => {
-  localProjectName.value = event.target.value
-
-  if (localProjectName.value.length === 0) {
-    showError.value = false
-    return
-  }
-
-  if (!isValidProjectName(localProjectName.value)) {
-    showError.value = true
-    errorMessage.value =
-      'Name must start with a letter/underscore and only contain letters, numbers, -, or _'
-  } else {
-    showError.value = false
-  }
-}
-
-const handleConfirm = () => {
-  if (store.isProjectNameConfirmed) {
-    store.isProjectNameConfirmed = false
-    store.setProjectName('')
-    return
-  }
-
-  if (!localProjectName.value || showError.value) return
-
-  store.setProjectName(localProjectName.value)
-  store.isProjectNameConfirmed = true
+const handleDatabaseClick = (db) => {
+  if (db !== 'PostgreSQL') return
+  store.setDatabase(store.getDatabase() === db ? '' : db)
 }
 
 onMounted(() => {
-  if (store.getProjectName()) {
-    localProjectName.value = store.getProjectName()
+  if (store.getDatabase() && store.getDatabase() !== 'PostgreSQL') {
+    store.setDatabase('')
   }
 })
 </script>
 
 <style scoped>
-.project-name {
-  width: 100%;
-  padding: 0.5rem;
-  border: 2px solid black;
-  border-radius: 4px;
-  box-shadow: 3px 3px 0px rgba(0, 0, 0, 1);
-  transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
-}
-
-.project-name:focus,
-.project-name.confirmed {
-  outline: none;
-  transform: translate(2px, 2px);
-  box-shadow: 0px 0px 0px rgba(0, 0, 0, 1);
-}
-.project-name.confirmed {
-  cursor: not-allowed;
-}
-
-.input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  margin-bottom: 1rem;
-  width: 100%;
-}
-.project-name-label {
-  font-weight: bold;
-  margin-bottom: 0.25rem;
-}
-.input-horizontal {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.confirm-btn {
-  caret-color: transparent;
-  border: 2px solid black;
-  border-radius: 4px;
-  background-color: #f4f4f0;
-  padding: 0.25rem;
-  box-shadow: 3px 3px 0px rgba(0, 0, 0, 1);
-  transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
-  height: 2.125rem;
-  font-weight: bold;
-}
-.confirm-btn:hover,
-.confirm-btn.confirmed {
-  transform: translate(2px, 2px);
-  box-shadow: 0px 0px 0px rgba(0, 0, 0, 1);
-  cursor: pointer;
-  transition: 0.1s;
-  background-color: #2fff2f;
-}
-.confirm-btn.confirmed {
-  transition: 0.1s;
-  background-color: #2fff2f;
-}
-.confirm-btn.confirmed:hover {
-  background-color: #f4f4f0;
-  transform: translate(0px, 0px);
-  box-shadow: 3px 3px 0px rgba(0, 0, 0, 1);
-}
-.label-group {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.input-error {
-  border-color: #ff4444;
-  background-color: #ffeeee;
-}
-
-.error-message {
-  color: #ff4910;
-  font-size: 0.8rem;
-  margin-top: 0.25rem;
-}
-
-.confirm-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  background-color: #f4f4f0;
-}
 .container {
   display: flex;
   flex-direction: column;
@@ -148,5 +49,66 @@ onMounted(() => {
   width: 100%;
   max-width: 360px;
   min-width: 360px;
+}
+
+.db-grid-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.db-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 100px);
+  gap: 3rem;
+  justify-items: center;
+}
+
+.db-item {
+  caret-color: transparent;
+  border: 2px solid black;
+  font-weight: bold;
+  border-radius: 4px;
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 1);
+  padding: 1rem;
+  text-align: center;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f4f4f0;
+  transition: all 0.1s ease-in-out;
+}
+
+.db-item.enabled:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px rgba(0, 0, 0, 1);
+  cursor: pointer;
+  background-color: #2fff2f;
+}
+
+.db-item.enabled.confirmed {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px rgba(0, 0, 0, 1);
+  background-color: #2fff2f;
+}
+
+.db-item.enabled.confirmed:hover {
+  background-color: #f4f4f0;
+  transform: translate(0px, 0px);
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 1);
+}
+
+.db-item.disabled {
+  opacity: 0.6;
+  background-color: #e0e0e0;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.db-item.disabled:hover {
+  transform: none;
+  box-shadow: none;
 }
 </style>

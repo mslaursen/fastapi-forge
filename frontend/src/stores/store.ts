@@ -4,8 +4,9 @@ import { ref } from 'vue'
 
 export const useProjectStore = defineStore("projectSpec", () => {
     const stepOneComplete = ref(false);
+    const stepTwoComplete = ref(false);
 
-    const projectSpec = ref({ "project_name": "" })
+    const projectSpec = ref({ "project_name": "", "database": "" })
     const isProjectNameConfirmed = ref(false)
 
     const setProjectName = (projectName: string): void => {
@@ -14,7 +15,21 @@ export const useProjectStore = defineStore("projectSpec", () => {
     const getProjectName = (): string => {
         return projectSpec.value.project_name
 
-    }
+    };
 
-    return { projectSpec, isProjectNameConfirmed, setProjectName, getProjectName }
+    const setDatabase = (database: string): void => {
+        projectSpec.value.database = database
+    };
+    const getDatabase = (): string => {
+        return projectSpec.value.database
+    };
+
+    return {
+        projectSpec,
+        isProjectNameConfirmed,
+        setProjectName,
+        getProjectName,
+        setDatabase,
+        getDatabase
+    }
 });
