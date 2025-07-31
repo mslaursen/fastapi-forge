@@ -23,22 +23,22 @@
     </header>
     <main class="main">
       <div class="content">
-        <Stepper :steps="steps" @completed="console.log('Stepper completed')" />
+        <StepWizard :steps="steps" />
       </div>
     </main>
   </div>
+  <GlobalModal ref="modalRef" />
 </template>
 
-<script setup>
-import Stepper from './components/Stepper.vue'
-import Step1 from './components/steps/Step1.vue'
-import Step2 from './components/steps/Step2.vue'
-import Step3 from './components/steps/Step3.vue'
+<script setup lang="ts">
+import StepWizard from "./components/StepWizard.vue"
+import ProjectNameStep from "./components/steps/ProjectNameStep.vue"
+import DatabaseStep from "./components/steps/DatabaseStep.vue"
+import SchemaStep from "./components/steps/SchemaStep.vue"
+import GlobalModal from "@/components/modal/GlobalModal.vue"
 
-const steps = [Step1, Step2, Step3]
+const steps: Array<any> = [SchemaStep, ProjectNameStep, DatabaseStep, SchemaStep]
 </script>
-
-
 
 <style>
 html,
@@ -85,7 +85,9 @@ body {
   border-radius: 15%;
   padding: 0.25rem;
   box-shadow: 2px 2px 0px rgba(0, 0, 0, 1);
-  transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
+  transition:
+    transform 0.1s ease-in-out,
+    box-shadow 0.1s ease-in-out;
 }
 
 .github-icon:hover {

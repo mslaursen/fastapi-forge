@@ -22,21 +22,21 @@
   </main>
 </template>
 
-<script setup>
-import { onMounted } from 'vue'
-import { useProjectStore } from '@/stores/store'
+<script setup lang="ts">
+import { onMounted } from "vue"
+import { useProjectStore } from "@/stores/store"
 
 const store = useProjectStore()
-const databases = ['PostgreSQL', 'MySQL', 'SQLite']
+const databases = ["PostgreSQL", "MySQL", "SQLite"]
 
 const handleDatabaseClick = (db) => {
-  if (db !== 'PostgreSQL') return
-  store.setDatabase(store.getDatabase() === db ? '' : db)
+  if (db !== "PostgreSQL") return
+  store.setDatabase(store.getDatabase() === db ? "" : db)
 }
 
 onMounted(() => {
-  if (store.getDatabase() && store.getDatabase() !== 'PostgreSQL') {
-    store.setDatabase('')
+  if (store.getDatabase() && store.getDatabase() !== "PostgreSQL") {
+    store.setDatabase("")
   }
 })
 </script>

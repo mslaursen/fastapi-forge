@@ -1,5 +1,5 @@
 <template>
-  <div class="stepper">
+  <div class="StepWizard">
     <div class="step-indicators">
       <div
         v-for="(step, index) in steps"
@@ -17,15 +17,12 @@
       <button v-if="currentStep < steps.length - 1" @click="nextStep" class="btn next-btn">
         Next
       </button>
-      <!-- <button v-if="currentStep === steps.length - 1" @click="finish" class="btn finish-btn">
-        Finish
-      </button> -->
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
+<script setup lang="ts">
+import { ref } from "vue"
 
 const props = defineProps({
   steps: {
@@ -35,8 +32,6 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['completed'])
-
 const currentStep = ref(0)
 
 const nextStep = () => {
@@ -45,25 +40,15 @@ const nextStep = () => {
   }
 }
 
-const prevStep = () => {
-  if (currentStep.value > 0) {
-    currentStep.value--
-  }
-}
-
 const goToStep = (index) => {
   if (index >= 0 && index < props.steps.length) {
     currentStep.value = index
   }
 }
-
-const finish = () => {
-  emit('completed')
-}
 </script>
 
 <style scoped>
-.stepper {
+.StepWizard {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -113,7 +98,9 @@ const finish = () => {
   border-radius: 4px;
   background-color: #f4f4f0;
   box-shadow: 3px 3px 0px rgba(0, 0, 0, 1);
-  transition: transform 0.1s ease-in-out, box-shadow 0.1s;
+  transition:
+    transform 0.1s ease-in-out,
+    box-shadow 0.1s;
   font-weight: bold;
 }
 
