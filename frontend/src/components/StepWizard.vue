@@ -14,6 +14,9 @@
     </div>
 
     <div class="step-actions">
+      <button v-if="currentStep > 0" @click="currentStep--" class="btn prev-btn">
+        Previous
+      </button>
       <button v-if="currentStep < steps.length - 1" @click="nextStep" class="btn next-btn">
         Next
       </button>
@@ -52,12 +55,15 @@ const goToStep = (index) => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  height: 100%
 }
+
 .step-indicators {
   display: flex;
   justify-content: center;
   margin-bottom: 1rem;
 }
+
 .step {
   caret-color: transparent;
   width: 50px;
@@ -71,11 +77,13 @@ const goToStep = (index) => {
   cursor: pointer;
   border: 2px solid black;
   box-shadow: 2px 2px 0px rgba(0, 0, 0, 1);
+  transition: transform 0.1s ease-out, box-shadow 0.1s;
 }
 
 .step:hover {
   background-color: darkgray;
   box-shadow: 0px 0px 0px rgba(0, 0, 0, 1);
+  transform: translate(2px, 2px);
 }
 
 .step.active {
@@ -90,6 +98,24 @@ const goToStep = (index) => {
   margin-bottom: 3rem;
 }
 
+.step-actions {
+  display: grid;
+  grid-template-rows: 1;
+  grid-template-columns: 2;
+  justify-content: space-between;
+  width: 10%;
+  position: absolute;
+  bottom: 8rem;
+}
+
+.prev-btn {
+  grid-column: 1;
+}
+
+.next-btn {
+  grid-column: 2;
+}
+
 .next-btn,
 .prev-btn,
 .finish-btn {
@@ -99,9 +125,7 @@ const goToStep = (index) => {
   border-radius: 4px;
   background-color: #f4f4f0;
   box-shadow: 3px 3px 0px rgba(0, 0, 0, 1);
-  transition:
-    transform 0.1s ease-in-out,
-    box-shadow 0.1s;
+  transition: transform 0.1s ease-in-out, box-shadow 0.1s;
   font-weight: bold;
 }
 
