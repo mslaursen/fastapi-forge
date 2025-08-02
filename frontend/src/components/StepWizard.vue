@@ -14,9 +14,7 @@
     </div>
 
     <div class="step-actions">
-      <button v-if="currentStep > 0" @click="currentStep--" class="btn prev-btn">
-        Previous
-      </button>
+      <button v-if="currentStep > 0" @click="currentStep--" class="btn prev-btn">Previous</button>
       <button v-if="currentStep < steps.length - 1" @click="nextStep" class="btn next-btn">
         Next
       </button>
@@ -55,7 +53,7 @@ const goToStep = (index) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: 100%
+  height: 100%;
 }
 
 .step-indicators {
@@ -77,7 +75,9 @@ const goToStep = (index) => {
   cursor: pointer;
   border: 2px solid black;
   box-shadow: 2px 2px 0px rgba(0, 0, 0, 1);
-  transition: transform 0.1s ease-out, box-shadow 0.1s;
+  transition:
+    transform 0.1s ease-out,
+    box-shadow 0.1s;
 }
 
 .step:hover {
@@ -125,7 +125,9 @@ const goToStep = (index) => {
   border-radius: 4px;
   background-color: #f4f4f0;
   box-shadow: 3px 3px 0px rgba(0, 0, 0, 1);
-  transition: transform 0.1s ease-in-out, box-shadow 0.1s;
+  transition:
+    transform 0.1s ease-in-out,
+    box-shadow 0.1s;
   font-weight: bold;
 }
 

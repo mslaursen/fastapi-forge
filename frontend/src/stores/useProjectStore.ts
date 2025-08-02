@@ -1,7 +1,16 @@
 import { defineStore } from "pinia"
 import { ref, shallowRef } from "vue"
 import type { Ref } from "vue"
-import type { NodesArray, EdgesArray,EnumsArray, NodeT, EdgeT, RelationalField, RelationalRelationField, EnumValue } from "@/types/types.ts"
+import type {
+  NodesArray,
+  EdgesArray,
+  EnumsArray,
+  NodeT,
+  EdgeT,
+  RelationalField,
+  RelationalRelationField,
+  EnumValue,
+} from "@/types/types.ts"
 import type { Edge } from "@vue-flow/core"
 
 export const useProjectStore = defineStore("projectSpec", () => {
@@ -73,27 +82,22 @@ export const useProjectStore = defineStore("projectSpec", () => {
 
   const createNode = (id: string): void => {
     if (findNodeById(id)) return
-    nodes.value.push({ 
-      id, 
-      data: { fields:[], relations:[] },
-      type: "custom", 
-      position: { x: 100, y: 100 } })
+    nodes.value.push({
+      id,
+      data: { fields: [], relations: [] },
+      type: "custom",
+      position: { x: 100, y: 100 },
+    })
   }
 
   const deleteNode = (id: string): void => {
     const node = findNodeById(id)
     if (!node) return
-    nodes.value = nodes.value.filter(
-      (node) => node.id !== id
-    )
-    edges.value = edges.value.filter(
-      (edge) => edge.source !== id && edge.target !== id
-    )
+    nodes.value = nodes.value.filter((node) => node.id !== id)
+    edges.value = edges.value.filter((edge) => edge.source !== id && edge.target !== id)
     nodes.value.forEach((node) => {
       if (node.data.relations) {
-        node.data.relations = node.data.relations?.filter(
-          (relation) => relation.targetModel !== id
-        )
+        node.data.relations = node.data.relations?.filter((relation) => relation.targetModel !== id)
       }
     })
   }
@@ -120,24 +124,18 @@ export const useProjectStore = defineStore("projectSpec", () => {
   }
 
   const nameExistsInModel = (node: NodeT, name: string): boolean => {
-    const existingFieldname = node.data.fields.find(
-      (field) => field.name === name
-    )
+    const existingFieldname = node.data.fields.find((field) => field.name === name)
     const existingRelationFieldName = node.data.relations.find(
-      (relation) => relation.fieldName === name
+      (relation) => relation.fieldName === name,
     )
-    return !!existingFieldname || !!existingRelationFieldName;
+    return !!existingFieldname || !!existingRelationFieldName
   }
 
-  const addField = (
-    source: string,
-    fieldData: RelationalField,
-  ) => {
+  const addField = (source: string, fieldData: RelationalField) => {
     const node = findNodeById(source)
     if (!node) throw new Error(`Model does not exist: ${source}`)
-    if (nameExistsInModel(node, fieldData.name)) throw new Error(
-      `Field name already exists for model: ${source}`
-    );
+    if (nameExistsInModel(node, fieldData.name))
+      throw new Error(`Field name already exists for model: ${source}`)
     node.data.fields.push(fieldData)
   }
 
@@ -149,15 +147,10 @@ export const useProjectStore = defineStore("projectSpec", () => {
     node.data.fields[fieldIndex] = fieldData
   }
 
-  const deleteField = (
-    source: string,
-    fieldName: string,
-  ) => {
+  const deleteField = (source: string, fieldName: string) => {
     const node = findNodeById(source)
     if (!node) throw new Error(`Model does not exist: ${source}`)
-    node.data.fields = node.data.fields.filter(
-      (field) => field.name !== fieldName
-    )
+    node.data.fields = node.data.fields.filter((field) => field.name !== fieldName)
   }
 
   const addRelation = (
@@ -171,16 +164,10 @@ export const useProjectStore = defineStore("projectSpec", () => {
     node.data.relations.push(relationData)
   }
 
-  const deleteRelation = (
-    source: string,
-    target: string,
-    fieldName: string,
-  ) => {
+  const deleteRelation = (source: string, target: string, fieldName: string) => {
     const node = findNodeById(source)
     if (!node) return
-    node.data.relations = node.data.relations.filter(
-      (relation) => relation.fieldName !== fieldName
-    )
+    node.data.relations = node.data.relations.filter((relation) => relation.fieldName !== fieldName)
     deleteEdge(source, target, fieldName)
   }
 
@@ -192,14 +179,12 @@ export const useProjectStore = defineStore("projectSpec", () => {
   ): void => {
     const node = findNodeById(source)
     if (!node || !node.data.relations) return
-    const index = node.data.relations.findIndex(
-      (rel) => rel.fieldName === originalFieldName
-    )
+    const index = node.data.relations.findIndex((rel) => rel.fieldName === originalFieldName)
     node.data.relations[index] = relationData
 
     const edgeId = formatEdgeId(source, originalTarget, originalFieldName)
     const edge = getEdgeById(edgeId)
-    if (!edge) return;
+    if (!edge) return
 
     const newEdgeId = formatEdgeId(source, relationData.targetModel, relationData.fieldName)
     edge.id = newEdgeId
@@ -207,9 +192,7 @@ export const useProjectStore = defineStore("projectSpec", () => {
     edge.target = relationData.targetModel
   }
 
-  const getEdgeById = (
-    id: string
-  ): EdgeT | undefined => {
+  const getEdgeById = (id: string): EdgeT | undefined => {
     return edges.value.find((edge) => edge.id === id)
   }
 
@@ -217,11 +200,7 @@ export const useProjectStore = defineStore("projectSpec", () => {
     return `(${source})-(${target})-(${fieldName})`
   }
 
-  const createEdge = (
-    source: string, 
-    target: string, 
-    fieldName: string
-  ): void => {
+  const createEdge = (source: string, target: string, fieldName: string): void => {
     if (source === target) return
     edges.value.push({
       id: formatEdgeId(source, target, fieldName),
@@ -230,14 +209,8 @@ export const useProjectStore = defineStore("projectSpec", () => {
     })
   }
 
-  const deleteEdge = (
-    source: string, 
-    target: string,
-    fieldName: string
-  ) => {
-    edges.value = edges.value.filter(
-      (edge) => edge.id !== formatEdgeId(source, target, fieldName)
-    )
+  const deleteEdge = (source: string, target: string, fieldName: string) => {
+    edges.value = edges.value.filter((edge) => edge.id !== formatEdgeId(source, target, fieldName))
   }
 
   const addEnum = (name: string) => {}
@@ -247,8 +220,6 @@ export const useProjectStore = defineStore("projectSpec", () => {
   const addEnumValue = (enumName: string, enumValue: EnumValue) => {}
   const updateEnumValue = (enumName: string, enumValueName: string, newEnumValue: EnumValue) => {}
   const deleteEnumValue = (enumName: string, enumValueName: string) => {}
-
-  
 
   const setProjectName = (projectName: string): void => {
     projectSpec.value.project_name = projectName

@@ -42,14 +42,14 @@
 
 <script setup lang="ts">
 import { ref } from "vue"
-import { useProjectStore } from "@/stores/store"
+import { useProjectStore } from "@/stores/useProjectStore"
 import { useModalStore } from "@/stores/useModalStore"
 
 const props = defineProps<{
   id: string
 }>()
 
-const store = useProjectStore()
+const projectStore = useProjectStore()
 const modalStore = useModalStore()
 
 const fieldName = ref("")
@@ -62,7 +62,7 @@ const isIndex = ref(false)
 
 const saveField = () => {
   if (!fieldName.value || !type.value) return
-  store.addField(props.id, {
+  projectStore.addField(props.id, {
     name: fieldName.value,
     type: type.value,
     default: defaultValue.value || undefined,

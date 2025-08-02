@@ -23,8 +23,6 @@
         <label class="field-label">Default value</label>
         <input class="field-input" v-model="defaultValue" type="text" />
       </div>
-
-
     </div>
 
     <div class="checkbox-group">
@@ -43,7 +41,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue"
-import { useProjectStore } from "@/stores/store"
+import { useProjectStore } from "@/stores/useProjectStore"
 import { useModalStore } from "@/stores/useModalStore"
 import type { Field } from "@/types/types"
 
@@ -52,7 +50,7 @@ const props = defineProps<{
   field: Field
 }>()
 
-const store = useProjectStore()
+const projectStore = useProjectStore()
 const modalStore = useModalStore()
 
 const fieldName = ref(props.field.name)
@@ -64,7 +62,7 @@ const isUnique = ref(props.field.isUnique || false)
 const isIndex = ref(props.field.isIndex || false)
 
 const saveField = () => {
-  store.updateField(props.id, props.field.name, {
+  projectStore.updateField(props.id, props.field.name, {
     name: fieldName.value,
     type: type.value,
     default: defaultValue.value || undefined,
@@ -77,7 +75,7 @@ const saveField = () => {
 }
 
 const deleteField = () => {
-  store.deleteField(props.id, props.field.name)
+  projectStore.deleteField(props.id, props.field.name)
   modalStore.close()
 }
 </script>
@@ -103,8 +101,6 @@ const deleteField = () => {
   gap: 0.15rem;
 }
 
-
-
 .field-label {
   font-weight: bold;
   margin-bottom: 5px;
@@ -120,7 +116,7 @@ const deleteField = () => {
 
 .checkbox-group {
   display: flex;
-  flex-direction: column; 
+  flex-direction: column;
   gap: 0.5rem;
   font-weight: bold;
 }
@@ -139,7 +135,9 @@ const deleteField = () => {
   border-radius: 4px;
   background-color: #ff6b6b;
   box-shadow: 3px 3px 0px black;
-  transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
+  transition:
+    transform 0.1s ease-in-out,
+    box-shadow 0.1s ease-in-out;
 }
 
 .delete-field-btn:hover {
@@ -155,7 +153,9 @@ const deleteField = () => {
   border-radius: 4px;
   background-color: #2fff2f;
   box-shadow: 3px 3px 0px black;
-  transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
+  transition:
+    transform 0.1s ease-in-out,
+    box-shadow 0.1s ease-in-out;
 }
 
 .save-field-btn:hover {

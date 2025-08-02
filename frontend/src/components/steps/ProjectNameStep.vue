@@ -11,19 +11,19 @@
         <input
           class="project-name"
           :class="{
-            confirmed: store.isProjectNameConfirmed,
+            confirmed: projectStore.isProjectNameConfirmed,
             'input-error': showError,
           }"
           type="text"
           placeholder="Enter your project name"
           :value="localProjectName"
           @input="handleInputChange($event)"
-          :disabled="store.isProjectNameConfirmed"
+          :disabled="projectStore.isProjectNameConfirmed"
           maxlength="50"
         />
         <button
           class="confirm-btn"
-          :class="{ confirmed: store.isProjectNameConfirmed }"
+          :class="{ confirmed: projectStore.isProjectNameConfirmed }"
           @click="handleConfirm"
           :disabled="showError || !localProjectName"
         >
@@ -39,9 +39,9 @@
 
 <script setup>
 import { ref, onMounted } from "vue"
-import { useProjectStore } from "@/stores/store"
+import { useProjectStore } from "@/stores/useProjectStore"
 
-const store = useProjectStore()
+const projectStore = useProjectStore()
 const localProjectName = ref("")
 const showError = ref(false)
 const errorMessage = ref("")
@@ -68,21 +68,21 @@ const handleInputChange = (event) => {
 }
 
 const handleConfirm = () => {
-  if (store.isProjectNameConfirmed) {
-    store.isProjectNameConfirmed = false
-    store.setProjectName("")
+  if (projectStore.isProjectNameConfirmed) {
+    projectStore.isProjectNameConfirmed = false
+    projectStore.setProjectName("")
     return
   }
 
   if (!localProjectName.value || showError.value) return
 
-  store.setProjectName(localProjectName.value)
-  store.isProjectNameConfirmed = true
+  projectStore.setProjectName(localProjectName.value)
+  projectStore.isProjectNameConfirmed = true
 }
 
 onMounted(() => {
-  if (store.getProjectName()) {
-    localProjectName.value = store.getProjectName()
+  if (projectStore.getProjectName()) {
+    localProjectName.value = projectStore.getProjectName()
   }
 })
 </script>

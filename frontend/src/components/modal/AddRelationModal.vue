@@ -43,14 +43,14 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue"
-import { useProjectStore } from "@/stores/store"
+import { useProjectStore } from "@/stores/useProjectStore"
 import { useModalStore } from "@/stores/useModalStore"
 
 const props = defineProps<{
   id: string
 }>()
 
-const store = useProjectStore()
+const projectStore = useProjectStore()
 const modalStore = useModalStore()
 
 const fieldName = ref("")
@@ -61,12 +61,12 @@ const nullable = ref(false)
 const unique = ref(false)
 const indexed = ref(false)
 
-const filteredNodes = computed(() => store.nodes.filter((node) => node.id !== props.id))
+const filteredNodes = computed(() => projectStore.nodes.filter((node) => node.id !== props.id))
 
 const saveSelect = () => {
   if (!selectedNodeId.value || !fieldName.value) return
 
-  store.addRelation(props.id, selectedNodeId.value, {
+  projectStore.addRelation(props.id, selectedNodeId.value, {
     fieldName: fieldName.value,
     targetModel: selectedNodeId.value,
     backPopulates: backPopulates.value,
