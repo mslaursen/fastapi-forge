@@ -45,7 +45,6 @@ function close() {
 }
 
 .modal {
-  font-family: sans-serif;
   border: 2px solid black;
   border-radius: 6px;
   overflow: hidden;
