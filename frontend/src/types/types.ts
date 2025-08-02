@@ -28,18 +28,29 @@ export interface RelationalNodeData {
   relations: Array<RelationalRelationField>
 }
 
-export interface Node {
+export interface NodeT {
   id: string
-  data?: RelationalNodeData
+  data: RelationalNodeData
   type: string
   position: Position2D
 }
 
-export interface Edge {
+export interface EdgeT {
   id: string
   source: string
   target: string
 }
 
-export type NodesArray = Array<Node>
-export type EdgesArray = Array<Edge>
+export interface EnumValue {
+  name: string
+  value: string
+}
+
+export interface Enum {
+  name: string
+  values: Array<EnumValue>
+}
+
+export type NodesArray = Array<NodeT>
+export type EdgesArray = Array<EdgeT>
+export type EnumsArray = Array<Enum>

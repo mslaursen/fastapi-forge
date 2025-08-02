@@ -9,17 +9,27 @@
         @mouseover="openNodeActions"
         @mouseleave="closeNodeActions"
       >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="lucide lucide-ellipsis"
         >
-        <div class="custom-node-actions-content" v-if="nodeActionsOpen">
-          <div class="custom-node-actions-content-action" @click="$emit('add-field', props.id)">
-            Add Field
-          </div>
-          <div class="custom-node-actions-content-action" @click="$emit('add-relation', props.id)">
-            Add Relation
-          </div>
-          <div class="custom-node-actions-content-action" @click="$emit('delete-node', props.id)">
-            Delete
-          </div>
+          <circle cx="12" cy="12" r="1"></circle>
+          <circle cx="19" cy="12" r="1"></circle>
+          <circle cx="5" cy="12" r="1"></circle>
+        </svg>
+        <div class="dropdown-list" v-if="nodeActionsOpen">
+          <div class="dropdown-item" @click="$emit('add-field', props.id)">Add Field</div>
+          <div class="dropdown-item" @click="$emit('add-relation', props.id)">Add Relation</div>
+          <div class="dropdown-item" @click="$emit('rename-node', props.id)">Rename</div>
+          <div class="dropdown-item" @click="$emit('delete-node', props.id)">Delete</div>
         </div>
       </div>
     </div>
@@ -66,20 +76,6 @@ const closeNodeActions = () => {
 </script>
 
 <style scoped>
-.custom-node-actions-content {
-  position: absolute;
-  background-color: #ffffff;
-  border: 2px solid black;
-  border-radius: 4px;
-  padding: 4px;
-  z-index: 10;
-  margin-left: 160px;
-  width: 120px;
-}
-.custom-node-actions-content-action {
-  cursor: pointer;
-}
-
 .custom-node {
   border: 2px solid black;
   border-radius: 6px;
@@ -103,22 +99,18 @@ const closeNodeActions = () => {
   height: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
   padding: 0 8px;
 }
 
 .custom-node-actions {
   cursor: pointer;
-  width: 32px;
+  width: 40px;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   border-left: 2px solid black;
-}
-
-.custom-node-actions:hover {
-  background-color: #f0f0f0;
+  background-color: #ffdb58;
 }
 
 .custom-node-body {
@@ -162,5 +154,36 @@ const closeNodeActions = () => {
   font-style: italic;
   color: #6c757d;
   white-space: nowrap;
+}
+
+.dropdown-list {
+  margin-left: 160px;
+  caret-color: transparent;
+  border: 2px solid black;
+  position: absolute;
+  width: 100%;
+  min-width: 120px;
+  max-width: 140px;
+  border-radius: 5px;
+  background: white;
+  z-index: 100;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.dropdown-item {
+  height: 35px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 5px;
+  box-sizing: border-box;
+  border: 2px solid transparent;
+  border-radius: 5px;
+}
+
+.dropdown-item:hover {
+  border: 2px solid black;
+  cursor: pointer;
 }
 </style>

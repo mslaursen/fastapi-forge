@@ -36,7 +36,10 @@
       <label><input type="checkbox" v-model="isIndex" /> Index</label>
     </div>
 
-    <button class="save-field-btn" @click="saveField">Save</button>
+    <div class="action-group">
+      <button class="delete-field-btn" @click="deleteField">Delete</button>
+      <button class="save-field-btn" @click="saveField">Save</button>
+    </div>
   </main>
 </template>
 
@@ -63,13 +66,7 @@ const isUnique = ref(props.field.isUnique || false)
 const isIndex = ref(props.field.isIndex || false)
 
 const saveField = () => {
-  const node = store.nodes.find((n) => n.id === props.id)
-  if (!node || !node.data?.fields) return
-
-  const fieldIndex = node.data.fields.findIndex((f) => f.name === props.field.name)
-  if (fieldIndex === -1) return
-
-  node.data.fields[fieldIndex] = {
+  store.updateField(props.id, props.field.name, {
     name: fieldName.value,
     type: type.value,
     default: defaultValue.value || undefined,
@@ -77,8 +74,12 @@ const saveField = () => {
     isNullable: isNullable.value,
     isUnique: isUnique.value,
     isIndex: isIndex.value,
-  }
+  })
+  modalStore.close()
+}
 
+const deleteField = () => {
+  store.deleteField(props.id, props.field.name)
   modalStore.close()
 }
 </script>
@@ -140,6 +141,31 @@ const saveField = () => {
   justify-content: space-between;
   gap: 1rem;
   font-weight: bold;
+}
+
+.action-group {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.delete-field-btn {
+  align-self: flex-end;
+  padding: 0.5rem 1rem;
+  border: 2px solid black;
+  border-radius: 4px;
+  font-weight: bold;
+  background-color: #ff6b6b;
+  box-shadow: 3px 3px 0px black;
+  transition:
+    transform 0.1s ease-in-out,
+    box-shadow 0.1s ease-in-out;
+}
+
+.delete-field-btn:hover {
+  cursor: pointer;
+  transform: translate(2px, 2px);
+  box-shadow: none;
 }
 
 .save-field-btn {

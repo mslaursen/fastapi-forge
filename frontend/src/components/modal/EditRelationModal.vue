@@ -37,7 +37,10 @@
       <label><input type="checkbox" v-model="indexed" /> Index</label>
     </div>
 
-    <button class="save-relation-btn" @click="saveChanges">Save</button>
+    <div class="action-group">
+      <button class="delete-relation-btn" @click="deleteRelation">Delete</button>
+      <button class="save-relation-btn" @click="saveChanges">Save</button>
+    </div>
   </main>
 </template>
 
@@ -78,10 +81,9 @@ onMounted(() => {
 const filteredNodes = computed(() => store.nodes.filter((node) => node.id !== props.id))
 
 const saveChanges = () => {
-  console.log("yo")
   if (!selectedNodeId.value || !fieldName.value) return
 
-  store.updateRelation(props.id, originalFieldName.value, {
+  store.updateRelation(props.id, props.relation.targetModel, props.relation.fieldName, {
     fieldName: fieldName.value,
     targetModel: selectedNodeId.value,
     backPopulates: backPopulates.value,
@@ -91,6 +93,11 @@ const saveChanges = () => {
     isIndex: indexed.value,
   })
 
+  modalStore.close()
+}
+
+const deleteRelation = () => {
+  store.deleteRelation(props.id, props.relation.targetModel, props.relation.fieldName)
   modalStore.close()
 }
 </script>
@@ -165,5 +172,30 @@ const saveChanges = () => {
   cursor: pointer;
   transform: translate(2px, 2px);
   box-shadow: none;
+}
+
+.delete-relation-btn {
+  align-self: flex-end;
+  padding: 0.5rem 1rem;
+  border: 2px solid black;
+  border-radius: 4px;
+  font-weight: bold;
+  background-color: #ff6b6b;
+  box-shadow: 3px 3px 0px black;
+  transition:
+    transform 0.1s ease-in-out,
+    box-shadow 0.1s ease-in-out;
+}
+
+.delete-relation-btn:hover {
+  cursor: pointer;
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.action-group {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
 }
 </style>

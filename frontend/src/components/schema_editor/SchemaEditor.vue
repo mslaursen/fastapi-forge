@@ -19,6 +19,7 @@
             <CustomNode
               v-bind="customNodeProps"
               @delete-node="deleteNode"
+              @rename-node="openRenameNodeModal"
               @add-field="openAddFieldModal"
               @add-relation="openAddRelationModal"
               @open-edit-field-modal="openEditFieldModal"
@@ -40,6 +41,7 @@ import AddFieldModal from "@/components/modal/AddFieldModal.vue"
 import EditFieldModal from "@/components/modal/EditFieldModal.vue"
 import EditRelationModal from "@/components/modal/EditRelationModal.vue"
 import AddRelationModal from "@/components/modal/AddRelationModal.vue"
+import RenameNodeModal from "@/components/modal/RenameNodeModal.vue"
 import { useProjectStore } from "@/stores/store"
 import { VueFlow } from "@vue-flow/core"
 import { useModalStore } from "@/stores/useModalStore"
@@ -60,6 +62,10 @@ const deleteNode = (id: string) => {
   store.deleteNode(id)
 }
 
+const openRenameNodeModal = (id: string) => {
+  modalStore.open(RenameNodeModal, { id })
+}
+
 const openAddFieldModal = (id: string) => {
   modalStore.open(AddFieldModal, { id })
 }
@@ -74,7 +80,6 @@ const openAddRelationModal = (id: string) => {
 
 const openEditRelationModal = (id: string, relation: RelationalRelationField) => {
   modalStore.open(EditRelationModal, { id, relation })
-  console.log(relation, id)
 }
 </script>
 
@@ -86,8 +91,9 @@ const openEditRelationModal = (id: string, relation: RelationalRelationField) =>
 .vue-flow-container {
   width: 1000px;
   height: 500px;
+  background-color: #ffffff;
   border: 2px solid black;
-  border-radius: 6px;
+  box-shadow: 4px 4px 0px black;
 }
 .vue-flow-header {
   height: 40px;
