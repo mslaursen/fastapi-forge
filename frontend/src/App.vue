@@ -52,7 +52,6 @@ body {
   flex-direction: column;
   height: 100%;
   background-color: #f4f4f0;
-  font-family: sans-serif;
 }
 
 .header {
