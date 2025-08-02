@@ -92,8 +92,6 @@ const openEditRelationModal = (id: string, relation: RelationalRelationField) =>
   width: 1000px;
   height: 500px;
   background-color: #ffffff;
-  border: 2px solid black;
-  box-shadow: 4px 4px 0px black;
 }
 .vue-flow-header {
   height: 40px;
@@ -106,7 +104,7 @@ const openEditRelationModal = (id: string, relation: RelationalRelationField) =>
 
 .vue-flow-viewport {
   width: 100%;
-  height: calc(100% - 35px);
+  height: calc(100% - 42px);
 }
 
 .vue-flow-create-model {

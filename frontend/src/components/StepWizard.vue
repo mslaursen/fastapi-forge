@@ -70,11 +70,12 @@ const goToStep = (index) => {
   margin: 0 5px;
   cursor: pointer;
   border: 2px solid black;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 1);
 }
 
 .step:hover {
   background-color: darkgray;
-  box-shadow: 2px 2px 0px rgba(0, 0, 0, 1);
+  box-shadow: 0px 0px 0px rgba(0, 0, 0, 1);
 }
 
 .step.active {
