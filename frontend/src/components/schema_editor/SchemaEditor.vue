@@ -8,11 +8,24 @@
       </div>
 
       <div class="vue-flow-viewport">
-        <VueFlow v-model:nodes="store.nodes" v-model:edges="store.edges">
+        <VueFlow v-model:nodes="projectStore.nodes" v-model:edges="projectStore.edges">
           <div class="create-wrapper">
             <div v-if="showInput" class="floating-create-expanded">
               <button class="collapse-btn" @click="showInput = false">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left size-4 rdp-nav_icon"><path d="m15 18-6-6 6-6"></path></svg>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="lucide lucide-chevron-left size-4 rdp-nav_icon"
+                >
+                  <path d="m15 18-6-6 6-6"></path>
+                </svg>
               </button>
               <input
                 class="create-model-input"
@@ -54,12 +67,12 @@ import EditFieldModal from "@/components/modal/EditFieldModal.vue"
 import EditRelationModal from "@/components/modal/EditRelationModal.vue"
 import AddRelationModal from "@/components/modal/AddRelationModal.vue"
 import RenameNodeModal from "@/components/modal/RenameNodeModal.vue"
-import { useProjectStore } from "@/stores/store"
+import { useProjectStore } from "@/stores/useProjectStore"
 import { VueFlow } from "@vue-flow/core"
 import { useModalStore } from "@/stores/useModalStore"
 import type { RelationalRelationField, RelationalField } from "@/types.types"
 
-const store = useProjectStore()
+const projectStore = useProjectStore()
 const modalStore = useModalStore()
 
 const modelName = ref("")
@@ -67,13 +80,13 @@ const showInput = ref(false)
 
 const handleCreateClick = () => {
   if (modelName.value.trim() === "") return
-  store.createNode(modelName.value)
+  projectStore.createNode(modelName.value)
   modelName.value = ""
   showInput.value = false
 }
 
 const deleteNode = (id: string) => {
-  store.deleteNode(id)
+  projectStore.deleteNode(id)
 }
 
 const openRenameNodeModal = (id: string) => {
@@ -167,7 +180,9 @@ const openEditRelationModal = (id: string, relation: RelationalRelationField) =>
   font-weight: bold;
   z-index: 10;
   box-shadow: 2px 2px 0px rgba(0, 0, 0, 1);
-  transition: transform 0.1s ease-out, box-shadow 0.1s;
+  transition:
+    transform 0.1s ease-out,
+    box-shadow 0.1s;
 }
 
 .create-circle:hover {
@@ -224,6 +239,4 @@ const openEditRelationModal = (id: string, relation: RelationalRelationField) =>
 .create-model-btn:hover {
   background-color: #2fff2f;
 }
-
-
 </style>

@@ -46,7 +46,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue"
-import { useProjectStore } from "@/stores/store"
+import { useProjectStore } from "@/stores/useProjectStore"
 import { useModalStore } from "@/stores/useModalStore"
 import type { RelationalRelationField } from "@/types.types"
 
@@ -55,7 +55,7 @@ const props = defineProps<{
   relation: RelationalRelationField
 }>()
 
-const store = useProjectStore()
+const projectStore = useProjectStore()
 const modalStore = useModalStore()
 
 const originalFieldName = ref("")
@@ -78,12 +78,12 @@ onMounted(() => {
   indexed.value = props.relation.isIndex || false
 })
 
-const filteredNodes = computed(() => store.nodes.filter((node) => node.id !== props.id))
+const filteredNodes = computed(() => projectStore.nodes.filter((node) => node.id !== props.id))
 
 const saveChanges = () => {
   if (!selectedNodeId.value || !fieldName.value) return
 
-  store.updateRelation(props.id, props.relation.targetModel, props.relation.fieldName, {
+  projectStore.updateRelation(props.id, props.relation.targetModel, props.relation.fieldName, {
     fieldName: fieldName.value,
     targetModel: selectedNodeId.value,
     backPopulates: backPopulates.value,
@@ -97,7 +97,7 @@ const saveChanges = () => {
 }
 
 const deleteRelation = () => {
-  store.deleteRelation(props.id, props.relation.targetModel, props.relation.fieldName)
+  projectStore.deleteRelation(props.id, props.relation.targetModel, props.relation.fieldName)
   modalStore.close()
 }
 </script>
