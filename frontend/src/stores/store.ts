@@ -1,7 +1,7 @@
 import { defineStore } from "pinia"
 import { ref, shallowRef } from "vue"
 import type { Ref } from "vue"
-import type { NodesArray, EdgesArray,EnumsArray, NodeT, EdgeT, Field, RelationalField, RelationalRelationField, EnumValue } from "@/types/types.ts"
+import type { NodesArray, EdgesArray,EnumsArray, NodeT, EdgeT, RelationalField, RelationalRelationField, EnumValue } from "@/types/types.ts"
 import type { Edge } from "@vue-flow/core"
 
 export const useProjectStore = defineStore("projectSpec", () => {
@@ -141,7 +141,7 @@ export const useProjectStore = defineStore("projectSpec", () => {
     node.data.fields.push(fieldData)
   }
 
-  const updateField = (source: string, originalFieldName: string, fieldData: Field) => {
+  const updateField = (source: string, originalFieldName: string, fieldData: RelationalField) => {
     const node = findNodeById(source)
     if (!node) throw new Error(`Model does not exist: ${source}`)
     const fieldIndex = node.data.fields.findIndex((f) => f.name === originalFieldName)
