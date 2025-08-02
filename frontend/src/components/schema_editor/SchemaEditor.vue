@@ -2,19 +2,31 @@
   <main class="container">
     <div class="vue-flow-container">
       <div class="vue-flow-header">
-        <div class="vue-flow-create-model">
-          <input
-            class="create-model-input"
-            type="text"
-            placeholder="Enter Model Name"
-            v-model="modelName"
-          />
-          <button class="create-model-btn" @click="createNode">Create</button>
-        </div>
+        <div class="header-section" @click="() => console.log('Models clicked')">Models</div>
+        <div class="header-divider" />
+        <div class="header-section" @click="() => console.log('Enums clicked')">Enums</div>
       </div>
 
       <div class="vue-flow-viewport">
         <VueFlow v-model:nodes="store.nodes" v-model:edges="store.edges">
+          <div class="create-wrapper">
+            <div v-if="showInput" class="floating-create-expanded">
+              <button class="collapse-btn" @click="showInput = false">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left size-4 rdp-nav_icon"><path d="m15 18-6-6 6-6"></path></svg>
+              </button>
+              <input
+                class="create-model-input"
+                type="text"
+                placeholder="Enter Model Name"
+                v-model="modelName"
+                @keyup.enter="handleCreateClick"
+              />
+              <button class="create-model-btn" @click="handleCreateClick">Create</button>
+            </div>
+
+            <div v-if="!showInput" class="create-circle" @click="showInput = true">+</div>
+          </div>
+
           <template #node-custom="customNodeProps">
             <CustomNode
               v-bind="customNodeProps"
@@ -51,11 +63,13 @@ const store = useProjectStore()
 const modalStore = useModalStore()
 
 const modelName = ref("")
+const showInput = ref(false)
 
-const createNode = () => {
+const handleCreateClick = () => {
   if (modelName.value.trim() === "") return
   store.createNode(modelName.value)
   modelName.value = ""
+  showInput.value = false
 }
 
 const deleteNode = (id: string) => {
@@ -88,57 +102,128 @@ const openEditRelationModal = (id: string, relation: RelationalRelationField) =>
   width: 100%;
   height: 100%;
 }
+
 .vue-flow-container {
   width: 1000px;
   height: 500px;
   background-color: #ffffff;
   border: 2px solid black;
 }
+
 .vue-flow-header {
   height: 40px;
-  border-bottom: 2px solid black;
   display: flex;
   align-items: center;
   background-color: #ffdb58;
+  width: 100%;
+  border-bottom: 2px solid black;
+  box-sizing: border-box;
+}
+
+.header-section {
+  flex: 1;
+  text-align: center;
+  cursor: pointer;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.header-divider {
+  width: 2px;
+  height: 100%;
+  background-color: black;
 }
 
 .vue-flow-viewport {
+  position: relative;
   width: 100%;
   height: calc(100% - 42px);
 }
 
-.vue-flow-create-model {
+.create-wrapper {
+  position: absolute;
+  top: 10px;
+  left: 10px;
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  width: 300px;
+}
+
+.create-circle {
+  width: 40px;
+  height: 40px;
+  background-color: #ffdb58;
+  border: 2px solid black;
+  color: black;
+  border-radius: 50%;
+  font-size: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  font-weight: bold;
+  z-index: 10;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 1);
+  transition: transform 0.1s ease-out, box-shadow 0.1s;
+}
+
+.create-circle:hover {
+  box-shadow: 0px 0px 0px rgba(0, 0, 0, 1);
+  transform: translate(2px, 2px);
+}
+
+.floating-create-expanded {
+  display: flex;
+  align-items: center;
+  background: #ffdb58;
+  border: 2px solid black;
+  border-radius: 50px;
+  height: 40px;
+  padding: 0 10px;
+  gap: 8px;
+  z-index: 1000;
+  margin-top: 2px;
+  margin-left: 2px;
+}
+
+.collapse-btn {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.collapse-btn svg {
+  width: 20px;
+  height: 20px;
 }
 
 .create-model-input {
-  width: 100%;
-  height: 12px;
-  padding: 0.5rem;
+  height: 26px;
   border: 2px solid black;
-  border-radius: 4px;
-  margin-left: 20px;
-}
-.create-model-input:focus {
-  outline: none;
+  border-radius: 6px;
+  padding: 0 10px;
+  width: 160px;
 }
 
 .create-model-btn {
-  caret-color: transparent;
+  height: 30px;
+  padding: 0 12px;
   border: 2px solid black;
-  border-radius: 4px;
-  background-color: #f4f4f0;
-  padding: 0.25rem;
-  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
   font-weight: bold;
 }
-
 .create-model-btn:hover {
-  cursor: pointer;
-  transition: 0.1s;
   background-color: #2fff2f;
 }
+
+
 </style>
