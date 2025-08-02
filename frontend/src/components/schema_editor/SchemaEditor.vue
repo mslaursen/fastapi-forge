@@ -181,8 +181,8 @@ const openEditRelationModal = (id: string, relation: RelationalRelationField) =>
   background: #ffdb58;
   border: 2px solid black;
   border-radius: 50px;
-  height: 40px; /* Exact same as create-circle */
-  padding: 0 10px; /* Only horizontal padding */
+  height: 40px;
+  padding: 0 10px;
   gap: 8px;
   z-index: 1000;
   margin-top: 2px;
