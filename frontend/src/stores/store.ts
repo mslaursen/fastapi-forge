@@ -154,7 +154,7 @@ export const useProjectStore = defineStore("projectSpec", () => {
     fieldName: string,
   ) => {
     const node = findNodeById(source)
-    if (!node) return
+    if (!node) throw new Error(`Model does not exist: ${source}`)
     node.data.fields = node.data.fields.filter(
       (field) => field.name !== fieldName
     )
@@ -196,13 +196,12 @@ export const useProjectStore = defineStore("projectSpec", () => {
       (rel) => rel.fieldName === originalFieldName
     )
     node.data.relations[index] = relationData
-    if (originalTarget === relationData.targetModel) return;
 
-    const edgeId =  `(${source})-(${originalTarget})-(${originalFieldName})`
+    const edgeId = formatEdgeId(source, originalTarget, originalFieldName)
     const edge = getEdgeById(edgeId)
     if (!edge) return;
 
-    const newEdgeId = `(${source})-(${relationData.targetModel})-(${relationData.fieldName})`
+    const newEdgeId = formatEdgeId(source, relationData.targetModel, relationData.fieldName)
     edge.id = newEdgeId
     edge.source = source
     edge.target = relationData.targetModel
@@ -214,6 +213,10 @@ export const useProjectStore = defineStore("projectSpec", () => {
     return edges.value.find((edge) => edge.id === id)
   }
 
+  const formatEdgeId = (source: string, target: string, fieldName: string): string => {
+    return `(${source})-(${target})-(${fieldName})`
+  }
+
   const createEdge = (
     source: string, 
     target: string, 
@@ -221,7 +224,7 @@ export const useProjectStore = defineStore("projectSpec", () => {
   ): void => {
     if (source === target) return
     edges.value.push({
-      id: `(${source})-(${target})-(${fieldName})`,
+      id: formatEdgeId(source, target, fieldName),
       source,
       target,
     })
@@ -233,7 +236,7 @@ export const useProjectStore = defineStore("projectSpec", () => {
     fieldName: string
   ) => {
     edges.value = edges.value.filter(
-      (edge) => edge.id !== `(${source})-(${target})-(${fieldName})`
+      (edge) => edge.id !== formatEdgeId(source, target, fieldName)
     )
   }
 

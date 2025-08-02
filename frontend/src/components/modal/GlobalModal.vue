@@ -4,9 +4,11 @@
       <div class="modal">
         <div class="modal-header">
           <div class="modal-title">
-            <slot name="title">Modal Title</slot>
+            <div name="title">{{ modalTitle }}</div>
           </div>
-          <div class="modal-actions" @click="close">×</div>
+          <div class="modal-actions" @click="close">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x h-4 w-4"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          </div>
         </div>
         <div class="modal-body">
           <component v-if="currentComponent" :is="currentComponent" v-bind="props" @close="close" />
@@ -21,7 +23,7 @@ import { storeToRefs } from "pinia"
 import { useModalStore } from "@/stores/useModalStore"
 
 const modalStore = useModalStore()
-const { isOpen, currentComponent, props } = storeToRefs(modalStore)
+const { modalTitle, isOpen, currentComponent, props } = storeToRefs(modalStore)
 
 function close() {
   modalStore.close()
@@ -43,51 +45,45 @@ function close() {
 }
 
 .modal {
+  font-family: sans-serif;
   border: 2px solid black;
   border-radius: 6px;
-  box-shadow: 2px 2px 0px rgba(0, 0, 0, 1);
   overflow: hidden;
   background-color: white;
+  max-width: 350px;
+  width: 100%;
+  margin: 0 1rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 2px solid black;
-  width: 100%;
-  height: 32px;
+  background-color: #ffdb58;
+  padding: 0.75rem 1rem;
 }
 
 .modal-title {
   font-weight: bold;
-  background-color: #ffdb58;
-  width: 100%;
-  height: 100%;
+  flex-grow: 1;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 0 8px;
+  font-size: 1rem;
 }
 
 .modal-actions {
   cursor: pointer;
-  width: 32px;
-  height: 100%;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-left: 2px solid black;
-  font-size: 1.2rem;
-}
-
-.modal-actions:hover {
-  background-color: #f0f0f0;
 }
 
 .modal-body {
-  display: flex;
-  flex-direction: column;
-  padding: 0;
+  background-color: #ffdb58;
+  overflow: hidden;
 }
 </style>

@@ -45,7 +45,7 @@ import RenameNodeModal from "@/components/modal/RenameNodeModal.vue"
 import { useProjectStore } from "@/stores/store"
 import { VueFlow } from "@vue-flow/core"
 import { useModalStore } from "@/stores/useModalStore"
-import type { RelationalRelationField } from "@/types.types"
+import type { RelationalRelationField, RelationalField } from "@/types.types"
 
 const store = useProjectStore()
 const modalStore = useModalStore()
@@ -63,23 +63,23 @@ const deleteNode = (id: string) => {
 }
 
 const openRenameNodeModal = (id: string) => {
-  modalStore.open(RenameNodeModal, { id })
+  modalStore.open(id, RenameNodeModal, { id })
 }
 
 const openAddFieldModal = (id: string) => {
-  modalStore.open(AddFieldModal, { id })
+  modalStore.open(id, AddFieldModal, { id })
 }
 
-const openEditFieldModal = (id: string, field: object) => {
-  modalStore.open(EditFieldModal, { id, field })
+const openEditFieldModal = (id: string, field: RelationalField) => {
+  modalStore.open("Edit field", EditFieldModal, { id, field })
 }
 
 const openAddRelationModal = (id: string) => {
-  modalStore.open(AddRelationModal, { id })
+  modalStore.open(id, AddRelationModal, { id })
 }
 
 const openEditRelationModal = (id: string, relation: RelationalRelationField) => {
-  modalStore.open(EditRelationModal, { id, relation })
+  modalStore.open(relation.fieldName, EditRelationModal, { id, relation })
 }
 </script>
 
