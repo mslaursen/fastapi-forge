@@ -234,14 +234,4 @@ const openEditRelationModal = (id: string, relation: RelationalRelationField) =>
 .create-model-btn:hover {
   background-color: var(--color-success);
 }
-
-.enums-view {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 24px;
-  font-weight: bold;
-}
 </style>
