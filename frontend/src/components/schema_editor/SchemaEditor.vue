@@ -8,6 +8,10 @@
       </div>
 
       <div class="vue-flow-viewport">
+        <div class="toggle-grid-button" @click="showGrid = !showGrid">
+          #
+        </div>
+
         <VueFlow
           v-model:nodes="projectStore.nodes"
           v-model:edges="projectStore.edges"
@@ -15,12 +19,13 @@
           :max-zoom="2"
           :min-zoom="0.1"
           :fit-view-on-init="true"
-          :snap-to-grid="true"
         >
-          <!-- <Background 
+          <Background 
+            v-if="showGrid"
             variant="lines"
-            style="{z-index: -1}"
-          /> -->
+            :size="51"
+            :gap="51"
+          />
           <div class="create-wrapper">
             <div v-if="showInput" class="floating-create-expanded">
               <button class="collapse-btn" @click="showInput = false">
@@ -82,12 +87,14 @@ import { useProjectStore } from "@/stores/useProjectStore"
 import { VueFlow } from "@vue-flow/core"
 import { useModalStore } from "@/stores/useModalStore"
 import type { RelationalRelationField, RelationalField } from "@/types.types"
+import { Background } from '@vue-flow/background'
 
 const projectStore = useProjectStore()
 const modalStore = useModalStore()
 
 const modelName = ref("")
 const showInput = ref(false)
+const showGrid = ref(false)
 
 const handleCreateClick = () => {
   if (modelName.value.trim() === "") return
@@ -167,6 +174,28 @@ const openEditRelationModal = (id: string, relation: RelationalRelationField) =>
   height: calc(100% - 42px);
 }
 
+.toggle-grid-button {
+  caret-color: transparent;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: var(--color-primary);
+  color: black;
+  border: 2px solid black;
+  padding: 3px 6px;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 1);
+  transition: transform 0.1s ease-out, box-shadow 0.1s;
+}
+
+.toggle-grid-button:hover {
+  box-shadow: 0px 0px 0px rgba(0, 0, 0, 1);
+  transform: translate(2px, 2px);
+}
+
 .create-wrapper {
   position: absolute;
   top: 10px;
@@ -191,9 +220,7 @@ const openEditRelationModal = (id: string, relation: RelationalRelationField) =>
   font-weight: bold;
   z-index: 10;
   box-shadow: 2px 2px 0px rgba(0, 0, 0, 1);
-  transition:
-    transform 0.1s ease-out,
-    box-shadow 0.1s;
+  transition: transform 0.1s ease-out, box-shadow 0.1s;
 }
 
 .create-circle:hover {
@@ -247,6 +274,7 @@ const openEditRelationModal = (id: string, relation: RelationalRelationField) =>
   cursor: pointer;
   font-weight: bold;
 }
+
 .create-model-btn:hover {
   background-color: var(--color-success);
 }
