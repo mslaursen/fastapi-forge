@@ -113,7 +113,7 @@ const saveSelect = () => {
   border-radius: 4px;
   padding: 0.5rem;
   box-shadow: 3px 3px 0px black;
-  background-color: #f4f4f0;
+  background-color: var(--color-background);
   transition:
     transform 0.1s ease-in-out,
     box-shadow 0.1s ease-in-out;
@@ -139,7 +139,7 @@ const saveSelect = () => {
   border: 2px solid black;
   border-radius: 4px;
   font-weight: bold;
-  background-color: #2fff2f;
+  background-color: var(--color-success);
   box-shadow: 3px 3px 0px black;
   transition:
     transform 0.1s ease-in-out,

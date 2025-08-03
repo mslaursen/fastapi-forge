@@ -68,13 +68,13 @@ function close() {
   margin: 0 1rem;
   display: flex;
   flex-direction: column;
+  background-color: var(--color-secondary);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #ffdb58;
   padding: 0.75rem 1rem;
 }
 
@@ -96,7 +96,7 @@ function close() {
 }
 
 .modal-body {
-  background-color: #ffdb58;
   overflow: hidden;
+  background-color: var(--color-secondary);
 }
 </style>

@@ -2,3 +2,11 @@ body {
   font-family: "DM Sans", sans-serif;
   font-optical-sizing: auto;
 }
+
+:root {
+  --color-primary: #5294fd;
+  --color-secondary: #dcebfe;
+  --color-success: #b8fd9f;
+  --color-danger: #ff6b6b;
+  --color-background: #f4f4f0;
+}

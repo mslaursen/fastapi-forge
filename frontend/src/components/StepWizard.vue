@@ -87,7 +87,7 @@ const goToStep = (index) => {
 }
 
 .step.active {
-  background-color: #ffdb58;
+  background-color: var(--color-primary);
 }
 
 .step.completed {
@@ -123,7 +123,7 @@ const goToStep = (index) => {
   padding: 0.5rem 1rem;
   border: 2px solid black;
   border-radius: 4px;
-  background-color: #f4f4f0;
+  background-color: var(--color-background);
   box-shadow: 3px 3px 0px rgba(0, 0, 0, 1);
   transition:
     transform 0.1s ease-in-out,
