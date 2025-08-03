@@ -8,7 +8,18 @@
       </div>
 
       <div class="vue-flow-viewport">
-        <VueFlow v-model:nodes="projectStore.nodes" v-model:edges="projectStore.edges">
+        <VueFlow 
+          v-model:nodes="projectStore.nodes" 
+          v-model:edges="projectStore.edges" 
+          :default-viewport="{ zoom: 2 }" 
+          :max-zoom="2" :min-zoom="0.1"
+          :fit-view-on-init="true"
+          :snap-to-grid="true"
+        >
+          <!-- <Background 
+            variant="lines"
+            style="{z-index: -1}"
+          /> -->
           <div class="create-wrapper">
             <div v-if="showInput" class="floating-create-expanded">
               <button class="collapse-btn" @click="showInput = false">
@@ -61,7 +72,6 @@
 import { ref } from "vue"
 import CustomNode from "@/components/schema_editor/CustomNode.vue"
 import "@vue-flow/core/dist/style.css"
-import AppModal from "@/components/modal/AppModal.vue"
 import AddFieldModal from "@/components/modal/AddFieldModal.vue"
 import EditFieldModal from "@/components/modal/EditFieldModal.vue"
 import EditRelationModal from "@/components/modal/EditRelationModal.vue"
@@ -127,7 +137,7 @@ const openEditRelationModal = (id: string, relation: RelationalRelationField) =>
   height: 40px;
   display: flex;
   align-items: center;
-  background-color: #ffdb58;
+  background-color: var(--color-primary);
   width: 100%;
   border-bottom: 2px solid black;
   box-sizing: border-box;
@@ -167,7 +177,7 @@ const openEditRelationModal = (id: string, relation: RelationalRelationField) =>
 .create-circle {
   width: 40px;
   height: 40px;
-  background-color: #ffdb58;
+  background-color: var(--color-primary);
   border: 2px solid black;
   color: black;
   border-radius: 50%;
@@ -193,7 +203,7 @@ const openEditRelationModal = (id: string, relation: RelationalRelationField) =>
 .floating-create-expanded {
   display: flex;
   align-items: center;
-  background: #ffdb58;
+  background: var(--color-primary);
   border: 2px solid black;
   border-radius: 50px;
   height: 40px;
@@ -237,6 +247,6 @@ const openEditRelationModal = (id: string, relation: RelationalRelationField) =>
   font-weight: bold;
 }
 .create-model-btn:hover {
-  background-color: #2fff2f;
+  background-color: var(--color-success);
 }
 </style>

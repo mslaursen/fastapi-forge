@@ -129,7 +129,7 @@ onMounted(() => {
   caret-color: transparent;
   border: 2px solid black;
   border-radius: 4px;
-  background-color: #f4f4f0;
+  background-color: var(--color-background);
   padding: 0.25rem;
   box-shadow: 3px 3px 0px rgba(0, 0, 0, 1);
   transition:
@@ -144,14 +144,14 @@ onMounted(() => {
   box-shadow: 0px 0px 0px rgba(0, 0, 0, 1);
   cursor: pointer;
   transition: 0.1s;
-  background-color: #2fff2f;
+  background-color: var(--color-success);
 }
 .confirm-btn.confirmed {
   transition: 0.1s;
-  background-color: #2fff2f;
+  background-color: var(--color-success);
 }
 .confirm-btn.confirmed:hover {
-  background-color: #f4f4f0;
+  background-color: var(--color-background);
   transform: translate(0px, 0px);
   box-shadow: 3px 3px 0px rgba(0, 0, 0, 1);
 }
@@ -175,7 +175,7 @@ onMounted(() => {
 .confirm-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  background-color: #f4f4f0;
+  background-color: var(--color-background);
 }
 .container {
   display: flex;

@@ -77,7 +77,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f4f4f0;
+  background-color: var(--color-background);
   transition: all 0.1s ease-in-out;
 }
 
@@ -85,17 +85,17 @@ onMounted(() => {
   transform: translate(2px, 2px);
   box-shadow: 0px 0px 0px rgba(0, 0, 0, 1);
   cursor: pointer;
-  background-color: #2fff2f;
+  background-color: var(--color-success);
 }
 
 .db-item.enabled.confirmed {
   transform: translate(2px, 2px);
   box-shadow: 0px 0px 0px rgba(0, 0, 0, 1);
-  background-color: #2fff2f;
+  background-color: var(--color-success);
 }
 
 .db-item.enabled.confirmed:hover {
-  background-color: #f4f4f0;
+  background-color: var(--color-background);
   transform: translate(0px, 0px);
   box-shadow: 3px 3px 0px rgba(0, 0, 0, 1);
 }

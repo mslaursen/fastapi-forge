@@ -51,7 +51,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: #f4f4f0;
+  background-color: var(--color-background);
 }
 
 .header {

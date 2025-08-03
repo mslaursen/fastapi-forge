@@ -86,7 +86,6 @@ const deleteField = () => {
   flex-direction: column;
   gap: 1rem;
   padding: 1rem;
-  background-color: #ffdb58;
 }
 
 .input-container {
@@ -133,7 +132,7 @@ const deleteField = () => {
   padding: 0.5rem 1rem;
   border: 2px solid black;
   border-radius: 4px;
-  background-color: #ff6b6b;
+  background-color: var(--color-danger);
   box-shadow: 3px 3px 0px black;
   transition:
     transform 0.1s ease-in-out,
@@ -151,7 +150,7 @@ const deleteField = () => {
   padding: 0.5rem 1rem;
   border: 2px solid black;
   border-radius: 4px;
-  background-color: #2fff2f;
+  background-color: var(--color-success);
   box-shadow: 3px 3px 0px black;
   transition:
     transform 0.1s ease-in-out,
