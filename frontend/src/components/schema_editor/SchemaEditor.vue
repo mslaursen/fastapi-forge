@@ -8,9 +8,7 @@
       </div>
 
       <div class="vue-flow-viewport">
-        <div class="toggle-grid-button" @click="showGrid = !showGrid">
-          #
-        </div>
+        <div class="toggle-grid-button" @click="showGrid = !showGrid">#</div>
 
         <VueFlow
           v-model:nodes="projectStore.nodes"
@@ -20,12 +18,7 @@
           :min-zoom="0.1"
           :fit-view-on-init="true"
         >
-          <Background 
-            v-if="showGrid"
-            variant="lines"
-            :size="51"
-            :gap="51"
-          />
+          <Background v-if="showGrid" variant="lines" :size="51" :gap="51" />
           <div class="create-wrapper">
             <div v-if="showInput" class="floating-create-expanded">
               <button class="collapse-btn" @click="showInput = false">
@@ -87,7 +80,7 @@ import { useProjectStore } from "@/stores/useProjectStore"
 import { VueFlow } from "@vue-flow/core"
 import { useModalStore } from "@/stores/useModalStore"
 import type { RelationalRelationField, RelationalField } from "@/types.types"
-import { Background } from '@vue-flow/background'
+import { Background } from "@vue-flow/background"
 
 const projectStore = useProjectStore()
 const modalStore = useModalStore()
@@ -188,7 +181,9 @@ const openEditRelationModal = (id: string, relation: RelationalRelationField) =>
   cursor: pointer;
   z-index: 10;
   box-shadow: 2px 2px 0px rgba(0, 0, 0, 1);
-  transition: transform 0.1s ease-out, box-shadow 0.1s;
+  transition:
+    transform 0.1s ease-out,
+    box-shadow 0.1s;
 }
 
 .toggle-grid-button:hover {
@@ -220,7 +215,9 @@ const openEditRelationModal = (id: string, relation: RelationalRelationField) =>
   font-weight: bold;
   z-index: 10;
   box-shadow: 2px 2px 0px rgba(0, 0, 0, 1);
-  transition: transform 0.1s ease-out, box-shadow 0.1s;
+  transition:
+    transform 0.1s ease-out,
+    box-shadow 0.1s;
 }
 
 .create-circle:hover {
