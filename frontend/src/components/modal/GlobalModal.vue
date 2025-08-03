@@ -69,7 +69,6 @@ function close() {
   display: flex;
   flex-direction: column;
   background-color: var(--color-secondary);
-
 }
 
 .modal-header {

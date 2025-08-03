@@ -8,11 +8,12 @@
       </div>
 
       <div class="vue-flow-viewport">
-        <VueFlow 
-          v-model:nodes="projectStore.nodes" 
-          v-model:edges="projectStore.edges" 
-          :default-viewport="{ zoom: 2 }" 
-          :max-zoom="2" :min-zoom="0.1"
+        <VueFlow
+          v-model:nodes="projectStore.nodes"
+          v-model:edges="projectStore.edges"
+          :default-viewport="{ zoom: 2 }"
+          :max-zoom="2"
+          :min-zoom="0.1"
           :fit-view-on-init="true"
           :snap-to-grid="true"
         >

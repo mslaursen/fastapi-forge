@@ -4,11 +4,9 @@ body {
 }
 
 :root {
-  --color-primary: #5294FD; */
-  --color-secondary: #DCEBFE;
-  /* --color-primary: #ffdb58;
-  --color-secondary: #ffdb58; */
-  --color-success: #B8FD9F;
+  --color-primary: #5294fd;
+  --color-secondary: #dcebfe;
+  --color-success: #b8fd9f;
   --color-danger: #ff6b6b;
   --color-background: #f4f4f0;
 }
