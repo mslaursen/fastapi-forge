@@ -80,6 +80,7 @@ const closeNodeActions = () => {
   border-radius: 6px;
   width: 250px;
   overflow: hidden;
+  background-color: white;
 }
 
 .custom-node-header {
