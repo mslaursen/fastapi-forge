@@ -1,11 +1,15 @@
 <template>
   <main class="rename-node-modal">
-    <div class="input-group">
-      <label class="field-label">New Node ID:</label>
-      <input class="field-input" v-model="newNodeId" type="text" />
+    <div class="input-container">
+      <div class="input-group">
+        <label class="field-label">New model name</label>
+        <input class="field-input" v-model="newNodeId" type="text" />
+      </div>
     </div>
 
-    <button class="save-btn" @click="rename">Rename</button>
+    <div class="action-group">
+      <button class="save-btn" @click="rename">Rename</button>
+    </div>
   </main>
 </template>
 
@@ -38,13 +42,12 @@ const rename = () => {
 .rename-node-modal {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
   padding: 1rem;
-  border: 2px solid black;
-  box-shadow: 4px 4px 0 black;
-  background-color: #fff;
-  width: 100%;
-  max-width: 400px;
+}
+
+.input-container {
+  display: flex;
+  flex-direction: column;
 }
 
 .input-group {
@@ -54,34 +57,29 @@ const rename = () => {
 
 .field-label {
   font-weight: bold;
-  margin-bottom: 0.25rem;
+  margin-bottom: 5px;
 }
 
 .field-input {
   border: 2px solid black;
-  border-radius: 4px;
-  padding: 0.5rem;
-  background-color: var(--color-background);
-  box-shadow: 3px 3px 0 black;
-  transition:
-    transform 0.1s ease-in-out,
-    box-shadow 0.1s ease-in-out;
+  border-radius: 6px;
+  padding: 0.6rem;
+  background-color: white;
 }
 
-.field-input:focus {
-  outline: none;
-  transform: translate(2px, 2px);
-  box-shadow: none;
+.action-group {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .save-btn {
-  align-self: flex-end;
+  width: 100%;
   padding: 0.5rem 1rem;
   border: 2px solid black;
   border-radius: 4px;
-  font-weight: bold;
   background-color: var(--color-success);
-  box-shadow: 3px 3px 0 black;
+  box-shadow: 3px 3px 0px black;
   transition:
     transform 0.1s ease-in-out,
     box-shadow 0.1s ease-in-out;

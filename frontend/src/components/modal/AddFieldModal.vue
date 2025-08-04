@@ -1,13 +1,13 @@
 <template>
   <main class="field-modal-container">
-    <div class="grid-2x2">
+    <div class="input-container">
       <div class="input-group">
-        <label class="field-label">Field Name:</label>
+        <label class="field-label">Field name</label>
         <input class="field-input" v-model="fieldName" type="text" />
       </div>
 
       <div class="input-group">
-        <label class="field-label">Type:</label>
+        <label class="field-label">Type</label>
         <select class="field-select" v-model="type">
           <option disabled value="">-- Select type --</option>
           <option value="String">String</option>
@@ -20,23 +20,21 @@
       </div>
 
       <div class="input-group">
-        <label class="field-label">Default Value:</label>
+        <label class="field-label">Default value</label>
         <input class="field-input" v-model="defaultValue" type="text" />
-      </div>
-
-      <div class="input-group checkbox-inline">
-        <label class="field-label">Primary Key:</label>
-        <input type="checkbox" v-model="isPrimaryKey" />
       </div>
     </div>
 
     <div class="checkbox-group">
+      <label><input type="checkbox" v-model="isPrimaryKey" /> Primary key</label>
       <label><input type="checkbox" v-model="isNullable" /> Nullable</label>
       <label><input type="checkbox" v-model="isUnique" /> Unique</label>
       <label><input type="checkbox" v-model="isIndex" /> Index</label>
     </div>
 
-    <button class="save-field-btn" @click="saveField">Save</button>
+    <div class="action-group">
+      <button class="save-field-btn" @click="saveField">Save</button>
+    </div>
   </main>
 </template>
 
@@ -71,7 +69,6 @@ const saveField = () => {
     isUnique: isUnique.value,
     isIndex: isIndex.value,
   })
-
   modalStore.close()
 }
 </script>
@@ -81,66 +78,53 @@ const saveField = () => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  border: 2px solid black;
   padding: 1rem;
-  box-shadow: 4px 4px 0px black;
-  background-color: #fff;
 }
 
-.grid-2x2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+.input-container {
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
 }
 
 .input-group {
   display: flex;
   flex-direction: column;
-}
-
-.checkbox-inline {
-  flex-direction: row;
-  align-items: center;
-  gap: 0.5rem;
+  gap: 0.15rem;
 }
 
 .field-label {
   font-weight: bold;
-  margin-bottom: 0.25rem;
+  margin-bottom: 5px;
 }
 
 .field-input,
 .field-select {
   border: 2px solid black;
-  border-radius: 4px;
-  padding: 0.5rem;
-  box-shadow: 3px 3px 0px black;
-  background-color: var(--color-background);
-  transition:
-    transform 0.1s ease-in-out,
-    box-shadow 0.1s ease-in-out;
-}
-
-.field-input:focus,
-.field-select:focus {
-  outline: none;
-  transform: translate(2px, 2px);
-  box-shadow: none;
+  border-radius: 6px;
+  padding: 0.6rem;
+  background-color: white;
 }
 
 .checkbox-group {
   display: flex;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.5rem;
   font-weight: bold;
 }
 
+.action-group {
+  gap: 0.5rem;
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+}
+
 .save-field-btn {
-  align-self: flex-end;
+  width: 100%;
   padding: 0.5rem 1rem;
   border: 2px solid black;
   border-radius: 4px;
-  font-weight: bold;
   background-color: var(--color-success);
   box-shadow: 3px 3px 0px black;
   transition:
