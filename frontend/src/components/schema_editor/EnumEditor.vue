@@ -28,9 +28,12 @@
     </div>
 
     <div class="main-content">
-
       <div v-if="selectedEnum" class="table-wrapper">
-        <button class="delete-selected-btn" @click="deleteSelectedRows" :disabled="!hasSelectedRows">
+        <button
+          class="delete-selected-btn"
+          @click="deleteSelectedRows"
+          :disabled="!hasSelectedRows"
+        >
           Delete Selected
         </button>
         <table class="enum-table">
@@ -123,8 +126,8 @@ const deleteEnum = (name: string) => {
   }
 }
 
-const selectedEnum = computed(() =>
-  enums.value.find((e) => e.name === selectedEnumName.value) || null
+const selectedEnum = computed(
+  () => enums.value.find((e) => e.name === selectedEnumName.value) || null,
 )
 
 const selectedRows = ref<number[]>([])
@@ -258,7 +261,6 @@ const deleteSelectedRows = () => {
   cursor: not-allowed;
 }
 
-
 .enum-table {
   border: 2px solid black;
   border-collapse: collapse;
@@ -294,8 +296,6 @@ const deleteSelectedRows = () => {
 .enum-table td:nth-child(4) {
   width: 0px;
 }
-
-
 
 .action-btn {
   cursor: pointer;
