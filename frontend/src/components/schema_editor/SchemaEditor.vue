@@ -1,15 +1,8 @@
 <template>
-  <main class="container">
-    <div class="vue-flow-container">
-      <div class="vue-flow-header">
-        <div class="header-section" @click="() => console.log('Models clicked')">Models</div>
-        <div class="header-divider" />
-        <div class="header-section" @click="() => console.log('Enums clicked')">Enums</div>
-      </div>
-
-      <div class="vue-flow-viewport">
+  <div class="vue-flow-container">
+    <div class="vue-flow-viewport">
+      <div class="viewport-wrapper">
         <div class="toggle-grid-button" @click="showGrid = !showGrid">#</div>
-
         <VueFlow
           v-model:nodes="projectStore.nodes"
           v-model:edges="projectStore.edges"
@@ -46,7 +39,6 @@
               />
               <button class="create-model-btn" @click="handleCreateClick">Create</button>
             </div>
-
             <div v-if="!showInput" class="create-circle" @click="showInput = true">+</div>
           </div>
 
@@ -64,7 +56,7 @@
         </VueFlow>
       </div>
     </div>
-  </main>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -87,7 +79,7 @@ const modalStore = useModalStore()
 
 const modelName = ref("")
 const showInput = ref(false)
-const showGrid = ref(false)
+const showGrid = ref(true)
 
 const handleCreateClick = () => {
   if (modelName.value.trim() === "") return
@@ -122,49 +114,20 @@ const openEditRelationModal = (id: string, relation: RelationalRelationField) =>
 </script>
 
 <style scoped>
-.container {
-  width: 100%;
-  height: 100%;
-}
-
 .vue-flow-container {
-  width: 1000px;
-  height: 500px;
-  background-color: #ffffff;
-  border: 2px solid black;
-}
-
-.vue-flow-header {
-  height: 40px;
-  display: flex;
-  align-items: center;
-  background-color: var(--color-primary);
-  width: 100%;
-  border-bottom: 2px solid black;
-  box-sizing: border-box;
-}
-
-.header-section {
-  flex: 1;
-  text-align: center;
-  cursor: pointer;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   height: 100%;
-}
-
-.header-divider {
-  width: 2px;
-  height: 100%;
-  background-color: black;
+  display: flex;
 }
 
 .vue-flow-viewport {
   position: relative;
+  flex: 1;
+  display: flex;
+}
+
+.viewport-wrapper {
   width: 100%;
-  height: calc(100% - 42px);
+  height: 100%;
 }
 
 .toggle-grid-button {
@@ -181,9 +144,6 @@ const openEditRelationModal = (id: string, relation: RelationalRelationField) =>
   cursor: pointer;
   z-index: 10;
   box-shadow: 2px 2px 0px rgba(0, 0, 0, 1);
-  transition:
-    transform 0.1s ease-out,
-    box-shadow 0.1s;
 }
 
 .toggle-grid-button:hover {
@@ -215,9 +175,6 @@ const openEditRelationModal = (id: string, relation: RelationalRelationField) =>
   font-weight: bold;
   z-index: 10;
   box-shadow: 2px 2px 0px rgba(0, 0, 0, 1);
-  transition:
-    transform 0.1s ease-out,
-    box-shadow 0.1s;
 }
 
 .create-circle:hover {
@@ -270,6 +227,8 @@ const openEditRelationModal = (id: string, relation: RelationalRelationField) =>
   border-radius: 6px;
   cursor: pointer;
   font-weight: bold;
+  background-color: var(--color-secondary);
+  margin-right: 5px;
 }
 
 .create-model-btn:hover {

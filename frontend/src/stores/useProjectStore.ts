@@ -55,16 +55,7 @@ export const useProjectStore = defineStore("projectSpec", () => {
         relations: [],
       },
       type: "custom",
-      position: { x: 250, y: 250 },
-    },
-    {
-      id: "Test",
-      data: {
-        fields: [],
-        relations: [],
-      },
-      type: "custom",
-      position: { x: 20, y: 270 },
+      position: { x: 150, y: 355 },
     },
   ])
 
@@ -73,6 +64,7 @@ export const useProjectStore = defineStore("projectSpec", () => {
       id: "(User)-(Post)-(post_id)",
       source: "User",
       target: "Post",
+      type: "smoothstep",
     },
   ])
 
@@ -206,6 +198,7 @@ export const useProjectStore = defineStore("projectSpec", () => {
       id: formatEdgeId(source, target, fieldName),
       source,
       target,
+      type: "smoothstep",
     })
   }
 

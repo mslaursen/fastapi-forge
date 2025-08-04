@@ -3,13 +3,13 @@
     <h1>Design your Schema</h1>
     <br />
     <div>
-      <SchemaEditor />
+      <Viewport />
     </div>
   </main>
 </template>
 
 <script setup lang="ts">
-import SchemaEditor from "@/components/schema_editor/SchemaEditor.vue"
+import Viewport from "@/components/schema_editor/Viewport.vue"
 </script>
 
 <style scoped>

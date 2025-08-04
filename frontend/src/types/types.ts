@@ -39,6 +39,7 @@ export interface EdgeT {
   id: string
   source: string
   target: string
+  type: string
 }
 
 export interface EnumValue {
