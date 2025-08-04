@@ -151,30 +151,6 @@ const openEditRelationModal = (id: string, relation: RelationalRelationField) =>
   transform: translate(2px, 2px);
 }
 
-.toggle-grid-button {
-  caret-color: transparent;
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background-color: var(--color-primary);
-  color: black;
-  border: 2px solid black;
-  padding: 3px 6px;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  z-index: 10;
-  box-shadow: 2px 2px 0px rgba(0, 0, 0, 1);
-  transition:
-    transform 0.1s ease-out,
-    box-shadow 0.1s;
-}
-
-.toggle-grid-button:hover {
-  box-shadow: 0px 0px 0px rgba(0, 0, 0, 1);
-  transform: translate(2px, 2px);
-}
-
 .create-wrapper {
   position: absolute;
   top: 10px;
