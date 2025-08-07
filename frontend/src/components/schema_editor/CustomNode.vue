@@ -41,7 +41,8 @@
         @click="$emit('open-edit-field-modal', props.id, field)"
       >
         <div class="custom-node-field-name">{{ field.name }}</div>
-        <div class="custom-node-field-type">{{ field.type }}</div>
+        <div class="custom-node-field-type" v-if="field.type !== 'Enum'">{{ field.type }}</div>
+        <div class="custom-node-field-type" v-else>{{ field.type }}({{ field.typeEnum }})</div>
       </div>
       <div
         v-for="relation in data.relations"
@@ -58,7 +59,6 @@
 
 <script setup lang="ts">
 import { ref } from "vue"
-import type { Position2D } from "@/types/types"
 const props = defineProps<{
   id: string
   data: object

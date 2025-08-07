@@ -1,5 +1,5 @@
 import { defineStore } from "pinia"
-import { ref, shallowRef } from "vue"
+import { ref } from "vue"
 import type { Ref } from "vue"
 import type {
   NodesArray,
@@ -10,14 +10,22 @@ import type {
   RelationalField,
   RelationalRelationField,
   EnumValue,
+  EnumT,
 } from "@/types/types.ts"
-import type { Edge } from "@vue-flow/core"
 
 export const useProjectStore = defineStore("projectSpec", () => {
   const projectSpec = ref({ project_name: "", database: "" })
   const isProjectNameConfirmed = ref(false)
 
-  const enums: Ref<EnumsArray> = ref([])
+  const enums: Ref<EnumsArray> = ref([
+    {
+      name: "UserRole",
+      values: [
+        { name: "ADMIN", value: "ADMIN" },
+        { name: "USER", value: "auto()" },
+      ],
+    },
+  ])
 
   const nodes: Ref<NodesArray> = ref([
     {
@@ -27,6 +35,7 @@ export const useProjectStore = defineStore("projectSpec", () => {
           { name: "id", type: "UUID", isPrimaryKey: true },
           { name: "name", type: "String" },
           { name: "email", type: "String" },
+          { name: "role", type: "Enum", typeEnum: "UserRole", defaultValue: "ADMIN" },
           { name: "created_at", type: "DateTime" },
           { name: "updated_at", type: "DateTime" },
         ],
@@ -206,13 +215,66 @@ export const useProjectStore = defineStore("projectSpec", () => {
     edges.value = edges.value.filter((edge) => edge.id !== formatEdgeId(source, target, fieldName))
   }
 
-  const addEnum = (name: string) => {}
-  const updateEnumName = (oldName: string, newName: string) => {}
-  const deleteEnum = (name: string) => {}
+  const findEnumByName = (name: string): EnumT => {
+    const en = enums.value.find((e) => e.name === name)
+    if (!en) throw Error(`Enum not found: ${name}`)
+    return en
+  }
 
-  const addEnumValue = (enumName: string, enumValue: EnumValue) => {}
-  const updateEnumValue = (enumName: string, enumValueName: string, newEnumValue: EnumValue) => {}
-  const deleteEnumValue = (enumName: string, enumValueName: string) => {}
+  const findEnumValue = (enumName: string, enumValueName: string): EnumValue => {
+    const en = findEnumByName(enumName)
+    const ev = en.values.find((v) => v.name === enumValueName)
+    if (!ev) throw Error(`EnumValue not found: ${enumValueName}`)
+    return ev
+  }
+
+  const addEnum = (name: string): EnumT => {
+    const newEnum = { name: name, values: [] }
+    enums.value.push(newEnum)
+    return newEnum
+  }
+  const updateEnumName = (oldName: string, newName: string) => {
+    const en = findEnumByName(oldName)
+    en.name = newName
+    nodes.value.forEach((n) => {
+      n.data.fields.forEach((f) => {
+        if (f.type === "Enum" && f.typeEnum === oldName) {
+          f.typeEnum = newName
+        }
+      })
+    })
+  }
+  const deleteEnum = (name: string) => {
+    enums.value = enums.value.filter((e) => e.name !== name)
+    nodes.value.forEach((n) => {
+      n.data.fields = n.data.fields.filter((f) => f.typeEnum !== name)
+    })
+  }
+
+  const addEnumValue = (enumName: string, enumValue: EnumValue) => {
+    const en = findEnumByName(enumName)
+    en.values.push(enumValue)
+  }
+  const updateEnumValue = (enumName: string, enumValueName: string, newEnumValue: EnumValue) => {
+    const ev = findEnumValue(enumName, enumValueName)
+    ev.name = newEnumValue.name
+    ev.value = newEnumValue.value
+
+    console.log(enumName)
+    console.log(newEnumValue)
+
+    nodes.value.forEach((n) => {
+      n.data.fields.forEach((f) => {
+        if (f.type === "Enum" && f.typeEnum === enumName) {
+          f.defaultValue = newEnumValue.name
+        }
+      })
+    })
+  }
+  const deleteEnumValue = (enumName: string, enumValueName: string) => {
+    const en = findEnumByName(enumName)
+    en.values = en.values.filter((e) => e.name !== enumValueName)
+  }
 
   const setProjectName = (projectName: string): void => {
     projectSpec.value.project_name = projectName
@@ -231,6 +293,7 @@ export const useProjectStore = defineStore("projectSpec", () => {
   return {
     nodes,
     edges,
+    enums,
     createNode,
     createEdge,
     deleteNode,
@@ -248,5 +311,12 @@ export const useProjectStore = defineStore("projectSpec", () => {
     setDatabase,
     getDatabase,
     findNodeById,
+    findEnumByName,
+    addEnum,
+    updateEnumName,
+    deleteEnum,
+    addEnumValue,
+    updateEnumValue,
+    deleteEnumValue,
   }
 })

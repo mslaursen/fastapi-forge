@@ -1,4 +1,4 @@
-from typing import Annotated, Any, Self
+ from typing import Annotated, Any, Self
 
 from pydantic import (
     BaseModel,

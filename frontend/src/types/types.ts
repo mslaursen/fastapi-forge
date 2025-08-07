@@ -3,12 +3,17 @@ export interface Position2D {
   y: number
 }
 
-export type FieldType = "String" | "UUID" | "DateTime" | "Number" | "Boolean" | "String"
+export type FieldType = "String" | "UUID" | "DateTime" | "Number" | "Boolean" | "String" | "Enum"
 
 export interface RelationalField {
   name: string
   type: FieldType
+  typeEnum?: string
   isPrimaryKey?: boolean
+  isNullable?: boolean
+  isUnique?: boolean
+  isIndex?: boolean
+  defaultValue?: string
 }
 
 export type OnDeleteType = "CASCADE" | "SET NULL"
@@ -16,11 +21,11 @@ export type OnDeleteType = "CASCADE" | "SET NULL"
 export interface RelationalRelationField {
   fieldName: string
   targetModel: string
-  backPopulates?: string
   onDelete: OnDeleteType
-  isNullable: boolean
-  isUnique: boolean
-  isIndex: boolean
+  backPopulates?: string
+  isNullable?: boolean
+  isUnique?: boolean
+  isIndex?: boolean
 }
 
 export interface RelationalNodeData {
@@ -47,11 +52,11 @@ export interface EnumValue {
   value: string
 }
 
-export interface Enum {
+export interface EnumT {
   name: string
   values: Array<EnumValue>
 }
 
 export type NodesArray = Array<NodeT>
 export type EdgesArray = Array<EdgeT>
-export type EnumsArray = Array<Enum>
+export type EnumsArray = Array<EnumT>

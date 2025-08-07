@@ -16,12 +16,29 @@
           <option value="DateTime">DateTime</option>
           <option value="Boolean">Boolean</option>
           <option value="Float">Float</option>
+          <option value="Enum">Enum</option>
+        </select>
+      </div>
+
+      <div class="input-group" v-if="type === 'Enum'">
+        <label class="field-label">Select Enum</label>
+        <select class="field-select" v-model="selectedEnum">
+          <option disabled value="">-- Select Enum --</option>
+          <option v-for="e in projectStore.enums" :key="e.name" :value="e">
+            {{ e.name }}
+          </option>
         </select>
       </div>
 
       <div class="input-group">
         <label class="field-label">Default value</label>
-        <input class="field-input" v-model="defaultValue" type="text" />
+        <select class="field-select" v-model="defaultValue" v-if="type === 'Enum'">
+          <option value="" />
+          <option v-for="v in selectedEnum?.values" :key="v.name" :value="v.name">
+            {{ v.name }}
+          </option>
+        </select>
+        <input class="field-input" v-model="defaultValue" type="text" v-else />
       </div>
     </div>
 
@@ -42,6 +59,7 @@
 import { ref } from "vue"
 import { useProjectStore } from "@/stores/useProjectStore"
 import { useModalStore } from "@/stores/useModalStore"
+import type { EnumT, FieldType } from "@/types/types"
 
 const props = defineProps<{
   id: string
@@ -49,6 +67,8 @@ const props = defineProps<{
 
 const projectStore = useProjectStore()
 const modalStore = useModalStore()
+
+const selectedEnum = ref<EnumT | undefined>()
 
 const fieldName = ref("")
 const type = ref("")
@@ -62,12 +82,13 @@ const saveField = () => {
   if (!fieldName.value || !type.value) return
   projectStore.addField(props.id, {
     name: fieldName.value,
-    type: type.value,
-    default: defaultValue.value || undefined,
+    type: type.value as FieldType,
+    typeEnum: selectedEnum.value?.name,
     isPrimaryKey: isPrimaryKey.value,
     isNullable: isNullable.value,
     isUnique: isUnique.value,
     isIndex: isIndex.value,
+    defaultValue: defaultValue.value || undefined,
   })
   modalStore.close()
 }

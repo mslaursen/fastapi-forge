@@ -91,7 +91,7 @@ const goToStep = (index) => {
 }
 
 .step.completed {
-  background-color: #7fbc8c;
+  background-color: var(--color-success);
 }
 
 .step-content {
