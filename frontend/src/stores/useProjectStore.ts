@@ -14,7 +14,7 @@ import type {
 } from "@/types/types.ts"
 
 export const useProjectStore = defineStore("projectSpec", () => {
-  const projectSpec = ref({ project_name: "", database: "" })
+  const projectSpec = ref({ project_name: "asd", database: "", models: [], custom_enums: [] })
   const isProjectNameConfirmed = ref(false)
 
   const enums: Ref<EnumsArray> = ref([
@@ -29,10 +29,10 @@ export const useProjectStore = defineStore("projectSpec", () => {
 
   const nodes: Ref<NodesArray> = ref([
     {
-      id: "User",
+      id: "user",
       data: {
         fields: [
-          { name: "id", type: "UUID", isPrimaryKey: true },
+          { name: "id", type: "UUID", isPrimaryKey: true, defaultValue: "uuid.uuid4" },
           { name: "name", type: "String" },
           { name: "email", type: "String" },
           { name: "role", type: "Enum", typeEnum: "UserRole", defaultValue: "ADMIN" },
@@ -42,7 +42,7 @@ export const useProjectStore = defineStore("projectSpec", () => {
         relations: [
           {
             fieldName: "post_id",
-            targetModel: "Post",
+            targetModel: "post",
             onDelete: "CASCADE",
             isNullable: false,
             isUnique: false,
@@ -54,10 +54,10 @@ export const useProjectStore = defineStore("projectSpec", () => {
       position: { x: 50, y: 50 },
     },
     {
-      id: "Post",
+      id: "post",
       data: {
         fields: [
-          { name: "id", type: "UUID", isPrimaryKey: true },
+          { name: "id", type: "UUID", isPrimaryKey: true, defaultValue: "uuid.uuid4" },
           { name: "created_at", type: "DateTime" },
           { name: "updated_at", type: "DateTime" },
         ],
@@ -70,12 +70,106 @@ export const useProjectStore = defineStore("projectSpec", () => {
 
   const edges: Ref<EdgesArray> = ref([
     {
-      id: "(User)-(Post)-(post_id)",
-      source: "User",
-      target: "Post",
+      id: "(user)-(post)-(post_id)",
+      source: "user",
+      target: "post",
       type: "smoothstep",
     },
   ])
+
+  const convertToPayload = () => {
+    const models = nodes.value.map((node) => {
+      const modelName = node.id
+
+      const fields = node.data.fields.map((field) => {
+        return {
+          name: field.name,
+          type: field.type,
+          type_enum: field.typeEnum ?? null,
+          primary_key: field.isPrimaryKey ?? false,
+          nullable: field.isNullable ?? false,
+          unique: field.isUnique ?? false,
+          index: field.isIndex ?? false,
+          default_value: field.defaultValue ?? null,
+          extra_kwargs: null,
+          metadata: {
+            is_created_at_timestamp: field.name === "created_at",
+            is_updated_at_timestamp: field.name === "updated_at",
+            is_foreign_key: false,
+          },
+        }
+      })
+
+      const relationships = node.data.relations.map((relation) => {
+        return {
+          field_name: relation.fieldName,
+          target_model: relation.targetModel,
+          back_populates: null,
+          on_delete: relation.onDelete ?? "CASCADE",
+          nullable: relation.isNullable ?? false,
+          unique: relation.isUnique ?? false,
+          index: relation.isIndex ?? false,
+        }
+      })
+
+      return {
+        name: modelName,
+        fields,
+        relationships,
+        metadata: {
+          create_endpoints: true,
+          create_tests: true,
+          create_daos: true,
+          create_dtos: true,
+          is_auth_model: false,
+        },
+      }
+    })
+
+    const custom_enums = enums.value.map((enm) => {
+      return {
+        name: enm.name,
+        values: enm.values.map((val) => ({
+          name: val.name,
+          value: val.value,
+        })),
+      }
+    })
+
+    return {
+      project_name: projectSpec.value.project_name,
+      use_postgres: true,
+      use_alembic: true,
+      models,
+      custom_enums,
+    }
+  }
+
+  const callGenerateEndpoint = async () => {
+    const payload = convertToPayload()
+
+    try {
+      const response = await fetch("http://localhost:8000/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Error ${response.status}: ${errorText}`)
+      }
+
+      const result = await response.json()
+      console.log("Generation successful:", result)
+      return result
+    } catch (error) {
+      console.error("Generation failed:", error)
+      throw error
+    }
+  }
 
   const findNodeById = (id: string): NodeT | undefined => {
     return nodes.value.find((node) => node.id === id)
@@ -146,6 +240,7 @@ export const useProjectStore = defineStore("projectSpec", () => {
     const fieldIndex = node.data.fields.findIndex((f) => f.name === originalFieldName)
     if (fieldIndex === -1) throw new Error(`Field does not exist: ${originalFieldName}`)
     node.data.fields[fieldIndex] = fieldData
+    console.log(fieldData)
   }
 
   const deleteField = (source: string, fieldName: string) => {
@@ -318,5 +413,7 @@ export const useProjectStore = defineStore("projectSpec", () => {
     addEnumValue,
     updateEnumValue,
     deleteEnumValue,
+    convertNodesToModel: convertToPayload,
+    callGenerateEndpoint,
   }
 })
