@@ -5,6 +5,11 @@ export interface Position2D {
 
 export type FieldType = "String" | "UUID" | "DateTime" | "Number" | "Boolean" | "String" | "Enum"
 
+export interface RelationalFieldMetadata {
+  isCreatedAtTimestamp?: boolean
+  isUpdatedAtTimestamp?: boolean
+}
+
 export interface RelationalField {
   name: string
   type: FieldType
@@ -14,6 +19,8 @@ export interface RelationalField {
   isUnique?: boolean
   isIndex?: boolean
   defaultValue?: string
+  metadata?: RelationalFieldMetadata
+  extraKwargs?: object
 }
 
 export type OnDeleteType = "CASCADE" | "SET NULL"

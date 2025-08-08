@@ -5,6 +5,7 @@ from pydantic import Field
 from pydantic.dataclasses import dataclass
 
 from fastapi_forge.enums import FieldDataTypeEnum
+from fastapi_forge.logger import logger
 
 EnumName = Annotated[str, Field(...)]
 
@@ -48,9 +49,10 @@ class BaseRegistry[T: Hashable]:
 
     def register(self, key: T, data_type: TypeInfo) -> None:
         if key in self:
-            raise KeyError(
+            logger.error(
                 f"{self.__class__.__name__}: Key '{key}' is already registered."
             )
+            return
         self._registry[key] = data_type
 
     def get(self, key: T) -> TypeInfo:

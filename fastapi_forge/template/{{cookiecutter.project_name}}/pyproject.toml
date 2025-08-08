@@ -1,11 +1,15 @@
 [project]
+name = "{{cookiecutter.project_name}}"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.8",
     "uvicorn>=0.34.0",
     "pydantic-settings>=2.7.1",
     "pydantic>=2.10.6",
     "email-validator>=2.2.0",
-    "schemahound>=0.1.14",
     "loguru>=0.7.3",
     "yarl>=1.18.3",
     "ruff>=0.9.4",
@@ -46,11 +50,7 @@ dependencies = [
     {%- if cookiecutter.use_logfire -%}
     "logfire[aio-pika,asyncpg,fastapi,httpx,sqlalchemy,system-metrics]>=3.16.0",
     {%- endif %}
-]name = "{{cookiecutter.project_name}}"
-version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
-requires-python = ">=3.12"
+]
 
 [tool.pytest.ini_options]
 env = [
@@ -59,7 +59,7 @@ env = [
 ]
 
 [tool.ruff]
-exclude = ["migrations", ".venv/", "Lib"]
+exclude = ["migrations",".venv/", "Lib"]
 target-version = "py312"
 line-length = 88
 indent-width = 4
@@ -133,7 +133,7 @@ line-ending = "auto"
 "__init__.py" = ["F401"]
 
 [tool.mypy]
-plugins = ["pydantic.mypy", {% if cookiecutter.use_postgres -%}"sqlalchemy.ext.mypy.plugin"{% endif %}]warn_return_any = false
+warn_return_any = false
 namespace_packages = true
 strict = true
 ignore_missing_imports = true
@@ -141,4 +141,5 @@ pretty = true
 show_error_codes = true
 implicit_reexport = true
 disable_error_code = ["prop-decorator", "override", "import-untyped"]
+plugins = ["pydantic.mypy", {% if cookiecutter.use_postgres -%}"sqlalchemy.ext.mypy.plugin"{% endif %}]
 exclude = ["migrations"]

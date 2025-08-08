@@ -2,6 +2,7 @@
   <div class="vue-flow-container">
     <div class="vue-flow-viewport">
       <div class="viewport-wrapper">
+        <button @click="console.log(projectStore.callGenerateEndpoint())">ASD</button>
         <div class="toggle-grid-button" @click="showGrid = !showGrid">#</div>
         <VueFlow
           v-model:nodes="projectStore.nodes"

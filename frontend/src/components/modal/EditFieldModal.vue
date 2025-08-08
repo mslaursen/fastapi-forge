@@ -8,7 +8,7 @@
 
       <div class="input-group">
         <label class="field-label">Type</label>
-        <select class="field-select" v-model="type">
+        <select class="field-select" v-model="type" :disabled="isPrimaryKey">
           <option disabled value="">-- Select type --</option>
           <option value="String">String</option>
           <option value="Int">Int</option>
@@ -32,13 +32,24 @@
 
       <div class="input-group">
         <label class="field-label">Default value</label>
-        <select class="field-select" v-model="defaultValue" v-if="type === 'Enum'">
+        <select
+          class="field-select"
+          v-model="defaultValue"
+          v-if="type === 'Enum'"
+          :disabled="isPrimaryKey"
+        >
           <option value="" />
           <option v-for="v in selectedEnum?.values" :key="v.name" :value="v.name">
             {{ v.name }}
           </option>
         </select>
-        <input class="field-input" v-model="defaultValue" type="text" v-else />
+        <input
+          class="field-input"
+          v-model="defaultValue"
+          type="text"
+          v-else
+          :disabled="isPrimaryKey || createdAtTimestamp || updatedAtTimestamp"
+        />
       </div>
     </div>
 
@@ -49,6 +60,12 @@
       <label><input type="checkbox" v-model="isIndex" /> Index</label>
     </div>
 
+    <div class="checkbox-group" v-if="type === 'DateTime'">
+      <label class="field-label">Timestamp</label>
+      <label><input type="checkbox" v-model="createdAtTimestamp" /> Created</label>
+      <label><input type="checkbox" v-model="updatedAtTimestamp" /> Updated</label>
+    </div>
+
     <div class="action-group">
       <button class="save-field-btn" @click="saveField">Save</button>
       <button class="delete-field-btn" @click="deleteField">Delete</button>
@@ -57,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
+import { ref, onMounted, watch } from "vue"
 import { useProjectStore } from "@/stores/useProjectStore"
 import { useModalStore } from "@/stores/useModalStore"
 import type { EnumT, RelationalField } from "@/types/types"
@@ -71,10 +88,6 @@ const projectStore = useProjectStore()
 const modalStore = useModalStore()
 
 const selectedEnum = ref<EnumT | undefined>()
-onMounted(() => {
-  if (props.field.type !== "Enum" || !props.field.typeEnum) return
-  selectedEnum.value = projectStore.findEnumByName(props.field.typeEnum)
-})
 
 const fieldName = ref(props.field.name)
 const type = ref(props.field.type)
@@ -84,7 +97,60 @@ const isNullable = ref(props.field.isNullable || false)
 const isUnique = ref(props.field.isUnique || false)
 const isIndex = ref(props.field.isIndex || false)
 
-console.log(defaultValue.value)
+const extraKwargs = ref(props.field.extraKwargs || {})
+const createdAtTimestamp = ref(props.field.metadata?.isCreatedAtTimestamp || false)
+const updatedAtTimestamp = ref(props.field.metadata?.isUpdatedAtTimestamp || false)
+
+onMounted(() => {
+  if (props.field.type === "Enum" && props.field.typeEnum) {
+    selectedEnum.value = projectStore.findEnumByName(props.field.typeEnum)
+  }
+  if (props.field.type === "DateTime") {
+    console.log(createdAtTimestamp.value)
+  }
+})
+
+watch(isPrimaryKey, (newVal) => {
+  if (newVal) {
+    type.value = "UUID"
+    defaultValue.value = "uuid.uuid4"
+  }
+})
+
+const resetMeta = () => {
+  defaultValue.value = ""
+  extraKwargs.value = {}
+}
+
+watch(createdAtTimestamp, (newVal) => {
+  if (newVal) {
+    updatedAtTimestamp.value = false
+    defaultValue.value = "datetime.now(timezone.utc)"
+    extraKwargs.value = {}
+  } else if (!updatedAtTimestamp.value) {
+    resetMeta()
+  }
+})
+
+watch(updatedAtTimestamp, (newVal) => {
+  if (newVal) {
+    createdAtTimestamp.value = false
+    defaultValue.value = "datetime.now(timezone.utc)"
+    extraKwargs.value = { onupdate: "datetime.now(timezone.utc)" }
+  } else if (!createdAtTimestamp.value) {
+    resetMeta()
+  }
+})
+
+watch(type, (newVal) => {
+  console.log(type.value, newVal)
+  if (newVal === "DateTime") return
+  if (createdAtTimestamp.value || updatedAtTimestamp.value) {
+    resetMeta()
+    createdAtTimestamp.value = false
+    updatedAtTimestamp.value = false
+  }
+})
 
 const saveField = () => {
   projectStore.updateField(props.id, props.field.name, {
@@ -96,6 +162,11 @@ const saveField = () => {
     isNullable: isNullable.value,
     isUnique: isUnique.value,
     isIndex: isIndex.value,
+    metadata: {
+      isCreatedAtTimestamp: createdAtTimestamp.value,
+      isUpdatedAtTimestamp: updatedAtTimestamp.value,
+    },
+    extraKwargs: Object.keys(extraKwargs.value).length ? extraKwargs.value : undefined,
   })
   modalStore.close()
 }

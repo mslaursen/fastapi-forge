@@ -32,7 +32,7 @@ import { ref } from "vue"
 import SchemaEditor from "@/components/schema_editor/SchemaEditor.vue"
 import EnumEditor from "@/components/schema_editor/EnumEditor.vue"
 
-const activeTab = ref<"models" | "enums">("enums")
+const activeTab = ref<"models" | "enums">("models")
 </script>
 
 <style scoped>

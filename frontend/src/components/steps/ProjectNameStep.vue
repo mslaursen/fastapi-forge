@@ -42,7 +42,7 @@ import { ref, onMounted } from "vue"
 import { useProjectStore } from "@/stores/useProjectStore"
 
 const projectStore = useProjectStore()
-const localProjectName = ref("")
+const localProjectName = ref("asd")
 const showError = ref(false)
 const errorMessage = ref("")
 

@@ -16,14 +16,15 @@ class HTTPBearer(_HTTPBearer):
     Returns access token as str.
     """
 
-    async def __call__(self, request: Request) -> str | None:  # type: ignore
+    async def __call__(self, request: Request) -> str | None:
         """Return access token."""
         try:
             obj = await super().__call__(request)
-            return obj.credentials if obj else None
-        except HTTPException:
+        except HTTPException as err:
             msg = "Missing token."
-            raise exceptions.Http401(msg)
+            raise exceptions.Http401(msg) from err
+        else:
+            return obj.credentials if obj else None
 
 
 auth_scheme = HTTPBearer()
