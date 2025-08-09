@@ -5,7 +5,6 @@
     <div class="input-group">
       <div class="label-group">
         <label class="project-name-label" for="project-name">Project Name</label>
-        <div class="project-name-length-indicator">{{ localProjectName.length }} / 50</div>
       </div>
       <div class="input-horizontal">
         <input
@@ -19,7 +18,7 @@
           :value="localProjectName"
           @input="handleInputChange($event)"
           :disabled="projectStore.isProjectNameConfirmed"
-          maxlength="50"
+          maxlength="100"
         />
         <button
           class="confirm-btn"
@@ -40,15 +39,12 @@
 <script setup>
 import { ref, onMounted } from "vue"
 import { useProjectStore } from "@/stores/useProjectStore"
+import { isValidProjectName } from "@/utils/validation"
 
 const projectStore = useProjectStore()
 const localProjectName = ref("asd")
 const showError = ref(false)
 const errorMessage = ref("")
-
-const isValidProjectName = (name) => {
-  return /^[a-zA-Z_][a-zA-Z0-9_-]*$/.test(name)
-}
 
 const handleInputChange = (event) => {
   localProjectName.value = event.target.value
