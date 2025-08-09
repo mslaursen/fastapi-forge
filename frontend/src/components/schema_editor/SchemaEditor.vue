@@ -2,7 +2,6 @@
   <div class="vue-flow-container">
     <div class="vue-flow-viewport">
       <div class="viewport-wrapper">
-        <button @click="console.log(projectStore.callGenerateEndpoint())">ASD</button>
         <div class="toggle-grid-button" @click="showGrid = !showGrid">#</div>
         <VueFlow
           v-model:nodes="projectStore.nodes"
@@ -37,6 +36,7 @@
                 placeholder="Enter Model Name"
                 v-model="modelName"
                 @keyup.enter="handleCreateClick"
+                maxlength="100"
               />
               <button class="create-model-btn" @click="handleCreateClick">
                 <svg
@@ -90,6 +90,8 @@ import { VueFlow } from "@vue-flow/core"
 import { useModalStore } from "@/stores/useModalStore"
 import type { RelationalRelationField, RelationalField } from "@/types.types"
 import { Background } from "@vue-flow/background"
+import { isValidModelName, warningMessages } from "@/utils/validation"
+import { showDangerToast } from "@/utils/toast"
 
 const projectStore = useProjectStore()
 const modalStore = useModalStore()
@@ -99,8 +101,13 @@ const showInput = ref(false)
 const showGrid = ref(true)
 
 const handleCreateClick = () => {
-  if (modelName.value.trim() === "") return
-  projectStore.createNode(modelName.value)
+  const newModelName = modelName.value.trim()
+  if (newModelName === "") return
+  if (!isValidModelName(newModelName)) {
+    showDangerToast(warningMessages.modelName)
+    return
+  }
+  projectStore.createNode(newModelName)
   modelName.value = ""
   showInput.value = false
 }

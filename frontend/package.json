@@ -17,7 +17,8 @@
     "@vue-flow/core": "^1.45.0",
     "cytoscape": "^3.32.1",
     "pinia": "^3.0.3",
-    "vue": "^3.5.17"
+    "vue": "^3.5.17",
+    "vue-toastification": "^2.0.0-rc.5"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.2",

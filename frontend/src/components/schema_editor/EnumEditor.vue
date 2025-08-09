@@ -11,7 +11,7 @@
               placeholder="Enter new enum name"
               v-model="newEnumName"
               @keyup.enter="createEnum"
-              maxlength="50"
+              maxlength="100"
             />
             <button class="confirm-btn" @click="createEnum" :disabled="!newEnumName">
               <svg
@@ -50,6 +50,7 @@
               @click.stop
               @keyup.enter="handleEditToggle(enumItem)"
               ref="enumNameInput"
+              maxlength="100"
             />
           </div>
           <div class="enum-item-actions">
@@ -154,6 +155,8 @@ import { useModalStore } from "@/stores/useModalStore"
 import AddEnumValueModal from "@/components/modal/AddEnumValueModal.vue"
 import EditEnumValueModal from "@/components/modal/EditEnumValueModal.vue"
 import type { EnumT, EnumValue } from "@/types/types"
+import { isValidEnumName, warningMessages } from "@/utils/validation"
+import { showDangerToast } from "@/utils/toast"
 
 const projectStore = useProjectStore()
 const modalStore = useModalStore()
@@ -188,6 +191,10 @@ const selectEnum = (e: EnumT) => {
 const createEnum = () => {
   const name = newEnumName.value.trim()
   if (name === "") return
+  if (!isValidEnumName(name)) {
+    showDangerToast(warningMessages.enumName)
+    return
+  }
   const newEnum = projectStore.addEnum(name)
   newEnumName.value = ""
   selectEnum(newEnum)
@@ -210,20 +217,19 @@ const handleEditToggle = (enumItem: EnumT) => {
   } else {
     editingEnumName.value = enumItem.name
     editedEnumName.value = enumItem.name
-    nextTick(() => {
-      if (enumNameInput.value) {
-        enumNameInput.value.focus()
-      }
-    })
   }
 }
 
 const saveEnumName = (enumItem: EnumT) => {
   const newName = editedEnumName.value.trim()
   if (newName && newName !== enumItem.name) {
-    projectStore.updateEnumName(enumItem.name, newName)
-    if (selectedEnum.value?.name === enumItem.name) {
-      selectedEnum.value.name = newName
+    if (!isValidEnumName(newName)) {
+      showDangerToast(warningMessages.enumName)
+    } else {
+      projectStore.updateEnumName(enumItem.name, newName)
+      if (selectedEnum.value?.name === enumItem.name) {
+        selectedEnum.value.name = newName
+      }
     }
   }
   editingEnumName.value = null

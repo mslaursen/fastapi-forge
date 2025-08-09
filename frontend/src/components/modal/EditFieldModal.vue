@@ -3,7 +3,7 @@
     <div class="input-container">
       <div class="input-group">
         <label class="field-label">Field name</label>
-        <input class="field-input" v-model="fieldName" type="text" />
+        <input class="field-input" v-model="fieldName" type="text" maxlength="100" />
       </div>
 
       <div class="input-group">
@@ -44,10 +44,11 @@
           </option>
         </select>
         <input
+          v-else
           class="field-input"
           v-model="defaultValue"
           type="text"
-          v-else
+          maxlength="100"
           :disabled="isPrimaryKey || createdAtTimestamp || updatedAtTimestamp"
         />
       </div>
@@ -78,6 +79,8 @@ import { ref, onMounted, watch } from "vue"
 import { useProjectStore } from "@/stores/useProjectStore"
 import { useModalStore } from "@/stores/useModalStore"
 import type { EnumT, RelationalField } from "@/types/types"
+import { isValidFieldName, warningMessages } from "@/utils/validation"
+import { showDangerToast } from "@/utils/toast"
 
 const props = defineProps<{
   id: string
@@ -153,6 +156,10 @@ watch(type, (newVal) => {
 })
 
 const saveField = () => {
+  if (!isValidFieldName(fieldName.value)) {
+    showDangerToast(warningMessages.fieldName)
+    return
+  }
   projectStore.updateField(props.id, props.field.name, {
     name: fieldName.value,
     type: type.value,

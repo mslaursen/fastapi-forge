@@ -3,7 +3,7 @@
     <div class="input-container">
       <div class="input-group">
         <label class="relation-label">Field name</label>
-        <input class="relation-input" v-model="fieldName" type="text" />
+        <input class="relation-input" v-model="fieldName" type="text" maxlength="100" />
       </div>
 
       <div class="input-group">
@@ -27,7 +27,7 @@
 
       <div class="input-group">
         <label class="relation-label">Back populates</label>
-        <input class="relation-input" v-model="backPopulates" type="text" />
+        <input class="relation-input" v-model="backPopulates" type="text" maxlength="100" />
       </div>
     </div>
 
@@ -47,6 +47,9 @@
 import { ref, computed } from "vue"
 import { useProjectStore } from "@/stores/useProjectStore"
 import { useModalStore } from "@/stores/useModalStore"
+import type { OnDeleteType } from "@/types/types"
+import { isValidFieldName, warningMessages } from "@/utils/validation"
+import { showDangerToast } from "@/utils/toast"
 
 const props = defineProps<{
   id: string
@@ -67,11 +70,15 @@ const filteredNodes = computed(() => projectStore.nodes.filter((node) => node.id
 
 const saveSelect = () => {
   if (!selectedNodeId.value || !fieldName.value) return
+  if (!isValidFieldName(fieldName.value)) {
+    showDangerToast(warningMessages.fieldName)
+    return
+  }
   projectStore.addRelation(props.id, selectedNodeId.value, {
     fieldName: fieldName.value,
     targetModel: selectedNodeId.value,
     backPopulates: backPopulates.value,
-    onDelete: onDelete.value,
+    onDelete: onDelete.value as OnDeleteType,
     isNullable: nullable.value,
     isUnique: unique.value,
     isIndex: indexed.value,
