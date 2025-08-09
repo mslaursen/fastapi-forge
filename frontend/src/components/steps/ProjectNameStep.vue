@@ -36,7 +36,7 @@
   </main>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from "vue"
 import { useProjectStore } from "@/stores/useProjectStore"
 import { isValidProjectName } from "@/utils/validation"
@@ -46,7 +46,7 @@ const localProjectName = ref("asd")
 const showError = ref(false)
 const errorMessage = ref("")
 
-const handleInputChange = (event) => {
+const handleInputChange = (event: { target: { value: string } }) => {
   localProjectName.value = event.target.value
 
   if (localProjectName.value.length === 0) {

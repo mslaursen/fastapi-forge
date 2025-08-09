@@ -37,7 +37,9 @@ import DatabaseStep from "./components/steps/DatabaseStep.vue"
 import SchemaStep from "./components/steps/SchemaStep.vue"
 import GlobalModal from "@/components/modal/GlobalModal.vue"
 
-const steps: Array<any> = [SchemaStep, ProjectNameStep, DatabaseStep, SchemaStep]
+import type { Component } from "vue"
+
+const steps: Component[] = [ProjectNameStep, DatabaseStep, SchemaStep]
 </script>
 
 <style>

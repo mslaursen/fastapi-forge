@@ -3,12 +3,12 @@
     <div class="input-container">
       <div class="input-group">
         <label class="field-label">Name</label>
-        <input class="field-input" v-model="name" type="text" />
+        <input class="field-input" v-model="name" type="text" maxlength="100" />
       </div>
 
       <div class="input-group">
         <label class="field-label">Value</label>
-        <input class="field-input" v-model="value" type="text" />
+        <input class="field-input" v-model="value" type="text" maxlength="100" />
       </div>
     </div>
 
@@ -23,6 +23,8 @@ import { ref } from "vue"
 import { useProjectStore } from "@/stores/useProjectStore"
 import { useModalStore } from "@/stores/useModalStore"
 import type { EnumValue } from "@/types/types"
+import { isValidEnumValueName, warningMessages } from "@/utils/validation"
+import { showDangerToast } from "@/utils/toast"
 
 const props = defineProps<{
   enumName: string
@@ -36,6 +38,10 @@ const name = ref(props.enumValue.name)
 const value = ref(props.enumValue.value)
 
 const saveEnumValue = () => {
+  if (!isValidEnumValueName(name.value)) {
+    showDangerToast(warningMessages.enumValueName)
+    return
+  }
   projectStore.updateEnumValue(props.enumName, props.enumValue.name, {
     name: name.value,
     value: value.value,
@@ -101,3 +107,5 @@ const saveEnumValue = () => {
   box-shadow: none;
 }
 </style>
+
+function showDangerToast(modelName: any) { throw new Error("Function not implemented."); }

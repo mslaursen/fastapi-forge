@@ -3,7 +3,7 @@
     <div class="input-container">
       <div class="input-group">
         <label class="field-label">New model name</label>
-        <input class="field-input" v-model="newNodeId" type="text" />
+        <input class="field-input" v-model="nodeId" type="text" maxlength="100" />
       </div>
     </div>
 
@@ -17,6 +17,8 @@
 import { ref } from "vue"
 import { useProjectStore } from "@/stores/useProjectStore"
 import { useModalStore } from "@/stores/useModalStore"
+import { isValidModelName, warningMessages } from "@/utils/validation"
+import { showDangerToast } from "@/utils/toast"
 
 const props = defineProps<{
   id: string
@@ -25,15 +27,20 @@ const props = defineProps<{
 const projectStore = useProjectStore()
 const modalStore = useModalStore()
 
-const newNodeId = ref(props.id)
+const nodeId = ref(props.id)
 
 const rename = () => {
-  if (!newNodeId.value.trim() || newNodeId.value === props.id) {
+  const newNodeId = nodeId.value.trim()
+  if (!isValidModelName(newNodeId)) {
+    showDangerToast(warningMessages.modelName)
+    return
+  }
+  if (!newNodeId || nodeId.value === props.id) {
     modalStore.close()
     return
   }
 
-  projectStore.renameNode(props.id, newNodeId.value.trim())
+  projectStore.renameNode(props.id, newNodeId)
   modalStore.close()
 }
 </script>
