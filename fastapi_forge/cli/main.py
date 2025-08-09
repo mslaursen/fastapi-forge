@@ -1,14 +1,6 @@
-import sys
-from pathlib import Path
-
 import click
 
 from fastapi_forge.api import start_forge_api
-from fastapi_forge.frontend.main import init
-from fastapi_forge.project_io import (
-    YamlProjectLoader,
-    create_postgres_project_loader,
-)
 
 
 def confirm_uv_installed() -> bool:
@@ -56,84 +48,82 @@ def start() -> None:
     start_forge_api()
 
 
-@main.command(
-    help="Start FastAPI Forge - Generate a new FastAPI project.",
-)
-@click.option(
-    "--use-example",
-    is_flag=True,
-    help="Generate a new project using a prebuilt example provided by FastAPI Forge.",
-)
-@click.option(
-    "--no-ui",
-    is_flag=True,
-    help="Generate the project directly in the terminal without launching the UI (default: False).",
-)
-@click.option(
-    "--dry-run",
-    is_flag=True,
-    help="Perform a dry run without generating any files (requires --no-ui).",
-)
-@click.option(
-    "--from-yaml",
-    type=click.Path(
-        exists=True,
-        dir_okay=False,
-        readable=True,
-        path_type=Path,
-    ),
-    help="Generate a project using a custom configuration from a YAML file.",
-)
-@click.option(
-    "--yes",
-    is_flag=True,
-    help="Automatically confirm all prompts (use with caution).",
-)
-@click.option(
-    "--conn-string",
-    help="Generate a project from a PostgreSQL connection string "
-    "(e.g., postgresql://user:password@host:port/dbname)",
-)
-@click.pass_context
-def start_v1(
-    _: click.Context,
-    use_example: bool = False,
-    no_ui: bool = False,
-    dry_run: bool = False,
-    yes: bool = False,
-    from_yaml: Path | None = None,
-    conn_string: str | None = None,
-) -> None:
-    """Start FastAPI Forge."""
-    if not yes and not confirm_uv_installed():
-        sys.exit(1)
+# @main.command(
+#     help="Start FastAPI Forge - Generate a new FastAPI project.",
+# )
+# @click.option(
+#     "--use-example",
+#     is_flag=True,
+#     help="Generate a new project using a prebuilt example provided by FastAPI Forge.",
+# )
+# @click.option(
+#     "--no-ui",
+#     is_flag=True,
+#     help="Generate the project directly in the terminal without launching the UI (default: False).",
+# )
+# @click.option(
+#     "--dry-run",
+#     is_flag=True,
+#     help="Perform a dry run without generating any files (requires --no-ui).",
+# )
+# @click.option(
+#     "--from-yaml",
+#     type=click.Path(
+#         exists=True,
+#         dir_okay=False,
+#         readable=True,
+#         path_type=Path,
+#     ),
+#     help="Generate a project using a custom configuration from a YAML file.",
+# )
+# @click.option(
+#     "--yes",
+#     is_flag=True,
+#     help="Automatically confirm all prompts (use with caution).",
+# )
+# @click.option(
+#     "--conn-string",
+#     help="Generate a project from a PostgreSQL connection string "
+#     "(e.g., postgresql://user:password@host:port/dbname)",
+# )
+# @click.pass_context
+# def start_v1(
+#     _: click.Context,
+#     use_example: bool = False,
+#     no_ui: bool = False,
+#     dry_run: bool = False,
+#     yes: bool = False,
+#     from_yaml: Path | None = None,
+#     conn_string: str | None = None,
+# ) -> None:
+#     """Start FastAPI Forge."""
+#     if not yes and not confirm_uv_installed():
+#         sys.exit(1)
 
-    option_count = sum([use_example, bool(from_yaml), bool(conn_string)])
-    if option_count > 1:
-        raise click.UsageError(
-            "Only one of '--use-example', '--from-yaml', or '--conn-string' can be used."
-        )
+#     option_count = sum([use_example, bool(from_yaml), bool(conn_string)])
+#     if option_count > 1:
+#         raise click.UsageError(
+#             "Only one of '--use-example', '--from-yaml', or '--conn-string' can be used."
+#         )
 
-    if no_ui and option_count < 1:
-        raise click.UsageError(
-            "Option '--no-ui' requires one of '--use-example', '--from-yaml', or '--conn-string'."
-        )
+#     if no_ui and option_count < 1:
+#         raise click.UsageError(
+#             "Option '--no-ui' requires one of '--use-example', '--from-yaml', or '--conn-string'."
+#         )
 
-    if dry_run and not no_ui:
-        raise click.UsageError("Option '--dry-run' requires '--no-ui' to be set.")
+#     if dry_run and not no_ui:
+#         raise click.UsageError("Option '--dry-run' requires '--no-ui' to be set.")
 
-    project_spec = None
+#     project_spec = None
 
-    if from_yaml:
-        project_spec = YamlProjectLoader(project_path=from_yaml).load()
-    elif conn_string:
-        project_spec = create_postgres_project_loader(conn_string).load()
-    elif use_example:
-        base_path = Path(__file__).parent / "example-projects"
-        path = base_path / "game_zone.yaml"
-        project_spec = YamlProjectLoader(project_path=path).load()
-
-    init(project_spec=project_spec, no_ui=no_ui, dry_run=dry_run)
+#     if from_yaml:
+#         project_spec = YamlProjectLoader(project_path=from_yaml).load()
+#     elif conn_string:
+#         project_spec = create_postgres_project_loader(conn_string).load()
+#     elif use_example:
+#         base_path = Path(__file__).parent / "example-projects"
+#         path = base_path / "game_zone.yaml"
+#         project_spec = YamlProjectLoader(project_path=path).load()
 
 
 if __name__ in {"__main__", "__mp_main__"}:
