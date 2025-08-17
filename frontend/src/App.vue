@@ -35,11 +35,13 @@ import StepWizard from "./components/StepWizard.vue"
 import ProjectNameStep from "./components/steps/ProjectNameStep.vue"
 import DatabaseStep from "./components/steps/DatabaseStep.vue"
 import SchemaStep from "./components/steps/SchemaStep.vue"
+import FeatureSelectionStep from "./components/steps/FeatureSelectionStep.vue"
+import GenerationStep from "./components/steps/GenerationStep.vue"
 import GlobalModal from "@/components/modal/GlobalModal.vue"
 
 import type { Component } from "vue"
 
-const steps: Component[] = [ProjectNameStep, DatabaseStep, SchemaStep]
+const steps: Component[] = [ProjectNameStep, DatabaseStep, SchemaStep, FeatureSelectionStep, GenerationStep]
 </script>
 
 <style>
