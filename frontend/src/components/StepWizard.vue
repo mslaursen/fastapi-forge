@@ -1,5 +1,5 @@
 <template>
-  <div class="StepWizard">
+  <div class="step-wizard">
     <div class="step-indicators">
       <div
         v-for="(step, index) in steps"
@@ -9,9 +9,9 @@
       ></div>
     </div>
 
-    <div class="step-content">
+    <!-- <div class="step-content">
       <component :is="steps[currentStep]" />
-    </div>
+    </div> -->
 
     <div class="step-actions">
       <button v-if="currentStep > 0" @click="currentStep--" class="btn prev-btn">Previous</button>
@@ -28,33 +28,36 @@ import { ref } from "vue"
 const props = defineProps({
   steps: {
     type: Array,
-
     required: true,
   },
 })
 
 const currentStep = ref(0)
+const emit = defineEmits(["select-step"])
+
+
+const onStepSelected = (index: number) => {
+  emit("select-step", index)
+}
 
 const nextStep = () => {
   if (currentStep.value < props.steps.length - 1) {
     currentStep.value++
+    onStepSelected(currentStep.value)
   }
 }
 
-const goToStep = (index) => {
+const goToStep = (index: number) => {
   if (index >= 0 && index < props.steps.length) {
     currentStep.value = index
+    onStepSelected(currentStep.value)
   }
 }
+
+
 </script>
 
 <style scoped>
-.StepWizard {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
-}
 
 .step-indicators {
   display: flex;
@@ -139,3 +142,4 @@ const goToStep = (index) => {
   cursor: pointer;
 }
 </style>
+

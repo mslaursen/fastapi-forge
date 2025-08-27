@@ -3,7 +3,7 @@
     <header class="header">
       <div class="logo">
         <h1>FastAPI Forge</h1>
-        <a class="github-icon" href="https://github.com/mslaursen/fastapi-forge" target="_blank">
+        <a class="github-icon" href="https://github.com/mslaursen/fastapi-forge" target="_blank" rel="noopener noreferrer">
           <svg
             width="20"
             height="20"
@@ -20,31 +20,64 @@
           </svg>
         </a>
       </div>
+      <div class="step-wizard">
+        <div class="step-indicators">
+          <div class="step-action">
+            <button :disabled="currentStep <= 0" @click="prevStep" class="btn prev-btn" aria-label="Previous step"><</button>
+          </div>
+          <div
+            v-for="(step, index) in steps"
+            :key="index"
+            :class="['step', { active: currentStep === index, completed: currentStep > index }]"
+            @click="goToStep(index)"
+            :aria-label="'Go to step ' + (index + 1)"
+          ></div>
+          <div class="step-action">
+            <button :disabled="currentStep >= steps.length - 1" @click="nextStep" class="btn next-btn" aria-label="Next step">></button>
+          </div>
+        </div>
+      </div>
     </header>
+
     <main class="main">
-      <div class="content">
-        <StepWizard :steps="steps" />
+      <div class="step-content">
+        <component :is="steps[currentStep]" />
       </div>
     </main>
+
+    <GlobalModal ref="modalRef" />
   </div>
-  <GlobalModal ref="modalRef" />
 </template>
 
 <script setup lang="ts">
-import StepWizard from "./components/StepWizard.vue"
 import ProjectNameStep from "./components/steps/ProjectNameStep.vue"
 import DatabaseStep from "./components/steps/DatabaseStep.vue"
 import SchemaStep from "./components/steps/SchemaStep.vue"
 import FeatureSelectionStep from "./components/steps/FeatureSelectionStep.vue"
 import GenerationStep from "./components/steps/GenerationStep.vue"
 import GlobalModal from "@/components/modal/GlobalModal.vue"
-
-import type { Component } from "vue"
+import { ref, type Component } from "vue"
 
 const steps: Component[] = [ProjectNameStep, DatabaseStep, SchemaStep, FeatureSelectionStep, GenerationStep]
+const currentStep = ref(0)
+const goToStep = (index: number) => {
+  if (index >= 0 && index < steps.length) {
+    currentStep.value = index
+  }
+}
+const nextStep = () => {
+  if (currentStep.value < steps.length - 1) {
+    currentStep.value++
+  }
+}
+const prevStep = () => {
+  if (currentStep.value > 0) {
+    currentStep.value--
+  }
+}
 </script>
 
-<style>
+<style >
 html,
 body {
   height: 100%;
@@ -58,27 +91,41 @@ body {
   background-color: var(--color-background);
 }
 
+.step-content {
+  margin-bottom: 3rem;
+  display: flex;
+  justify-content: center;
+}
+
 .header {
   height: 60px;
   position: sticky;
   flex-shrink: 0;
   background-color: #ffffff;
   border-bottom: 4px solid black;
-  top: 0;
-  display: flex;
-  align-items: center;
-}
-
-.content {
-  flex-grow: 1;
-  padding: 1rem;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  padding: 0 1rem;
 }
 
 .logo {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-left: 1rem;
+  grid-column: 1;
+  height: 60px;
+}
+
+.step-wizard {
+  grid-column: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.main {
+  flex-grow: 1;
+  padding: 1rem;
 }
 
 .github-icon {
@@ -103,5 +150,68 @@ body {
 .github-icon:active,
 .github-icon:focus {
   color: black;
+}
+
+.step-indicators {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+.step {
+  caret-color: transparent;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: lightgray;
+  border: 2px solid black;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 1);
+  transition:
+    transform 0.1s ease-out,
+    box-shadow 0.1s;
+}
+
+.step:hover {
+  background-color: darkgray;
+  box-shadow: 0px 0px 0px rgba(0, 0, 0, 1);
+  transform: translate(2px, 2px);
+  cursor: pointer;
+}
+
+.step.active {
+  background-color: var(--color-primary);
+}
+
+.step.completed {
+  background-color: var(--color-success);
+}
+
+.step-action {
+  display: flex;
+  justify-content: center;
+}
+
+.next-btn,
+.prev-btn,
+.finish-btn {
+  caret-color: transparent;
+  padding: 0.5rem 1rem;
+  border: 2px solid black;
+  border-radius: 4px;
+  background-color: var(--color-background);
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 1);
+  transition:
+    transform 0.1s ease-in-out,
+    box-shadow 0.1s;
+  font-weight: bold;
+}
+
+.next-btn:hover,
+.prev-btn:hover,
+.finish-btn:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px rgba(0, 0, 0, 1);
+  cursor: pointer;
 }
 </style>

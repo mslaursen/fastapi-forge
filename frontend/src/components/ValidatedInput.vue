@@ -21,7 +21,7 @@ interface Props {
   modelValue: string
   label?: string
   validate?: ((value: string) => boolean) | ((value: string) => string | null)
-  errorMessage?: string // used if validate returns boolean
+  errorMessage?: string 
 }
 
 const props = defineProps<Props>()
@@ -40,7 +40,7 @@ const runValidation = (value: string) => {
   if (typeof result === "boolean") {
     error.value = result ? null : (props.errorMessage ?? "Invalid value")
   } else {
-    error.value = result // already string|null from custom function
+    error.value = result
   }
 }
 
