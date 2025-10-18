@@ -20,10 +20,11 @@ class HTTPBearer(_HTTPBearer):
         """Return access token."""
         try:
             obj = await super().__call__(request)
-            return obj.credentials if obj else None
-        except HTTPException:
+        except HTTPException as err:
             msg = "Missing token."
-            raise exceptions.Http401(msg)
+            raise exceptions.Http401(msg) from err
+        else:
+            return obj.credentials if obj else None
 
 
 auth_scheme = HTTPBearer()

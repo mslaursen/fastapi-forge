@@ -1,0 +1,32 @@
+body {
+  font-family: "DM Sans", sans-serif;
+  font-optical-sizing: auto;
+}
+
+:root {
+  --color-primary: #5294fd;
+  --color-secondary: #dcebfe;
+  --color-success: #7fbc8c;
+  --color-danger: #ff6b6b;
+  --color-warning: #f5c26b;
+  --color-background: #f4f4f0;
+}
+
+.Vue-Toastification__toast {
+  border: 2px solid black;
+  border-radius: 0px !important;
+  color: black !important;
+  box-shadow: 2px 2px 0px !important;
+}
+
+.Vue-Toastification__toast--success.container-class {
+  background-color: var(--color-success);
+}
+
+.Vue-Toastification__toast--error.container-class {
+  background-color: var(--color-danger);
+}
+
+.Vue-Toastification__toast--warning.container-class {
+  background-color: var(--color-warning);
+}
