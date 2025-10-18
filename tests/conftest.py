@@ -10,4 +10,5 @@ def clear_enum_registry() -> None:
 
 @pytest.fixture
 def type_info_registry() -> TypeInfoRegistry:
+    """Test."""
     return TypeInfoRegistry()
