@@ -16,7 +16,7 @@ class HTTPBearer(_HTTPBearer):
     Returns access token as str.
     """
 
-    async def __call__(self, request: Request) -> str | None:  # type: ignore
+    async def __call__(self, request: Request) -> str | None:
         """Return access token."""
         try:
             obj = await super().__call__(request)
