@@ -1,41 +1,41 @@
-# 🚀 FastAPI-Forge  
-⚡ UI Based FastAPI Project Generator  
+# FastAPI-Forge  
+UI Based FastAPI Project Generator  
 
-✨ *Define your database models through a UI, select services, and get a complete production-ready containerized project with tests and endpoints!* 
-
-
-## 🔥 Features  
+*Define your database models through a UI, select services, and get a complete production-ready containerized project with tests and endpoints!* 
 
 
-### 🖌️ UI Power  
-- 🖥️ [NiceGUI](https://github.com/zauberzeug/nicegui)-based interface for project design  
-- 📊 Visual model creation and configuration 
-- ✅ Checkbox additional services to be integrated
-- 🚀 Quick-add common fields
-- ⚙️ One-click project generation  
+## Features  
 
-### ⚡ Auto-Generated Components
-- 🗄️ [SQLAlchemy](https://github.com/sqlalchemy/sqlalchemy) Models  
-- 📦 [Pydantic](https://github.com/pydantic/pydantic) Schemas  
-- 🌐 RESTful Endpoints (CRUD + more)  
-- 🧪 Comprehensive Test Suite (pytest)  
-- 🏗️ DAOs (Database Access Objects)
-- 🏭 [Factory Boy](https://github.com/FactoryBoy/factory_boy) Test Factories  
-- 🐳 [Docker Compose](https://github.com/docker/compose) Setup  
 
-### 🎛️ Advanced Features  
-- 🎚️ Custom Enum support as data types  
-- 📥 YAML project import/export  
-- 🐘 Convert existing databases into FastAPI projects via connection string! 
+### UI Power  
+- [NiceGUI](https://github.com/zauberzeug/nicegui)-based interface for project design  
+- Visual model creation and configuration 
+- Checkbox additional services to be integrated
+- Quick-add common fields
+- One-click project generation  
+
+### Auto-Generated Components
+- [SQLAlchemy](https://github.com/sqlalchemy/sqlalchemy) Models  
+- [Pydantic](https://github.com/pydantic/pydantic) Schemas  
+- RESTful Endpoints (CRUD + more)  
+- Comprehensive Test Suite (pytest)  
+- DAOs (Database Access Objects)
+- [Factory Boy](https://github.com/FactoryBoy/factory_boy) Test Factories  
+- [Docker Compose](https://github.com/docker/compose) Setup  
+
+### Advanced Features  
+- Custom Enum support as data types  
+- YAML project import/export  
+- Convert existing databases into FastAPI projects via connection string! 
     - Basically lets you quickly create an API for any database.
 
-### 🔄 CI/CD Automation  
-- ⚙️ GitHub Workflows for automated testing and linting  
-  - 🧪 Runs pytest suite 
-  - ✨ Executes code formatting checks
-  - ✅ Ensures code quality before merging  
+### CI/CD Automation  
+- GitHub Workflows for automated testing and linting  
+  - Runs pytest suite 
+  - Executes code formatting checks
+  - Ensures code quality before merging  
 
-## 🧩 Optional Integrations  
+## Optional Integrations  
 
 | Category       | Technologies                          |
 |----------------|---------------------------------------|
@@ -56,13 +56,13 @@
 
 
 
-## ✅ Requirements
+## Requirements
 - Python 3.12+
 - UV
 - Docker and Docker Compose (for running the generated project)
 
 
-## 🚀 Quick Start 
+## Quick Start 
 Install FastAPI-Forge:
 
 ```bash
@@ -90,7 +90,7 @@ make up # Builds and runs your project along with additional services
 - Access the SwaggerUI/OpenAPI docs at: `http://localhost:8000/docs`.  
 
 
-## ⚙️ Command Options
+## Command Options
 Customize your project generation with these options:
 
 ### `--use-example`
@@ -128,7 +128,7 @@ fastapi-forge start --from-yaml=~/Documents/project-config.yaml --no-ui
 ```
 
 
-## 🧰 Using the Makefile
+## Using the Makefile
 The generated project includes a `Makefile` to simplify common dev tasks:
 
 ### Start the Application
@@ -157,7 +157,7 @@ make lint
 
 ---
 
-## 📦 Database Migrations with Alembic
+## Database Migrations with Alembic
 If you chose Alembic for migrations during project setup, these commands will help manage your database schema:
 
 ### Generate a New Migration
