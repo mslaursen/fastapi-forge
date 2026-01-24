@@ -80,8 +80,8 @@ async def build_fastapi_project(
         build_time = perf_counter() - start_time
         logger.info(f"Project build completed in {build_time:.2f} seconds")
 
-        click.secho("\n🎉 Project generated successfully !", fg="green", bold=True)
-        click.echo("\n🚀 Next steps to get started:\n")
+        click.secho("\nProject generated successfully !", fg="green", bold=True)
+        click.echo("\nNext steps to get started:\n")
 
         steps = [
             ("Navigate to your project directory", "cd your_project_name"),
@@ -94,8 +94,7 @@ async def build_fastapi_project(
             click.echo(f"{i}. {desc}:")
             click.secho(f"   {cmd}", fg="cyan")
 
-        click.echo("\n💡 Pro tip: Run 'make help' to see all available commands")
-        click.secho("\n✨ Happy coding with your new FastAPI project!", fg="magenta")
+        click.echo("\nPro tip: Run 'make help' to see all available commands")
 
     except Exception as error:
         logger.error(f"Project build failed: {error}")
